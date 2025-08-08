@@ -1,0 +1,50 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #000000;
+  --color-fg: #ffffff;
+  --color-gray: #9CA3AF; /* Tailwind gray-400 */
+}
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-black text-white antialiased;
+    background-color: var(--color-bg);
+    color: var(--color-fg);
+  }
+
+  ::selection {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+  }
+}
+
+@layer components {
+  .container {
+    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+
+  .surface {
+    @apply bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/60;
+  }
+
+  .border-subtle {
+    @apply border-white/10;
+  }
+
+  .text-muted {
+    color: var(--color-gray);
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .smooth { @apply transition-all duration-300 ease-out; }
+}
