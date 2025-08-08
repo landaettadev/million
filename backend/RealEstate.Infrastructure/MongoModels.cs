@@ -33,6 +33,13 @@ public sealed class MongoContext
         Properties = Database.GetCollection<PropertyDocument>(settings.CollectionNames.Properties);
         PropertyImages = Database.GetCollection<PropertyImageDocument>(settings.CollectionNames.PropertyImages);
     }
+
+    public MongoContext(IMongoDatabase database)
+    {
+        Database = database;
+        Properties = Database.GetCollection<PropertyDocument>("properties");
+        PropertyImages = Database.GetCollection<PropertyImageDocument>("propertyImages");
+    }
 }
 
 [BsonIgnoreExtraElements]
@@ -49,6 +56,7 @@ public sealed class PropertyDocument
     public string Address { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public string OperationType { get; set; } = string.Empty; // "sale" | "rent"
+    public string? Description { get; set; }
 
     public int? Beds { get; set; }
     public int? Baths { get; set; }
@@ -68,6 +76,7 @@ public sealed class PropertyImageDocument
 
     public string File { get; set; } = string.Empty;
     public bool Enabled { get; set; }
+    public int Order { get; set; } = 1;
 }
 
 public sealed class PropertyRepository : IPropertyRepository
@@ -100,30 +109,37 @@ public sealed class PropertyRepository : IPropertyRepository
         var skip = (query.Page - 1) * query.PageSize;
         var total = await _ctx.Properties.CountDocumentsAsync(filter, cancellationToken: ct);
 
-        // Proyección lite con primera imagen habilitada
-        var pipeline = _ctx.Properties
+        var properties = await _ctx.Properties
             .Find(filter)
             .SortBy(x => x.Price)
             .Skip(skip)
             .Limit(query.PageSize)
-            .ToEnumerable(ct)
-            .Select(doc => (doc, image: _ctx.PropertyImages
-                .Find(i => i.PropertyId == doc.Id && i.Enabled)
-                .FirstOrDefault(ct)?.File));
+            .ToListAsync(ct);
 
-        var items = pipeline.Select(x => new PropertyLiteDto(
-            Id: x.doc.Id,
-            IdOwner: x.doc.OwnerId,
-            Name: x.doc.Name,
-            Address: x.doc.Address,
-            Price: x.doc.Price,
-            Image: x.image,
-            OperationType: string.Equals(x.doc.OperationType, "sale", StringComparison.OrdinalIgnoreCase) ? OperationType.Sale : OperationType.Rent,
-            Beds: x.doc.Beds,
-            Baths: x.doc.Baths,
-            HalfBaths: x.doc.HalfBaths,
-            Sqft: x.doc.Sqft
-        )).ToList();
+        var items = new List<PropertyLiteDto>();
+        
+        foreach (var property in properties)
+        {
+            var firstImage = await _ctx.PropertyImages
+                .Find(i => i.PropertyId == property.Id && i.Enabled)
+                .SortBy(i => i.Order)
+                .Project(i => i.File)
+                .FirstOrDefaultAsync(ct);
+
+            items.Add(new PropertyLiteDto(
+                Id: property.Id,
+                IdOwner: property.OwnerId,
+                Name: property.Name,
+                Address: property.Address,
+                Price: property.Price,
+                Image: firstImage,
+                OperationType: string.Equals(property.OperationType, "sale", StringComparison.OrdinalIgnoreCase) ? OperationType.Sale : OperationType.Rent,
+                Beds: property.Beds,
+                Baths: property.Baths,
+                HalfBaths: property.HalfBaths,
+                Sqft: property.Sqft
+            ));
+        }
 
         return new PagedResult<PropertyLiteDto>(items, query.Page, query.PageSize, total);
     }
@@ -135,6 +151,7 @@ public sealed class PropertyRepository : IPropertyRepository
 
         var images = await _ctx.PropertyImages
             .Find(i => i.PropertyId == id && i.Enabled)
+            .SortBy(i => i.Order)
             .Project(i => i.File)
             .ToListAsync(ct);
 
@@ -146,6 +163,7 @@ public sealed class PropertyRepository : IPropertyRepository
             Price: doc.Price,
             Images: images,
             OperationType: string.Equals(doc.OperationType, "sale", StringComparison.OrdinalIgnoreCase) ? OperationType.Sale : OperationType.Rent,
+            Description: doc.Description,
             Beds: doc.Beds,
             Baths: doc.Baths,
             HalfBaths: doc.HalfBaths,

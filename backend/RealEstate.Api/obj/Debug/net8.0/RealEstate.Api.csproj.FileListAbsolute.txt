@@ -50,3 +50,4 @@ C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Api\obj\Debug\net8
 C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Api\obj\Debug\net8.0\RealEstate.Api.pdb
 C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Api\obj\Debug\net8.0\RealEstate.Api.genruntimeconfig.cache
 C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Api\obj\Debug\net8.0\ref\RealEstate.Api.dll
+C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Api\obj\Debug\net8.0\RealEstate.Api.sourcelink.json
