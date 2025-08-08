@@ -6,6 +6,8 @@ import { useRouter, useParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { Gallery } from '@/components/property/Gallery'
 import { formatPrice } from '@/lib/format'
 import { getPropertyById } from '@/lib/api'
@@ -18,23 +20,25 @@ export default function PropertyDetailPage() {
 
   const [data, setData] = useState<PropertyDetailDto | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<unknown | null>(null)
+
+  const loadProperty = async () => {
+    if (!id) return
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await getPropertyById(id)
+      setData(res)
+    } catch (err) {
+      setError(err)
+      console.error('Failed to load property:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    let active = true
-    const load = async () => {
-      if (!id) return
-      setLoading(true)
-      try {
-        const res = await getPropertyById(id)
-        if (active) setData(res)
-      } finally {
-        if (active) setLoading(false)
-      }
-    }
-    load()
-    return () => {
-      active = false
-    }
+    loadProperty()
   }, [id])
 
   const BackButton = (
@@ -44,6 +48,23 @@ export default function PropertyDetailPage() {
       </Button>
     </div>
   )
+
+  if (error) {
+    return (
+      <ErrorBoundary>
+        <div className="min-h-screen">
+          {BackButton}
+          <div className="container py-24">
+            <ErrorMessage 
+              error={error} 
+              onRetry={loadProperty}
+              className="mx-auto max-w-lg"
+            />
+          </div>
+        </div>
+      </ErrorBoundary>
+    )
+  }
 
   if (loading) {
     return (
@@ -70,7 +91,7 @@ export default function PropertyDetailPage() {
         {BackButton}
         <div className="container py-24 text-center">
           <h1 className="font-serif text-3xl font-semibold mb-4">Not found</h1>
-          <p className="text-white/60 mb-8">The property does not exist or is no longer available.</p>
+          <p className="text-gray-600 mb-8">The property does not exist or is no longer available.</p>
           <Button variant="primary" onClick={() => router.push('/properties')} aria-label="Back to list">
             Back to list
           </Button>
@@ -82,14 +103,15 @@ export default function PropertyDetailPage() {
   const hasMultiple = data.images && data.images.length > 1
 
   return (
-    <div className="min-h-screen">
+    <ErrorBoundary>
+      <div className="min-h-screen">
       {BackButton}
 
       <div className="container py-8 grid md:grid-cols-2 gap-8">
         {/* Left: Gallery or single image */}
         <div>
           {hasMultiple ? (
-            <Gallery images={data.images} alt={data.name} />
+            <Gallery images={data.images} />
           ) : (
             <div className="relative aspect-[16/10] rounded-2xl overflow-hidden">
               <Image
@@ -141,6 +163,7 @@ export default function PropertyDetailPage() {
         </div>
       </div>
     </div>
+    </ErrorBoundary>
   )
 }
 
