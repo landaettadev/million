@@ -27,11 +27,13 @@ public class E2eFixture : IAsyncLifetime
         await _mongo.StartAsync();
 
         // Start API process on fixed port with env vars
+        var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
+        var apiProj = Path.Combine(repoRoot, "RealEstate.Api", "RealEstate.Api.csproj");
         var startInfo = new ProcessStartInfo
         {
             FileName = "dotnet",
-            Arguments = "run --no-build",
-            WorkingDirectory = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "RealEstate.Api")),
+            Arguments = $"run --project \"{apiProj}\" -c Release",
+            WorkingDirectory = repoRoot,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             UseShellExecute = false,

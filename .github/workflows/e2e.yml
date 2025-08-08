@@ -22,10 +22,15 @@ jobs:
       - name: Restore
         run: dotnet restore backend/RealEstate.sln
 
+      - name: Enable Docker in Docker (Linux)
+        run: |
+          docker --version
+          echo "Docker available"
+
       - name: Run E2E tests
         env:
           DOTNET_NOLOGO: true
-        run: dotnet test backend/RealEstate.Tests.E2E/RealEstate.Tests.E2E.csproj -c Release --logger "trx;LogFileName=e2e.trx"
+        run: dotnet test backend/RealEstate.Tests.E2E/RealEstate.Tests.E2E.csproj -c Release --logger "trx;LogFileName=e2e.trx" --blame-hang-timeout 5m
 
       - name: Publish test results
         if: always()

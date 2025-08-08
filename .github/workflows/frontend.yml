@@ -25,10 +25,10 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      - name: Test
+      - name: Test (no E2E dependency)
         working-directory: frontend
         env:
-          NEXT_PUBLIC_API_BASE: http://localhost:5244
+          NEXT_PUBLIC_API_BASE: http://localhost:0
           NEXT_PUBLIC_ENVIRONMENT: test
         run: npm test -- --ci --coverage --watchAll=false
 
