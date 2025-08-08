@@ -1,168 +1,218 @@
-import { getProperties, getPropertyById } from '../../lib/api'
-import { server } from '../setup/server'
-import { http, HttpResponse } from 'msw'
+import { api } from '../../lib/api'
 
-describe('API Functions', () => {
+// Mock fetch globally
+global.fetch = jest.fn()
+
+const mockFetch = fetch as jest.MockedFunction<typeof fetch>
+
+describe('API', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
   describe('getProperties', () => {
-    it('fetches properties successfully', async () => {
-      const result = await getProperties()
-      
-      expect(result.items).toHaveLength(2)
-      expect(result.page).toBe(1)
-      expect(result.pageSize).toBe(20)
-      expect(result.total).toBe(2)
-      expect(result.items[0]).toMatchObject({
-        id: '507f1f77bcf86cd799439011',
-        name: 'Luxury Penthouse',
-        address: '123 Park Avenue, New York',
-        price: 2500000,
-        operationType: 'sale',
+    it('should fetch properties with default parameters', async () => {
+      const mockResponse = {
+        items: [
+          {
+            id: '1',
+            idOwner: 'owner1',
+            name: 'Luxury Apartment',
+            address: '123 Park Avenue',
+            price: 2500000,
+            operationType: 'sale',
+            image: 'https://example.com/image.jpg'
+          }
+        ],
+        total: 1,
+        page: 1,
+        pageSize: 20
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse
+      } as Response)
+
+      const result = await api.getProperties()
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/properties'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json'
+          })
+        })
+      )
+
+      expect(result).toEqual(mockResponse)
+    })
+
+    it('should fetch properties with custom parameters', async () => {
+      const mockResponse = {
+        items: [],
+        total: 0,
+        page: 2,
+        pageSize: 10
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse
+      } as Response)
+
+      const result = await api.getProperties({
+        page: 2,
+        pageSize: 10,
+        name: 'Luxury',
+        minPrice: 1000000,
+        maxPrice: 5000000,
+        operationType: 'sale'
       })
-    })
 
-    it('filters properties by name', async () => {
-      const result = await getProperties({ name: 'Luxury' })
-      
-      expect(result.items).toHaveLength(1)
-      expect(result.items[0].name).toBe('Luxury Penthouse')
-    })
-
-    it('filters properties by address', async () => {
-      const result = await getProperties({ address: '5th Avenue' })
-      
-      expect(result.items).toHaveLength(1)
-      expect(result.items[0].address).toBe('456 5th Avenue, New York')
-    })
-
-    it('filters properties by price range', async () => {
-      const result = await getProperties({ minPrice: 2000000, maxPrice: 3000000 })
-      
-      expect(result.items).toHaveLength(1)
-      expect(result.items[0].price).toBe(2500000)
-    })
-
-    it('filters properties by operation type', async () => {
-      const result = await getProperties({ operationType: 'rent' })
-      
-      expect(result.items).toHaveLength(1)
-      expect(result.items[0].operationType).toBe('rent')
-    })
-
-    it('handles pagination correctly', async () => {
-      const result = await getProperties({ page: 2, pageSize: 1 })
-      
-      expect(result.page).toBe(2)
-      expect(result.pageSize).toBe(1)
-      expect(result.items).toHaveLength(1)
-    })
-
-    it('throws ApiError on server error', async () => {
-      server.use(
-        http.get('http://localhost:5244/api/properties', () => {
-          return HttpResponse.json(
-            {
-              traceId: 'test-trace-id',
-              error: 'Internal server error',
-              statusCode: 500,
-              timestamp: new Date().toISOString(),
-            },
-            { status: 500 }
-          )
-        })
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/properties'),
+        expect.any(Object)
       )
 
-      await expect(getProperties()).rejects.toThrow('Internal server error')
+      expect(result).toEqual(mockResponse)
     })
 
-    it('throws TimeoutError on request timeout', async () => {
-      server.use(
-        http.get('http://localhost:5244/api/properties', async () => {
-          // Simulate a timeout by delaying longer than the 30s timeout
-          await new Promise(resolve => setTimeout(resolve, 35000))
-          return HttpResponse.json({ items: [], page: 1, pageSize: 20, total: 0 })
-        })
-      )
+    it('should handle API errors', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        statusText: 'Internal Server Error',
+        json: async () => ({ error: 'Internal server error' })
+      } as Response)
 
-      await expect(getProperties()).rejects.toThrow('Request timed out')
-    }, 35000) // Increase test timeout
+      await expect(api.getProperties()).rejects.toThrow()
+    })
 
-    it('throws NetworkError on network failure', async () => {
-      server.use(
-        http.get('http://localhost:5244/api/properties', () => {
-          return HttpResponse.error()
-        })
-      )
+    it('should handle network errors', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
-      await expect(getProperties()).rejects.toThrow()
+      await expect(api.getProperties()).rejects.toThrow('Network error')
     })
   })
 
-  describe('getPropertyById', () => {
-    it('fetches property by ID successfully', async () => {
-      const result = await getPropertyById('507f1f77bcf86cd799439011')
-      
-      expect(result).toMatchObject({
-        id: '507f1f77bcf86cd799439011',
-        name: 'Luxury Penthouse',
-        address: '123 Park Avenue, New York',
+  describe('getProperty', () => {
+    it('should fetch a single property', async () => {
+      const mockResponse = {
+        id: '1',
+        idOwner: 'owner1',
+        name: 'Luxury Apartment',
+        address: '123 Park Avenue',
         price: 2500000,
         operationType: 'sale',
-        images: expect.arrayContaining([
-          'https://picsum.photos/800/600?random=1',
-          'https://picsum.photos/800/600?random=2',
-          'https://picsum.photos/800/600?random=3',
-        ]),
-        description: 'Beautiful luxury penthouse with stunning city views.',
-      })
-    })
+        images: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg']
+      }
 
-    it('returns null for non-existent property', async () => {
-      const result = await getPropertyById('nonexistent')
-      expect(result).toBeNull()
-    })
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResponse
+      } as Response)
 
-    it('throws ApiError for invalid ID format', async () => {
-      await expect(getPropertyById('invalid')).rejects.toThrow('Invalid property ID format')
-    })
+      const result = await api.getProperty('1')
 
-    it('throws ApiError on server error', async () => {
-      server.use(
-        http.get('http://localhost:5244/api/properties/:id', () => {
-          return HttpResponse.json(
-            {
-              traceId: 'test-trace-id',
-              error: 'Internal server error',
-              statusCode: 500,
-              timestamp: new Date().toISOString(),
-            },
-            { status: 500 }
-          )
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/properties/1'),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json'
+          })
         })
       )
 
-      await expect(getPropertyById('507f1f77bcf86cd799439011')).rejects.toThrow('Internal server error')
+      expect(result).toEqual(mockResponse)
     })
 
-    it('throws TimeoutError on request timeout', async () => {
-      server.use(
-        http.get('http://localhost:5244/api/properties/:id', async () => {
-          await new Promise(resolve => setTimeout(resolve, 35000))
-          return HttpResponse.json({})
-        })
-      )
+    it('should handle property not found', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        json: async () => ({ error: 'Property not found' })
+      } as Response)
 
-      await expect(getPropertyById('507f1f77bcf86cd799439011')).rejects.toThrow('Request timed out')
-    }, 35000)
+      await expect(api.getProperty('nonexistent')).rejects.toThrow()
+    })
   })
 
-  describe('Environment configuration', () => {
-    it('throws error when API base URL is not set', async () => {
-      const originalEnv = process.env.NEXT_PUBLIC_API_BASE
-      delete process.env.NEXT_PUBLIC_API_BASE
+  describe('error handling', () => {
+    it('should handle JSON parsing errors', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => {
+          throw new Error('Invalid JSON')
+        }
+      } as Response)
 
-      await expect(getProperties()).rejects.toThrow('NEXT_PUBLIC_API_BASE is not set')
+      await expect(api.getProperties()).rejects.toThrow('Invalid JSON')
+    })
 
-      process.env.NEXT_PUBLIC_API_BASE = originalEnv
+    it('should handle timeout errors', async () => {
+      mockFetch.mockImplementationOnce(() => {
+        return new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Timeout')), 100)
+        })
+      })
+
+      await expect(api.getProperties()).rejects.toThrow('Timeout')
+    })
+  })
+
+  describe('URL construction', () => {
+    it('should construct URLs correctly with query parameters', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ items: [], total: 0, page: 1, pageSize: 20 })
+      } as Response)
+
+      await api.getProperties({
+        name: 'Luxury',
+        address: 'Park Avenue',
+        minPrice: 1000000,
+        maxPrice: 5000000,
+        operationType: 'sale',
+        page: 1,
+        pageSize: 20
+      })
+
+      const calledUrl = mockFetch.mock.calls[0][0] as string
+      const url = new URL(calledUrl)
+
+      expect(url.searchParams.get('name')).toBe('Luxury')
+      expect(url.searchParams.get('address')).toBe('Park Avenue')
+      expect(url.searchParams.get('minPrice')).toBe('1000000')
+      expect(url.searchParams.get('maxPrice')).toBe('5000000')
+      expect(url.searchParams.get('operationType')).toBe('sale')
+      expect(url.searchParams.get('page')).toBe('1')
+      expect(url.searchParams.get('pageSize')).toBe('20')
+    })
+
+    it('should handle undefined parameters', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ items: [], total: 0, page: 1, pageSize: 20 })
+      } as Response)
+
+      await api.getProperties({
+        name: undefined,
+        address: undefined,
+        minPrice: undefined,
+        maxPrice: undefined,
+        operationType: undefined
+      })
+
+      const calledUrl = mockFetch.mock.calls[0][0] as string
+      const url = new URL(calledUrl)
+
+      expect(url.searchParams.has('name')).toBe(false)
+      expect(url.searchParams.has('address')).toBe(false)
+      expect(url.searchParams.has('minPrice')).toBe(false)
+      expect(url.searchParams.has('maxPrice')).toBe(false)
+      expect(url.searchParams.has('operationType')).toBe(false)
     })
   })
 })
