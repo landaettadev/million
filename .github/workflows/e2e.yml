@@ -1,0 +1,37 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore backend/RealEstate.sln
+
+      - name: Run E2E tests
+        env:
+          DOTNET_NOLOGO: true
+        run: dotnet test backend/RealEstate.Tests.E2E/RealEstate.Tests.E2E.csproj -c Release --logger "trx;LogFileName=e2e.trx"
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-test-results
+          path: |
+            backend/RealEstate.Tests.E2E/TestResults/**/*.trx
+
