@@ -22,8 +22,10 @@ jobs:
       - name: Restore
         run: dotnet restore backend/RealEstate.sln
 
-      - name: Unit & Integration Tests
-        run: dotnet test backend/RealEstate.Tests/RealEstate.Tests.csproj -c Release --logger "trx;LogFileName=unit.trx"
+      - name: Unit & Integration Tests (no E2E)
+        run: |
+          dotnet test backend/RealEstate.Tests/RealEstate.Tests.csproj -c Release --logger "trx;LogFileName=unit.trx"
+          dotnet test backend/RealEstate.Tests.Integration/RealEstate.Tests.Integration.csproj -c Release --logger "trx;LogFileName=integration.trx"
 
       - name: Upload results
         if: always()
