@@ -13,3 +13,4 @@ C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Infrastructure\obj
 C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Infrastructure\obj\Debug\net8.0\refint\RealEstate.Infrastructure.dll
 C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Infrastructure\obj\Debug\net8.0\RealEstate.Infrastructure.pdb
 C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Infrastructure\obj\Debug\net8.0\ref\RealEstate.Infrastructure.dll
+C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Infrastructure\obj\Debug\net8.0\RealEstate.Infrastructure.sourcelink.json

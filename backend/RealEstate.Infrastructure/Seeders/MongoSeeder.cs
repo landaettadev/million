@@ -15,6 +15,12 @@ public sealed class MongoSeeder
         _config = config;
     }
 
+    public MongoSeeder(IMongoDatabase database, MongoSettings settings, IConfiguration config)
+    {
+        _ctx = new MongoContext(database);
+        _config = config;
+    }
+
     public async Task RunAsync(CancellationToken ct = default)
     {
         // Indexes
