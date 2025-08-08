@@ -1,101 +1,131 @@
 import { render, screen } from '@testing-library/react'
-import { PropertyCard } from '../../../components/property/PropertyCard'
-import type { PropertyLiteDto } from '../../../lib/types'
+import userEvent from '@testing-library/user-event'
+import { PropertyCard } from '@/components/property/PropertyCard'
+import type { PropertyLiteDto } from '@/lib/types'
+
+// Mock Next.js Link component
+jest.mock('next/link', () => {
+  return ({ children, href, ...props }: any) => {
+    return <a href={href} {...props}>{children}</a>
+  }
+})
+
+// Mock Next.js Image component
+jest.mock('next/image', () => ({
+  __esModule: true,
+  default: ({ src, alt, ...props }: any) => {
+    return <img src={src} alt={alt} {...props} />
+  },
+}))
 
 const mockProperty: PropertyLiteDto = {
-  id: '507f1f77bcf86cd799439011',
-  idOwner: '507f1f77bcf86cd799439012',
-  name: 'Luxury Penthouse',
+  id: 'test-id-123',
+  idOwner: 'owner-123',
+  name: 'Luxury Apartment',
   address: '123 Park Avenue, New York',
   price: 2500000,
-  image: 'https://picsum.photos/800/600?random=1',
+  image: 'https://example.com/image.jpg',
   operationType: 'sale',
   beds: 3,
   baths: 2,
-  halfBaths: 1,
-  sqft: 2500,
+  sqft: 2500
 }
 
-describe('PropertyCard Component', () => {
+describe('PropertyCard', () => {
   it('renders property information correctly', () => {
     render(<PropertyCard item={mockProperty} />)
     
-    expect(screen.getByText('Luxury Penthouse')).toBeInTheDocument()
+    expect(screen.getByText('Luxury Apartment')).toBeInTheDocument()
+    expect(screen.getByText('3 Beds')).toBeInTheDocument()
+    expect(screen.getByText('2 Baths')).toBeInTheDocument()
+    expect(screen.getByText('2,500 Sq. Ft.')).toBeInTheDocument()
     expect(screen.getByText('$2.5M')).toBeInTheDocument()
-    // Address is in the alt text of the image, not as separate text
-    expect(screen.getByAltText('Luxury Penthouse — 123 Park Avenue, New York')).toBeInTheDocument()
   })
 
-  it('renders property specifications correctly', () => {
-    render(<PropertyCard item={mockProperty} />)
+  it('renders loading skeleton when loading is true', () => {
+    render(<PropertyCard item={mockProperty} loading={true} />)
     
-    expect(screen.getByText(/3 Beds/)).toBeInTheDocument()
-    expect(screen.getByText(/2 Baths/)).toBeInTheDocument()
-    expect(screen.getByText(/1 Half Bath/)).toBeInTheDocument()
-    expect(screen.getByText(/2,500 Sq\. Ft\./)).toBeInTheDocument()
+    expect(screen.getByLabelText('Loading project name')).toBeInTheDocument()
+    expect(screen.getByLabelText('Loading title')).toBeInTheDocument()
+    expect(screen.getByLabelText('Loading specs')).toBeInTheDocument()
+    expect(screen.getByLabelText('Loading price')).toBeInTheDocument()
   })
 
-  it('renders property image with correct alt text', () => {
+  it('displays property image when available', () => {
     render(<PropertyCard item={mockProperty} />)
     
-    const image = screen.getByAltText('Luxury Penthouse — 123 Park Avenue, New York')
+    const image = screen.getByAltText('Luxury Apartment — 123 Park Avenue, New York')
     expect(image).toBeInTheDocument()
-    expect(image).toHaveAttribute('src', 'https://picsum.photos/800/600?random=1')
+    expect(image).toHaveAttribute('src', 'https://example.com/image.jpg')
   })
 
-  it('handles missing optional specifications', () => {
-    const propertyWithoutSpecs: PropertyLiteDto = {
-      ...mockProperty,
-      beds: undefined,
-      baths: undefined,
-      halfBaths: undefined,
-      sqft: undefined,
-    }
-
-    render(<PropertyCard item={propertyWithoutSpecs} />)
+  it('shows placeholder when no image is available', () => {
+    const propertyWithoutImage = { ...mockProperty, image: undefined }
+    render(<PropertyCard item={propertyWithoutImage} />)
     
-    expect(screen.getByText('Luxury Penthouse')).toBeInTheDocument()
-    expect(screen.getByText('$2.5M')).toBeInTheDocument()
-    // Specs section should not be rendered
-    expect(screen.queryByText(/Beds/)).not.toBeInTheDocument()
+    expect(screen.queryByAltText(/Luxury Apartment/)).not.toBeInTheDocument()
   })
 
-  it('handles single half bath correctly', () => {
-    const propertyWithOneHalfBath: PropertyLiteDto = {
-      ...mockProperty,
-      halfBaths: 1,
-    }
-
-    render(<PropertyCard item={propertyWithOneHalfBath} />)
+  it('renders project name when available', () => {
+    const propertyWithProject = { ...mockProperty, projectName: 'Luxury Collection' }
+    render(<PropertyCard item={propertyWithProject} />)
     
-    expect(screen.getByText(/1 Half Bath/)).toBeInTheDocument()
+    expect(screen.getByText('Luxury Collection')).toBeInTheDocument()
+  })
+
+  it('handles half baths correctly', () => {
+    const propertyWithHalfBaths = { ...mockProperty, halfBaths: 1 }
+    render(<PropertyCard item={propertyWithHalfBaths} />)
+    
+    expect(screen.getByText('1 Half Bath')).toBeInTheDocument()
   })
 
   it('handles multiple half baths correctly', () => {
-    const propertyWithMultipleHalfBaths: PropertyLiteDto = {
-      ...mockProperty,
-      halfBaths: 2,
-    }
-
-    render(<PropertyCard item={propertyWithMultipleHalfBaths} />)
+    const propertyWithHalfBaths = { ...mockProperty, halfBaths: 2 }
+    render(<PropertyCard item={propertyWithHalfBaths} />)
     
-    expect(screen.getByText(/2 Half Baths/)).toBeInTheDocument()
+    expect(screen.getByText('2 Half Baths')).toBeInTheDocument()
+  })
+
+  it('renders link with correct href', () => {
+    render(<PropertyCard item={mockProperty} />)
+    
+    const link = screen.getByRole('link')
+    expect(link).toHaveAttribute('href', '/properties/test-id-123')
   })
 
   it('has correct accessibility attributes', () => {
     render(<PropertyCard item={mockProperty} />)
     
-    const article = screen.getByRole('article')
-    expect(article).toBeInTheDocument()
-    
-    const image = screen.getByRole('img')
-    expect(image).toHaveAttribute('alt', 'Luxury Penthouse — 123 Park Avenue, New York')
+    const link = screen.getByRole('link')
+    expect(link).toHaveAttribute('aria-label', 'View details of Luxury Apartment')
   })
 
-  it('applies group hover classes correctly', () => {
-    render(<PropertyCard item={mockProperty} />)
+  it('formats price correctly', () => {
+    const expensiveProperty = { ...mockProperty, price: 5000000 }
+    render(<PropertyCard item={expensiveProperty} />)
     
-    const article = screen.getByRole('article')
-    expect(article).toHaveClass('group')
+    expect(screen.getByText('$5.0M')).toBeInTheDocument()
+  })
+
+  it('handles properties without optional fields', () => {
+    const minimalProperty = {
+      id: 'minimal-id',
+      idOwner: 'owner-123',
+      name: 'Minimal Property',
+      address: '456 Simple St',
+      price: 1000000,
+      operationType: 'rent' as const
+    }
+    
+    render(<PropertyCard item={minimalProperty} />)
+    
+    expect(screen.getByText('Minimal Property')).toBeInTheDocument()
+    expect(screen.getByText('$1.0M')).toBeInTheDocument()
+    
+    // Should not render specs if not available
+    expect(screen.queryByText(/Beds/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Baths/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Sq\. Ft\./)).not.toBeInTheDocument()
   })
 })
