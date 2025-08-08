@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: realestate-mongo-test
+    ports:
+      - "27018:27017" # host:container
+    environment:
+      MONGO_INITDB_DATABASE: realestate_test
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - realestate-test-net
+
+  seed:
+    image: mongo:7
+    container_name: realestate-mongo-test-seed
+    depends_on:
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ./seed/test:/seed:ro
+    entrypoint: ["bash", "-lc"]
+    command: >
+      "\
+      mongoimport --uri mongodb://mongo:27017/realestate_test --collection owners --file /seed/owners.json --jsonArray && \
+      mongoimport --uri mongodb://mongo:27017/realestate_test --collection properties --file /seed/properties.json --jsonArray && \
+      mongoimport --uri mongodb://mongo:27017/realestate_test --collection propertyImages --file /seed/propertyImages.json --jsonArray && \
+      mongoimport --uri mongodb://mongo:27017/realestate_test --collection propertyTraces --file /seed/propertyTraces.json --jsonArray && \
+      echo 'Seed completed' && sleep 1"
+    networks:
+      - realestate-test-net
+
+networks:
+  realestate-test-net:
+    driver: bridge
+
+

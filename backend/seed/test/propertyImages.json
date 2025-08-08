@@ -1,0 +1,25 @@
+[
+  {
+    "_id": {"$oid": "66f0a1000000000000000001"},
+    "propertyId": {"$oid": "66f0a0000000000000000001"},
+    "file": "https://picsum.photos/seed/test1/800/600",
+    "enabled": true,
+    "order": 1
+  },
+  {
+    "_id": {"$oid": "66f0a1000000000000000002"},
+    "propertyId": {"$oid": "66f0a0000000000000000001"},
+    "file": "https://picsum.photos/seed/test2/800/600",
+    "enabled": true,
+    "order": 2
+  },
+  {
+    "_id": {"$oid": "66f0a1000000000000000003"},
+    "propertyId": {"$oid": "66f0a0000000000000000002"},
+    "file": "https://picsum.photos/seed/test3/800/600",
+    "enabled": true,
+    "order": 1
+  }
+]
+
+

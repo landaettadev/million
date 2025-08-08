@@ -1,0 +1,27 @@
+[
+  {
+    "_id": {"$oid": "66f0a0000000000000000001"},
+    "ownerId": {"$oid": "66f0a0000000000000001001"},
+    "name": "Test Luxury Apartment",
+    "address": "123 Park Avenue, New York",
+    "price": 2500000,
+    "operationType": "sale",
+    "beds": 3,
+    "baths": 2,
+    "halfBaths": 1,
+    "sqft": 2500
+  },
+  {
+    "_id": {"$oid": "66f0a0000000000000000002"},
+    "ownerId": {"$oid": "66f0a0000000000000001002"},
+    "name": "Test Modern Penthouse",
+    "address": "456 5th Avenue, New York",
+    "price": 3500000,
+    "operationType": "sale",
+    "beds": 4,
+    "baths": 3,
+    "sqft": 3200
+  }
+]
+
+
