@@ -25,6 +25,8 @@ public sealed class MongoContext
     public IMongoDatabase Database { get; }
     public IMongoCollection<PropertyDocument> Properties { get; }
     public IMongoCollection<PropertyImageDocument> PropertyImages { get; }
+    public IMongoCollection<OwnerDocument> Owners { get; }
+    public IMongoCollection<PropertyTraceDocument> PropertyTraces { get; }
 
     public MongoContext(MongoSettings settings)
     {
@@ -32,6 +34,8 @@ public sealed class MongoContext
         Database = client.GetDatabase(settings.Database);
         Properties = Database.GetCollection<PropertyDocument>(settings.CollectionNames.Properties);
         PropertyImages = Database.GetCollection<PropertyImageDocument>(settings.CollectionNames.PropertyImages);
+        Owners = Database.GetCollection<OwnerDocument>(settings.CollectionNames.Owners);
+        PropertyTraces = Database.GetCollection<PropertyTraceDocument>(settings.CollectionNames.PropertyTraces);
     }
 
     public MongoContext(IMongoDatabase database)
@@ -39,6 +43,8 @@ public sealed class MongoContext
         Database = database;
         Properties = Database.GetCollection<PropertyDocument>("properties");
         PropertyImages = Database.GetCollection<PropertyImageDocument>("propertyImages");
+        Owners = Database.GetCollection<OwnerDocument>("owners");
+        PropertyTraces = Database.GetCollection<PropertyTraceDocument>("propertyTraces");
     }
 }
 
@@ -77,6 +83,35 @@ public sealed class PropertyImageDocument
     public string File { get; set; } = string.Empty;
     public bool Enabled { get; set; }
     public int Order { get; set; } = 1;
+}
+
+[BsonIgnoreExtraElements]
+public sealed class OwnerDocument
+{
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; } = default!;
+
+    public string Name { get; set; } = string.Empty;
+    public string Address { get; set; } = string.Empty;
+    public string? Photo { get; set; }
+    public DateTime? Birthday { get; set; }
+}
+
+[BsonIgnoreExtraElements]
+public sealed class PropertyTraceDocument
+{
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; } = default!;
+
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string PropertyId { get; set; } = default!;
+
+    public DateTime DateSale { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public decimal Value { get; set; }
+    public decimal Tax { get; set; }
 }
 
 public sealed class PropertyRepository : IPropertyRepository

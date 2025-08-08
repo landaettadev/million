@@ -1,6 +1,8 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using RealEstate.Api.Middleware;
 using RealEstate.Application;
 
 namespace RealEstate.Api.Endpoints;
@@ -11,7 +13,7 @@ public static class PropertyEndpoints
     {
         var group = endpoints.MapGroup("/api/properties");
 
-        group.MapGet("/", async (HttpContext ctx, IPropertyReadService service) =>
+        group.MapGet("/", async (HttpContext ctx, IPropertyReadService service, IValidator<SearchPropertiesQuery> validator) =>
         {
             var q = new SearchPropertiesQuery(
                 Name: ctx.Request.Query["name"].ToString(),
@@ -23,14 +25,45 @@ public static class PropertyEndpoints
                 PageSize: int.TryParse(ctx.Request.Query["pageSize"], out var size) ? size : PagingDefaults.DefaultPageSize
             );
 
+            // Validate query parameters
+            var validationResult = await validator.ValidateAsync(q, ctx.RequestAborted);
+            if (!validationResult.IsValid)
+            {
+                var errors = validationResult.Errors.Select(e => new ValidationError 
+                { 
+                    PropertyName = e.PropertyName, 
+                    ErrorMessage = e.ErrorMessage 
+                }).ToArray();
+                
+                throw new RealEstate.Api.Middleware.ValidationException("Invalid query parameters", errors);
+            }
+
             var result = await service.SearchAsync(q, ctx.RequestAborted);
             return Results.Ok(new { items = result.Items, page = result.Page, pageSize = result.PageSize, total = result.Total });
         });
 
-        group.MapGet("/{id}", async (string id, IPropertyReadService service, HttpContext ctx) =>
+        group.MapGet("/{id}", async (string id, IPropertyReadService service, IValidator<string> idValidator, HttpContext ctx) =>
         {
+            // Validate ObjectId format using FluentValidation
+            var idValidationResult = await idValidator.ValidateAsync(id, ctx.RequestAborted);
+            if (!idValidationResult.IsValid)
+            {
+                var errors = idValidationResult.Errors.Select(e => new ValidationError 
+                { 
+                    PropertyName = e.PropertyName, 
+                    ErrorMessage = e.ErrorMessage 
+                }).ToArray();
+                
+                throw new RealEstate.Api.Middleware.ValidationException("Invalid property ID", errors);
+            }
+
             var item = await service.GetByIdAsync(id, ctx.RequestAborted);
-            return item is null ? Results.NotFound() : Results.Ok(item);
+            if (item is null)
+            {
+                throw new KeyNotFoundException($"Property with ID '{id}' not found");
+            }
+            
+            return Results.Ok(item);
         });
 
         return endpoints;

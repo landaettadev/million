@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { FiltersBar, type FiltersValue } from '@/components/property/FiltersBar'
 import { Pagination } from '@/components/property/Pagination'
 import { PropertyCarousel } from '@/components/property/PropertyCarousel'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { api } from '@/lib/api'
 import type { PropertyListResponse } from '@/lib/types'
 
@@ -33,27 +35,29 @@ export default function PropertiesPage() {
   const [page, setPage] = useState<number>(initial.page)
   const [data, setData] = useState<PropertyListResponse | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
+  const [error, setError] = useState<unknown | null>(null)
+
+  const loadProperties = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const res = await api.getProperties({
+        ...filters,
+        page,
+        pageSize: PAGE_SIZE,
+        operationType: (filters.operationType || undefined) as 'sale' | 'rent' | undefined,
+      })
+      setData(res)
+    } catch (err) {
+      setError(err)
+      console.error('Failed to load properties:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      setLoading(true)
-      try {
-        const res = await api.getProperties({
-          ...filters,
-          page,
-          pageSize: PAGE_SIZE,
-          operationType: (filters.operationType || undefined) as 'sale' | 'rent' | undefined,
-        })
-        if (!cancelled) setData(res)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-    load()
-    return () => {
-      cancelled = true
-    }
+    loadProperties()
   }, [filters, page])
 
   useEffect(() => {
@@ -85,47 +89,55 @@ export default function PropertiesPage() {
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1
 
   return (
-    <div className="min-h-screen bg-white">
-      <div className="bg-white">
-        <div className="container pt-14 pb-6">
-          <h1 className="text-center font-serif uppercase tracking-wide text-4xl md:text-5xl text-black mb-3">
-            Recent Transactions
-          </h1>
-          <p className="text-center text-[#6B7280] max-w-2xl mx-auto">
-            Discover our curated portfolio of luxury sales and rentals.
-          </p>
+    <ErrorBoundary>
+      <div className="min-h-screen bg-white">
+        <div className="bg-white">
+          <div className="container pt-14 pb-6">
+            <h1 className="text-center font-serif uppercase tracking-wide text-4xl md:text-5xl text-black mb-3">
+              Recent Transactions
+            </h1>
+            <p className="text-center text-[#6B7280] max-w-2xl mx-auto">
+              Discover our curated portfolio of luxury sales and rentals.
+            </p>
+          </div>
+        </div>
+
+        <FiltersBar value={draft} onChange={onChange} onSubmit={onSubmit} onClear={onClear} />
+
+        <div className="container py-16">
+          {error ? (
+            <ErrorMessage 
+              error={error} 
+              onRetry={loadProperties}
+              className="mx-auto max-w-lg"
+            />
+          ) : loading || !data ? (
+            // Skeleton via empty carousel with placeholders
+            <PropertyCarousel
+              items={Array.from({ length: 4 }).map((_, i) => ({
+                id: `sk-${i}`,
+                idOwner: 'loading',
+                name: 'Loading',
+                address: 'Loading',
+                price: 0,
+                image: '',
+                operationType: 'sale',
+              }))}
+            />
+          ) : data.items.length > 0 ? (
+            <PropertyCarousel items={data.items} />
+          ) : (
+            <div className="text-center py-20">
+              <h3 className="font-serif text-2xl text-black mb-2">No properties found</h3>
+              <p className="text-[#6B7280]">Try adjusting your filters to find more properties.</p>
+            </div>
+          )}
+
+          {data && data.total > 0 && !error && (
+            <Pagination page={page} pageSize={PAGE_SIZE} total={data.total} onChange={(p) => setPage(p)} />
+          )}
         </div>
       </div>
-
-      <FiltersBar value={draft} onChange={onChange} onSubmit={onSubmit} onClear={onClear} />
-
-      <div className="container py-16">
-        {loading || !data ? (
-          // Skeleton via empty carousel with placeholders
-          <PropertyCarousel
-            items={Array.from({ length: 4 }).map((_, i) => ({
-              id: `sk-${i}`,
-              idOwner: 'loading',
-              name: 'Loading',
-              address: 'Loading',
-              price: 0,
-              image: '',
-              operationType: 'sale',
-            }))}
-          />
-        ) : data.items.length > 0 ? (
-          <PropertyCarousel items={data.items} />
-        ) : (
-          <div className="text-center py-20">
-            <h3 className="font-serif text-2xl text-black mb-2">No properties found</h3>
-            <p className="text-[#6B7280]">Try adjusting your filters to find more properties.</p>
-          </div>
-        )}
-
-        {data && data.total > 0 && (
-          <Pagination page={page} pageSize={PAGE_SIZE} total={data.total} onChange={(p) => setPage(p)} />
-        )}
-      </div>
-    </div>
+    </ErrorBoundary>
   )
 }

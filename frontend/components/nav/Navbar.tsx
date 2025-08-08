@@ -29,7 +29,7 @@ export function Navbar() {
       {/* Right: CTA */}
       <div>
         <Button
-          variant="outline"
+          variant="ghost"
           className="border-white/30 text-white hover:bg-white hover:text-black smooth"
         >
           Sell your unit

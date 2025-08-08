@@ -34,14 +34,30 @@ public sealed class MongoSeeder
         if (count > 0 && insertIfEmpty) return;
 
         var random = new Random(42);
-        var docs = Enumerable.Range(1, _config.GetValue<int>("Seed:Count", 12)).Select(i => new PropertyDocument
+        var seedCount = _config.GetValue<int>("Seed:Count", 12);
+        
+        // Create Owners first
+        var owners = Enumerable.Range(1, seedCount / 2 + 1).Select(i => new OwnerDocument
         {
             Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-            OwnerId = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+            Name = GetRandomOwnerName(random),
+            Address = GetRandomOwnerAddress(random),
+            Photo = $"https://picsum.photos/id/{100 + i}/300/300",
+            Birthday = DateTime.UtcNow.AddYears(-random.Next(25, 65)).AddDays(-random.Next(0, 365))
+        }).ToList();
+
+        await _ctx.Owners.InsertManyAsync(owners, cancellationToken: ct);
+
+        // Create Properties
+        var docs = Enumerable.Range(1, seedCount).Select(i => new PropertyDocument
+        {
+            Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+            OwnerId = owners[random.Next(owners.Count)].Id, // Reference existing owner
             Name = $"Property {i}",
             Address = i % 2 == 0 ? "Beverly Hills, CA" : "Manhattan, NY",
             Price = random.Next(100_000, 5_000_000),
             OperationType = i % 2 == 0 ? "sale" : "rent",
+            Description = GetRandomDescription(random),
             Beds = random.Next(2, 6),
             Baths = random.Next(1, 4),
             HalfBaths = random.Next(0, 2),
@@ -69,6 +85,75 @@ public sealed class MongoSeeder
             }
         }
         await _ctx.PropertyImages.InsertManyAsync(images, cancellationToken: ct);
+
+        // Create PropertyTraces 
+        var traces = new List<PropertyTraceDocument>();
+        foreach (var property in docs)
+        {
+            var traceCount = random.Next(1, 4); // 1-3 traces per property
+            for (var k = 0; k < traceCount; k++)
+            {
+                traces.Add(new PropertyTraceDocument
+                {
+                    Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+                    PropertyId = property.Id,
+                    DateSale = DateTime.UtcNow.AddDays(-random.Next(30, 1095)), // Last 3 years
+                    Name = GetRandomTraceName(random),
+                    Value = property.Price * (decimal)(0.8 + random.NextDouble() * 0.4), // ±20% of current price
+                    Tax = property.Price * (decimal)(0.01 + random.NextDouble() * 0.02) // 1-3% tax
+                });
+            }
+        }
+        await _ctx.PropertyTraces.InsertManyAsync(traces, cancellationToken: ct);
+    }
+
+    private static string GetRandomOwnerName(Random random)
+    {
+        var firstNames = new[] { "John", "Jane", "Michael", "Sarah", "David", "Emily", "Robert", "Jessica", "William", "Ashley" };
+        var lastNames = new[] { "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez" };
+        return $"{firstNames[random.Next(firstNames.Length)]} {lastNames[random.Next(lastNames.Length)]}";
+    }
+
+    private static string GetRandomOwnerAddress(Random random)
+    {
+        var addresses = new[]
+        {
+            "123 Oak Street, Los Angeles, CA",
+            "456 Pine Avenue, New York, NY", 
+            "789 Elm Drive, Miami, FL",
+            "321 Maple Lane, Chicago, IL",
+            "654 Cedar Road, Houston, TX",
+            "987 Birch Boulevard, Phoenix, AZ"
+        };
+        return addresses[random.Next(addresses.Length)];
+    }
+
+    private static string GetRandomDescription(Random random)
+    {
+        var descriptions = new[]
+        {
+            "Luxurious modern home with stunning city views",
+            "Charming family residence in quiet neighborhood", 
+            "Contemporary apartment with premium finishes",
+            "Elegant townhouse with spacious layout",
+            "Beautiful villa with private garden",
+            "Sophisticated penthouse with panoramic views"
+        };
+        return descriptions[random.Next(descriptions.Length)];
+    }
+
+    private static string GetRandomTraceName(Random random)
+    {
+        var traceNames = new[]
+        {
+            "Initial Sale",
+            "Property Transfer", 
+            "Ownership Change",
+            "Estate Transfer",
+            "Investment Purchase",
+            "Family Inheritance"
+        };
+        return traceNames[random.Next(traceNames.Length)];
     }
 
     private async Task EnsureIndexesAsync(CancellationToken ct)
@@ -97,5 +182,16 @@ public sealed class MongoSeeder
             .Ascending(x => x.PropertyId)
             .Ascending(x => x.Enabled));
         await _ctx.PropertyImages.Indexes.CreateOneAsync(imgIdx, cancellationToken: ct);
+
+        // Owners indexes
+        var ownerIdx = new CreateIndexModel<OwnerDocument>(Builders<OwnerDocument>.IndexKeys
+            .Ascending(x => x.Name));
+        await _ctx.Owners.Indexes.CreateOneAsync(ownerIdx, cancellationToken: ct);
+
+        // PropertyTraces indexes  
+        var traceIdx = new CreateIndexModel<PropertyTraceDocument>(Builders<PropertyTraceDocument>.IndexKeys
+            .Ascending(x => x.PropertyId)
+            .Descending(x => x.DateSale));
+        await _ctx.PropertyTraces.Indexes.CreateOneAsync(traceIdx, cancellationToken: ct);
     }
 }
