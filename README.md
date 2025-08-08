@@ -108,14 +108,44 @@ PropertyTrace {
 
 ## 🧪 Tests
 
+### Unit Tests
 ```bash
-# Backend
+# Backend Unit Tests
 cd backend/RealEstate.Tests
 dotnet test
 
-# Frontend (opcional)
+# Frontend Unit Tests
 cd frontend
-npm run test
+npm test
+```
+
+### Integration Tests
+```bash
+# Endpoint Integration Tests (uses Testcontainers)
+cd backend/RealEstate.Tests.Integration
+dotnet test
+```
+
+### Performance Tests
+```bash
+# Benchmark Tests
+cd backend/RealEstate.Tests.Performance
+dotnet run --configuration Release
+
+# Load Tests
+cd backend/RealEstate.Tests.Performance
+dotnet test --filter "Category=LoadTest"
+```
+
+### Run All Tests
+```bash
+# Windows
+cd backend
+.\run-all-tests.ps1
+
+# Linux/Mac
+cd backend
+./run-all-tests.sh
 ```
 
 ## 📁 Estructura del Proyecto
@@ -138,9 +168,16 @@ million/
 │   │   ├── Data/                # Database context
 │   │   ├── Configuration/       # MongoDB config
 │   │   └── Seeders/             # Data seeding
-│   └── RealEstate.Tests/        # NUnit tests
-│       ├── Services/            # Service tests
-│       └── Repositories/        # Repository tests
+│   ├── RealEstate.Tests/        # NUnit unit tests
+│   │   ├── Services/            # Service tests
+│   │   └── Repositories/        # Repository tests
+│   ├── RealEstate.Tests.Integration/ # Integration tests
+│   │   ├── Endpoints/           # API endpoint tests
+│   │   └── Infrastructure/      # Test infrastructure
+│   └── RealEstate.Tests.Performance/ # Performance & load tests
+│       ├── Benchmarks/          # BenchmarkDotNet tests
+│       ├── LoadTests/           # NBomber load tests
+│       └── Infrastructure/      # Performance test setup
 ├── frontend/
 │   ├── app/(routes)/            # Next.js App Router
 │   │   └── properties/          # Property pages
@@ -193,3 +230,19 @@ Al iniciar el backend, se insertarán automáticamente 12 propiedades de ejemplo
 - **Error Handling**: Middleware global con envelope
 - **CORS**: Configurado para frontend
 - **Swagger**: Documentación automática en desarrollo
+
+## 🧪 Testing Strategy
+
+### Niveles de Testing
+- **Unit Tests**: NUnit (backend) + Jest/RTL (frontend)
+- **Integration Tests**: WebApplicationFactory + Testcontainers
+- **Performance Tests**: BenchmarkDotNet para métricas precisas
+- **Load Tests**: NBomber para pruebas bajo carga
+- **End-to-End**: Cypress (futuro)
+
+### Métricas de Performance
+- **Response Time**: <500ms promedio bajo carga normal
+- **Throughput**: >100 req/s con 50 usuarios concurrentes
+- **Error Rate**: <1% bajo carga normal, <5% bajo estrés
+- **Memory Usage**: Monitoreo de memory leaks
+- **Database**: Optimización de queries y índices
