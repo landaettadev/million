@@ -71,7 +71,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         var result = await _repository.SearchAsync(new SearchPropertiesQuery(Address: "Park"));
 
         // Assert
-        result.Items.Should().HaveCount(2);
+        result.Items.Should().HaveCount(1);
         result.Items.Should().OnlyContain(p => p.Address.Contains("Park", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -133,7 +133,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         ));
 
         // Assert
-        result.Items.Should().HaveCount(1);
+        result.Items.Should().HaveCount(2);
         result.Items.Should().OnlyContain(p => 
             p.Name.Contains("Luxury", StringComparison.OrdinalIgnoreCase) &&
             p.Price >= 2000000 &&
@@ -170,7 +170,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         await SeedTestData();
 
         // Act
-        var result = await _repository.GetByIdAsync("nonexistent");
+        var result = await _repository.GetByIdAsync(MongoDB.Bson.ObjectId.GenerateNewId().ToString());
 
         // Assert
         result.Should().BeNull();

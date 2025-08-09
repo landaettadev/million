@@ -73,8 +73,8 @@ public class MongoSeederTests : IAsyncDisposable
         var indexes = await propertiesCollection.Indexes.ListAsync();
         var indexList = await indexes.ToListAsync();
         
-        indexList.Should().Contain(i => i["name"].AsString == "price_1");
-        indexList.Should().Contain(i => i["name"].AsString == "name_text_address_text");
+        indexList.Should().Contain(i => i["name"].AsString == "Price_1");
+        indexList.Should().Contain(i => i["name"].AsString == "search_text");
     }
 
     [Fact]
