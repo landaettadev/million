@@ -62,59 +62,36 @@ describe('FiltersBar', () => {
     expect(screen.getByDisplayValue('Park Avenue')).toBeInTheDocument()
     expect(screen.getByDisplayValue('1000000')).toBeInTheDocument()
     expect(screen.getByDisplayValue('5000000')).toBeInTheDocument()
-    expect(screen.getByDisplayValue('sale')).toBeInTheDocument()
+    const operationSelect = screen.getByLabelText('Filter by operation type') as HTMLSelectElement
+    expect(operationSelect.value).toBe('sale')
   })
 
   it('calls onChange when name input changes', async () => {
-    const user = userEvent.setup()
     renderFiltersBar()
-    
     const nameInput = screen.getByLabelText('Filter by name')
-    await user.type(nameInput, 'Luxury')
-    
-    expect(mockOnChange).toHaveBeenCalledWith({
-      ...defaultFilters,
-      name: 'Luxury'
-    })
+    fireEvent.change(nameInput, { target: { value: 'Luxury' } })
+    expect(mockOnChange).toHaveBeenLastCalledWith({ ...defaultFilters, name: 'Luxury' })
   })
 
   it('calls onChange when address input changes', async () => {
-    const user = userEvent.setup()
     renderFiltersBar()
-    
     const addressInput = screen.getByLabelText('Filter by address')
-    await user.type(addressInput, 'Park Avenue')
-    
-    expect(mockOnChange).toHaveBeenCalledWith({
-      ...defaultFilters,
-      address: 'Park Avenue'
-    })
+    fireEvent.change(addressInput, { target: { value: 'Park Avenue' } })
+    expect(mockOnChange).toHaveBeenLastCalledWith({ ...defaultFilters, address: 'Park Avenue' })
   })
 
   it('calls onChange when min price input changes', async () => {
-    const user = userEvent.setup()
     renderFiltersBar()
-    
     const minPriceInput = screen.getByLabelText('Filter by minimum price')
-    await user.type(minPriceInput, '1000000')
-    
-    expect(mockOnChange).toHaveBeenCalledWith({
-      ...defaultFilters,
-      minPrice: 1000000
-    })
+    fireEvent.change(minPriceInput, { target: { value: '1000000' } })
+    expect(mockOnChange).toHaveBeenLastCalledWith({ ...defaultFilters, minPrice: 1000000 })
   })
 
   it('calls onChange when max price input changes', async () => {
-    const user = userEvent.setup()
     renderFiltersBar()
-    
     const maxPriceInput = screen.getByLabelText('Filter by maximum price')
-    await user.type(maxPriceInput, '5000000')
-    
-    expect(mockOnChange).toHaveBeenCalledWith({
-      ...defaultFilters,
-      maxPrice: 5000000
-    })
+    fireEvent.change(maxPriceInput, { target: { value: '5000000' } })
+    expect(mockOnChange).toHaveBeenLastCalledWith({ ...defaultFilters, maxPrice: 5000000 })
   })
 
   it('calls onChange when operation type changes', async () => {
@@ -131,16 +108,11 @@ describe('FiltersBar', () => {
   })
 
   it('handles invalid number inputs gracefully', async () => {
-    const user = userEvent.setup()
-    renderFiltersBar()
-    
+    renderFiltersBar({ ...defaultFilters, minPrice: 1 })
     const minPriceInput = screen.getByLabelText('Filter by minimum price')
-    await user.type(minPriceInput, 'invalid')
-    
-    expect(mockOnChange).toHaveBeenCalledWith({
-      ...defaultFilters,
-      minPrice: undefined
-    })
+    // number inputs ignore non-numeric strings; simulate clearing to become undefined
+    fireEvent.change(minPriceInput, { target: { value: '' } })
+    expect(mockOnChange).toHaveBeenLastCalledWith({ ...defaultFilters, minPrice: undefined })
   })
 
   it('calls onSubmit when form is submitted', async () => {
@@ -167,39 +139,23 @@ describe('FiltersBar', () => {
     const user = userEvent.setup()
     renderFiltersBar()
     
-    const form = screen.getByRole('form') || document.querySelector('form')
-    if (form) {
-      const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
-      fireEvent(form, submitEvent)
-      
-      expect(mockOnSubmit).toHaveBeenCalledTimes(1)
-    }
+    const submitBtn = screen.getByRole('button', { name: 'Search' })
+    await user.click(submitBtn)
+    expect(mockOnSubmit).toHaveBeenCalledTimes(1)
   })
 
   it('handles empty string inputs correctly', async () => {
-    const user = userEvent.setup()
-    renderFiltersBar()
-    
+    renderFiltersBar({ ...defaultFilters, name: 'A' })
     const nameInput = screen.getByLabelText('Filter by name')
-    await user.clear(nameInput)
-    
-    expect(mockOnChange).toHaveBeenCalledWith({
-      ...defaultFilters,
-      name: undefined
-    })
+    fireEvent.change(nameInput, { target: { value: '' } })
+    expect(mockOnChange).toHaveBeenLastCalledWith({ ...defaultFilters, name: undefined })
   })
 
   it('handles number inputs with empty strings', async () => {
-    const user = userEvent.setup()
-    renderFiltersBar()
-    
+    renderFiltersBar({ ...defaultFilters, minPrice: 1 })
     const minPriceInput = screen.getByLabelText('Filter by minimum price')
-    await user.clear(minPriceInput)
-    
-    expect(mockOnChange).toHaveBeenCalledWith({
-      ...defaultFilters,
-      minPrice: undefined
-    })
+    fireEvent.change(minPriceInput, { target: { value: '' } })
+    expect(mockOnChange).toHaveBeenLastCalledWith({ ...defaultFilters, minPrice: undefined })
   })
 
   it('has correct accessibility attributes', () => {

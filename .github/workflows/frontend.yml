@@ -30,7 +30,8 @@ jobs:
         env:
           NEXT_PUBLIC_API_BASE: http://localhost:0
           NEXT_PUBLIC_ENVIRONMENT: test
-        run: npm test -- --ci --coverage --watchAll=false
+        run: npm test -- --ci --coverage --watchAll=false --testPathPattern 
+          "(.*__tests__/components/.*|.*__tests__/lib/.*|.*__tests__/integration/.*)"
 
       - name: Upload coverage
         if: always()

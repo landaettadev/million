@@ -27,9 +27,9 @@ jest.mock('next/navigation', () => ({
 // Mock Next.js Image component
 jest.mock('next/image', () => ({
   __esModule: true,
-  default: (props) => {
+  default: ({ fill, ...rest }) => {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img {...props} />
+    return <img {...rest} />
   },
 }))
 
@@ -67,28 +67,15 @@ global.fetch = jest.fn()
 process.env.NEXT_PUBLIC_API_BASE = 'http://localhost:5244'
 process.env.NEXT_PUBLIC_ENVIRONMENT = 'test'
 
-// MSW setup - only import and setup when needed
-let server
-if (process.env.NODE_ENV === 'test') {
-  try {
-    const { server: testServer } = require('./__tests__/setup/server')
-    server = testServer
-    
-    beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
-    afterEach(() => server.resetHandlers())
-    afterAll(() => server.close())
-  } catch (error) {
-    // MSW setup is optional, only needed for integration tests
-    console.warn('MSW setup failed, continuing without mocking:', error.message)
-  }
-}
-
 // Minimal polyfill to silence TransformStream warnings under Node
 if (typeof global.TransformStream === 'undefined') {
   try {
     const { TransformStream } = require('stream/web')
     global.TransformStream = TransformStream
-  } catch {}
+  } catch {
+    // fallback minimal stub if stream/web is not available
+    global.TransformStream = class TransformStream {}
+  }
 }
 
 // Polyfill BroadcastChannel for MSW in Node test env
@@ -102,3 +89,5 @@ if (typeof global.BroadcastChannel === 'undefined') {
     removeEventListener() {}
   }
 }
+
+// Note: MSW is configured per-suite in integration tests to avoid interference with unit tests

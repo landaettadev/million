@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import PropertiesPage from '../../app/properties/page'
 import { server } from '../setup/server'
@@ -20,15 +20,13 @@ jest.mock('../../components/property/PropertyCarousel', () => ({
 }))
 
 describe('Properties Page Integration', () => {
+  beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+  afterEach(() => server.resetHandlers())
+  afterAll(() => server.close())
+
   beforeEach(() => {
-    // Mock window.location
-    Object.defineProperty(window, 'location', {
-      value: {
-        search: '',
-        href: 'http://localhost:3000/properties',
-      },
-      writable: true,
-    })
+    // Set URL to same-origin path to avoid JSDOM security error
+    window.history.pushState({}, '', '/properties')
   })
 
   it('loads and displays properties on initial render', async () => {

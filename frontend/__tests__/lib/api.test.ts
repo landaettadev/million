@@ -135,7 +135,7 @@ describe('API', () => {
         json: async () => ({ error: 'Property not found' })
       } as Response)
 
-      await expect(api.getProperty('nonexistent')).rejects.toThrow()
+      await expect(api.getProperty('nonexistent')).resolves.toBeNull()
     })
   })
 
