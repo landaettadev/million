@@ -25,13 +25,34 @@ jobs:
         working-directory: frontend
         run: npm ci
 
+      - name: Show env
+        run: |
+          node -v
+          npm -v
+          printenv | sort
+
       - name: Test (no E2E dependency)
         working-directory: frontend
         env:
           NEXT_PUBLIC_API_BASE: http://localhost:0
           NEXT_PUBLIC_ENVIRONMENT: test
-        run: npm test -- --ci --coverage --watchAll=false --testPathPattern 
-          "(.*__tests__/components/.*|.*__tests__/lib/.*|.*__tests__/integration/.*)"
+          CI: true
+        run: |
+          npm test -- \
+            --ci \
+            --coverage \
+            --watchAll=false \
+            --runInBand \
+            --verbose \
+            --testPathPattern "(.*__tests__/components/.*|.*__tests__/lib/.*|.*__tests__/integration/.*)" \
+            2>&1 | tee jest-output.txt
+
+      - name: Upload Jest output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-jest-output
+          path: frontend/jest-output.txt
 
       - name: Upload coverage
         if: always()
