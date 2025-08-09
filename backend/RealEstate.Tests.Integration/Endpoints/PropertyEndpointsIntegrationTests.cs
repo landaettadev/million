@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using RealEstate.Application;
 using RealEstate.Infrastructure;
 using RealEstate.Tests.Integration.Infrastructure;
+using Xunit;
 
 namespace RealEstate.Tests.Integration.Endpoints;
 
