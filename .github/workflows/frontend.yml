@@ -38,5 +38,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-coverage
-          path: frontend/coverage/**
+          path: |
+            frontend/coverage/**
+            frontend/coverage
+          if-no-files-found: ignore
 
