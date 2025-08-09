@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "IkOCarccIW4=",
+  "dgSpecHash": "4LZ/j9baF2E=",
   "success": true,
   "projectFilePath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests\\RealEstate.Tests.csproj",
   "expectedPackageFiles": [
@@ -13,6 +13,7 @@
     "C:\\Users\\landa\\.nuget\\packages\\docker.dotnet.enhanced.x509\\3.128.3\\docker.dotnet.enhanced.x509.3.128.3.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\dotnet.testcontainers\\1.6.0\\dotnet.testcontainers.1.6.0.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\fluentassertions\\8.5.0\\fluentassertions.8.5.0.nupkg.sha512",
+    "C:\\Users\\landa\\.nuget\\packages\\fluentvalidation\\12.0.0\\fluentvalidation.12.0.0.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\mapster\\7.4.0\\mapster.7.4.0.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\mapster.core\\1.2.1\\mapster.core.1.2.1.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\mapster.dependencyinjection\\1.0.1\\mapster.dependencyinjection.1.0.1.nupkg.sha512",

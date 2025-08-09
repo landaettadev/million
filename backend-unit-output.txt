@@ -1,0 +1,13 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  RealEstate.Application -> /home/runner/work/million/million/backend/RealEstate.Application/bin/Release/net8.0/RealEstate.Application.dll
+  RealEstate.Infrastructure -> /home/runner/work/million/million/backend/RealEstate.Infrastructure/bin/Release/net8.0/RealEstate.Infrastructure.dll
+  RealEstate.Tests -> /home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll
+Test run for /home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll (.NETCoreApp,Version=v8.0)
+VSTest version 17.11.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+Results File: /home/runner/work/million/million/backend/RealEstate.Tests/TestResults/unit.trx
+
+Passed!  - Failed:     0, Passed:    28, Skipped:     0, Total:    28, Duration: 52 s - RealEstate.Tests.dll (net8.0)

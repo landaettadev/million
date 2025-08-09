@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using RealEstate.Infrastructure;
 using Testcontainers.MongoDb;
+using Xunit;
 
 namespace RealEstate.Tests.Performance.Infrastructure;
 

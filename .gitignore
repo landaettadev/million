@@ -1,0 +1,15 @@
+
+# Frontend ignores
+frontend/node_modules/
+frontend/.next/
+frontend/coverage/
+frontend/.turbo/
+frontend/.jest-cache/
+# Backend build outputs
+backend/**/bin/
+backend/**/obj/
+# OS/IDE
+.DS_Store
+.idea/
+.vscode/
+

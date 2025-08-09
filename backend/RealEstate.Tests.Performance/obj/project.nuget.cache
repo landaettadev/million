@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "aDWAwIFiLFc=",
+  "dgSpecHash": "BlGjYe9pQuI=",
   "success": true,
   "projectFilePath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests.Performance\\RealEstate.Tests.Performance.csproj",
   "expectedPackageFiles": [
@@ -89,6 +89,7 @@
     "C:\\Users\\landa\\.nuget\\packages\\nats.client\\1.1.6\\nats.client.1.1.6.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\nbomber\\6.0.0\\nbomber.6.0.0.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\nbomber.contracts\\6.0.0\\nbomber.contracts.6.0.0.nupkg.sha512",
+    "C:\\Users\\landa\\.nuget\\packages\\nbomber.http\\6.0.0\\nbomber.http.6.0.0.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\netstandard.library\\1.6.1\\netstandard.library.1.6.1.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\newtonsoft.json\\13.0.1\\newtonsoft.json.13.0.1.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\nuget.frameworks\\5.11.0\\nuget.frameworks.5.11.0.nupkg.sha512",
@@ -209,18 +210,5 @@
     "C:\\Users\\landa\\.nuget\\packages\\zspitz.util\\0.1.113\\zspitz.util.0.1.113.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\zstdsharp.port\\0.7.3\\zstdsharp.port.0.7.3.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "message": "RealEstate.Tests.Performance depends on NBomber (>= 5.10.2) but NBomber 5.10.2 was not found. NBomber 6.0.0 was resolved instead.",
-      "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests.Performance\\RealEstate.Tests.Performance.csproj",
-      "warningLevel": 1,
-      "filePath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests.Performance\\RealEstate.Tests.Performance.csproj",
-      "libraryId": "NBomber",
-      "targetGraphs": [
-        "net8.0"
-      ]
-    }
-  ]
+  "logs": []
 }

@@ -1,6 +1,7 @@
-using System.Diagnostics;
 using System.Net;
 using System.Text.Json;
+using Microsoft.AspNetCore.Http;
+using FluentValidation;
 
 namespace RealEstate.Api.Middleware;
 
@@ -8,11 +9,13 @@ public class ErrorHandlingMiddleware
 {
     private readonly RequestDelegate _next;
     private readonly ILogger<ErrorHandlingMiddleware> _logger;
+    private readonly IWebHostEnvironment _environment;
 
-    public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger)
+    public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger, IWebHostEnvironment environment)
     {
         _next = next;
         _logger = logger;
+        _environment = environment;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -23,98 +26,53 @@ public class ErrorHandlingMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unexpected error occurred");
+            _logger.LogError(ex, "An unhandled exception occurred");
             await HandleExceptionAsync(context, ex);
         }
     }
 
-    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
-        
-        var errorResponse = exception switch
-        {
-            ValidationException validationEx => new ErrorResponse
-            {
-                TraceId = traceId,
-                Error = "Validation failed",
-                Details = validationEx.Errors?.Select(e => e.ErrorMessage).ToArray(),
-                StatusCode = (int)HttpStatusCode.BadRequest
-            },
-            ArgumentException argEx => new ErrorResponse
-            {
-                TraceId = traceId,
-                Error = "Invalid argument",
-                Details = new[] { argEx.Message },
-                StatusCode = (int)HttpStatusCode.BadRequest
-            },
-            KeyNotFoundException notFoundEx => new ErrorResponse
-            {
-                TraceId = traceId,
-                Error = "Resource not found",
-                Details = new[] { notFoundEx.Message },
-                StatusCode = (int)HttpStatusCode.NotFound
-            },
-            UnauthorizedAccessException => new ErrorResponse
-            {
-                TraceId = traceId,
-                Error = "Unauthorized access",
-                StatusCode = (int)HttpStatusCode.Unauthorized
-            },
-            TimeoutException => new ErrorResponse
-            {
-                TraceId = traceId,
-                Error = "Request timeout",
-                Details = new[] { "The operation took too long to complete" },
-                StatusCode = (int)HttpStatusCode.RequestTimeout
-            },
-            _ => new ErrorResponse
-            {
-                TraceId = traceId,
-                Error = "Internal server error",
-                Details = new[] { "An unexpected error occurred" },
-                StatusCode = (int)HttpStatusCode.InternalServerError
-            }
-        };
-
-        context.Response.StatusCode = errorResponse.StatusCode;
         context.Response.ContentType = "application/json";
-
-        var jsonOptions = new JsonSerializerOptions
+        
+        var errorResponse = new
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-            WriteIndented = true
+            traceId = context.TraceIdentifier,
+            error = GetErrorTitle(exception),
+            details = _environment.IsDevelopment() ? exception.Message : null,
+            statusCode = GetStatusCode(exception),
+            timestamp = DateTime.UtcNow
         };
 
-        var jsonResponse = JsonSerializer.Serialize(errorResponse, jsonOptions);
+        context.Response.StatusCode = (int)GetStatusCode(exception);
+        
+        var jsonResponse = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+        });
+        
         await context.Response.WriteAsync(jsonResponse);
     }
-}
 
-public class ErrorResponse
-{
-    public string TraceId { get; set; } = string.Empty;
-    public string Error { get; set; } = string.Empty;
-    public string[]? Details { get; set; }
-    public int StatusCode { get; set; }
-    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-}
-
-// Custom exceptions
-public class ValidationException : Exception
-{
-    public IEnumerable<ValidationError>? Errors { get; }
-
-    public ValidationException(string message) : base(message) { }
-
-    public ValidationException(string message, IEnumerable<ValidationError> errors) : base(message)
+    private static string GetErrorTitle(Exception exception)
     {
-        Errors = errors;
+        return exception switch
+        {
+            ValidationException => "Validation Error",
+            KeyNotFoundException => "Resource Not Found",
+            ArgumentException => "Invalid Argument",
+            _ => "Internal Server Error"
+        };
     }
-}
 
-public class ValidationError
-{
-    public string PropertyName { get; set; } = string.Empty;
-    public string ErrorMessage { get; set; } = string.Empty;
+    private static HttpStatusCode GetStatusCode(Exception exception)
+    {
+        return exception switch
+        {
+            ValidationException => HttpStatusCode.BadRequest,
+            KeyNotFoundException => HttpStatusCode.NotFound,
+            ArgumentException => HttpStatusCode.BadRequest,
+            _ => HttpStatusCode.InternalServerError
+        };
+    }
 }

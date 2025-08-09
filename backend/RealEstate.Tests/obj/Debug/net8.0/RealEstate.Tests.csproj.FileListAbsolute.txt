@@ -436,3 +436,4 @@ C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Tests\bin\Debug\ne
 C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Tests\bin\Debug\net8.0\xunit.assert.dll
 C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Tests\bin\Debug\net8.0\xunit.core.dll
 C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Tests\bin\Debug\net8.0\xunit.execution.dotnet.dll
+C:\Users\landa\OneDrive\Escritorio\million\backend\RealEstate.Tests\bin\Debug\net8.0\FluentValidation.dll

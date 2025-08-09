@@ -8,19 +8,7 @@ public class PropertyIdValidator : AbstractValidator<string>
     public PropertyIdValidator()
     {
         RuleFor(id => id)
-            .NotEmpty()
-            .WithMessage("Property ID is required")
-            .Must(BeValidObjectId)
-            .WithMessage("Property ID must be a valid MongoDB ObjectId format");
+            .NotEmpty().WithMessage("Property ID cannot be empty.")
+            .Must(id => ObjectId.TryParse(id, out _)).WithMessage("Invalid property ID format.");
     }
-
-    private static bool BeValidObjectId(string id)
-    {
-        return ObjectId.TryParse(id, out _);
-    }
-}
-
-public class PropertyIdRequest
-{
-    public string Id { get; set; } = string.Empty;
 }
