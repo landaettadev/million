@@ -7,11 +7,10 @@ using Microsoft.Extensions.Logging;
 using RealEstate.Infrastructure;
 using Testcontainers.MongoDb;
 using Xunit;
-using Xunit;
 
 namespace RealEstate.Tests.Integration.Infrastructure;
 
-public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public class IntegrationTestWebAppFactory : WebApplicationFactory<RealEstate.Api.Program>, Xunit.IAsyncLifetime
 {
     private readonly MongoDbContainer _mongoContainer = new MongoDbBuilder()
         .WithImage("mongo:7.0")
