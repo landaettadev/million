@@ -24,6 +24,9 @@ public class PropertyEndpointsIntegrationTests : IClassFixture<IntegrationTestWe
     [Fact]
     public async Task GET_Properties_ReturnsEmptyList_WhenNoData()
     {
+        // Arrange - Clear any existing data
+        await ClearAllDataAsync();
+        
         // Act
         var response = await _client.GetAsync("/api/properties");
 
@@ -232,6 +235,18 @@ public class PropertyEndpointsIntegrationTests : IClassFixture<IntegrationTestWe
         await context.PropertyTraces.InsertManyAsync(traces);
         
         return properties.First().Id;
+    }
+
+    private async Task ClearAllDataAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<MongoContext>();
+        
+        // Clear all existing data
+        await context.Owners.DeleteManyAsync(MongoDB.Driver.FilterDefinition<OwnerDocument>.Empty);
+        await context.Properties.DeleteManyAsync(MongoDB.Driver.FilterDefinition<PropertyDocument>.Empty);
+        await context.PropertyImages.DeleteManyAsync(MongoDB.Driver.FilterDefinition<PropertyImageDocument>.Empty);
+        await context.PropertyTraces.DeleteManyAsync(MongoDB.Driver.FilterDefinition<PropertyTraceDocument>.Empty);
     }
 
     private async Task SeedLargeDatasetAsync(int propertyCount)
