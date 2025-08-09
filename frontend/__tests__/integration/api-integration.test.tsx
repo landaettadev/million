@@ -1,7 +1,8 @@
+import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
+import { server } from '../setup/server'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { server } from '../../setup/server'
 import { http, HttpResponse } from 'msw'
 import { api } from '../../lib/api'
 
@@ -67,6 +68,9 @@ const TestComponent = () => {
 }
 
 describe('API Integration Tests', () => {
+  beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
+  afterEach(() => server.resetHandlers())
+  afterAll(() => server.close())
   let queryClient: QueryClient
 
   beforeEach(() => {
@@ -130,7 +134,7 @@ describe('API Integration Tests', () => {
   })
 
   it('should handle API errors gracefully', async () => {
-    server.use(
+    server?.use(
       http.get('http://localhost:5244/api/properties', () => {
         return HttpResponse.json(
           {
