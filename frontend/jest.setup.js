@@ -82,3 +82,23 @@ if (process.env.NODE_ENV === 'test') {
     console.warn('MSW setup failed, continuing without mocking:', error.message)
   }
 }
+
+// Minimal polyfill to silence TransformStream warnings under Node
+if (typeof global.TransformStream === 'undefined') {
+  try {
+    const { TransformStream } = require('stream/web')
+    global.TransformStream = TransformStream
+  } catch {}
+}
+
+// Polyfill BroadcastChannel for MSW in Node test env
+if (typeof global.BroadcastChannel === 'undefined') {
+  // minimal no-op polyfill sufficient for MSW internals
+  global.BroadcastChannel = class {
+    constructor() {}
+    postMessage() {}
+    close() {}
+    addEventListener() {}
+    removeEventListener() {}
+  }
+}
