@@ -1,0 +1,9 @@
+  Determining projects to restore...
+/home/runner/work/million/million/backend/RealEstate.Tests.Integration/RealEstate.Tests.Integration.csproj : warning NU1603: RealEstate.Tests.Integration depends on xunit.runner.visualstudio (>= 2.5.9) but xunit.runner.visualstudio 2.5.9 was not found. An approximate best match of xunit.runner.visualstudio 2.8.0 was resolved.
+  All projects are up-to-date for restore.
+/home/runner/work/million/million/backend/RealEstate.Tests.Integration/RealEstate.Tests.Integration.csproj : warning NU1603: RealEstate.Tests.Integration depends on xunit.runner.visualstudio (>= 2.5.9) but xunit.runner.visualstudio 2.5.9 was not found. An approximate best match of xunit.runner.visualstudio 2.8.0 was resolved.
+  RealEstate.Application -> /home/runner/work/million/million/backend/RealEstate.Application/bin/Release/net8.0/RealEstate.Application.dll
+  RealEstate.Infrastructure -> /home/runner/work/million/million/backend/RealEstate.Infrastructure/bin/Release/net8.0/RealEstate.Infrastructure.dll
+  RealEstate.Api -> /home/runner/work/million/million/backend/RealEstate.Api/bin/Release/net8.0/RealEstate.Api.dll
+/home/runner/work/million/million/backend/RealEstate.Tests.Integration/Infrastructure/IntegrationTestWebAppFactory.cs(10,7): warning CS0105: The using directive for 'Xunit' appeared previously in this namespace [/home/runner/work/million/million/backend/RealEstate.Tests.Integration/RealEstate.Tests.Integration.csproj]
+/home/runner/work/million/million/backend/RealEstate.Tests.Integration/Infrastructure/IntegrationTestWebAppFactory.cs(14,67): error CS0122: 'Program' is inaccessible due to its protection level [/home/runner/work/million/million/backend/RealEstate.Tests.Integration/RealEstate.Tests.Integration.csproj]

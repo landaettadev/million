@@ -1,0 +1,292 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="11e6515d-4573-4501-a0d4-4cb02e0599a1" name="@pkrvmsl9tci6h6u 2025-08-09 01:57:40" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2025-08-09T01:57:40.5438999+00:00" queuing="2025-08-09T01:57:40.5439000+00:00" start="2025-08-09T01:57:39.3741657+00:00" finish="2025-08-09T01:58:32.1571988+00:00" />
+  <TestSettings name="default" id="c7f75d22-4519-428a-b536-a89341bc035a">
+    <Deployment runDeploymentRoot="_pkrvmsl9tci6h6u_2025-08-09_01_57_40" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="eac3e904-969f-47ac-8577-4f5c61ea6178" testId="958451d4-4c33-3015-143b-102ac271bde2" testName="RealEstate.Tests.Seeders.MongoSeederTests.RunAsync_ShouldCreateProperIndexes" computerName="pkrvmsl9tci6h6u" duration="00:00:03.2151423" startTime="2025-08-09T01:58:05.4450538+00:00" endTime="2025-08-09T01:58:08.6600917+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="eac3e904-969f-47ac-8577-4f5c61ea6178" />
+    <UnitTestResult executionId="28e7222c-5e66-47ec-a3fe-aaa9aaacf438" testId="09955af6-96f5-b641-75ce-3cd423a0b5a0" testName="RealEstate.Tests.Seeders.MongoSeederTests.RunAsync_WithEmptyDatabase_ShouldCreateIndexesAndSeedData" computerName="pkrvmsl9tci6h6u" duration="00:00:03.2359389" startTime="2025-08-09T01:58:02.2091808+00:00" endTime="2025-08-09T01:58:05.4444867+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="28e7222c-5e66-47ec-a3fe-aaa9aaacf438" />
+    <UnitTestResult executionId="91ab5f51-6817-4773-a58c-23b5b573f178" testId="64b8a0d5-d080-0d51-5842-31c33209f72a" testName="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_ShouldReturnOnlyFirstEnabledImage" computerName="pkrvmsl9tci6h6u" duration="00:00:03.2278972" startTime="2025-08-09T01:58:03.2087218+00:00" endTime="2025-08-09T01:58:06.4388374+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="91ab5f51-6817-4773-a58c-23b5b573f178" />
+    <UnitTestResult executionId="5ed34053-33fa-480c-bccb-42f7f7953be8" testId="d84f2b75-a6ad-1036-3c21-66858f98e191" testName="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithPageSizeExceedingMax_ShouldNormalizeToMaxPageSize" computerName="pkrvmsl9tci6h6u" duration="00:00:00.0016622" startTime="2025-08-09T01:57:40.5035492+00:00" endTime="2025-08-09T01:57:40.5036632+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="5ed34053-33fa-480c-bccb-42f7f7953be8" />
+    <UnitTestResult executionId="bc5f18af-899e-4c8a-8c97-26d818a024c0" testId="ad1fc722-274c-0d3a-8292-d41b51d0e748" testName="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.GetByIdAsync_WithNonExistentId_ShouldReturnNull" computerName="pkrvmsl9tci6h6u" duration="00:00:03.1935124" startTime="2025-08-09T01:58:19.2890067+00:00" endTime="2025-08-09T01:58:22.4824216+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bc5f18af-899e-4c8a-8c97-26d818a024c0" />
+    <UnitTestResult executionId="8a53c5fb-fc16-4fe4-9eaa-0c0b77b1fe41" testId="c49bf595-429b-71c5-b9cd-676b905ea180" testName="RealEstate.Tests.Seeders.MongoSeederTests.RunAsync_WithCustomSeedCount_ShouldSeedCorrectAmount" computerName="pkrvmsl9tci6h6u" duration="00:00:18.5945686" startTime="2025-08-09T01:57:40.3045382+00:00" endTime="2025-08-09T01:57:58.9052134+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="8a53c5fb-fc16-4fe4-9eaa-0c0b77b1fe41" />
+    <UnitTestResult executionId="91e71706-b7b8-4d5c-8285-e430fcfb17cd" testId="69dfb863-080b-7789-ba96-97e6d929ccf8" testName="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithAddressFilter_ShouldReturnMatchingProperties" computerName="pkrvmsl9tci6h6u" duration="00:00:03.1940303" startTime="2025-08-09T01:58:22.4829230+00:00" endTime="2025-08-09T01:58:25.6769248+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="91e71706-b7b8-4d5c-8285-e430fcfb17cd" />
+    <UnitTestResult executionId="3bcd4181-802c-4d63-baf4-c02bf0273a7f" testId="43b2e8bb-aeb6-4dd7-78a2-f3e50119448d" testName="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithZeroPage_ShouldNormalizeToDefaultPage" computerName="pkrvmsl9tci6h6u" duration="00:00:00.0012821" startTime="2025-08-09T01:57:40.4676670+00:00" endTime="2025-08-09T01:57:40.4685201+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3bcd4181-802c-4d63-baf4-c02bf0273a7f" />
+    <UnitTestResult executionId="b2627d6d-5d99-42a7-8ba0-4b2f932e5d6b" testId="7c3a540a-5a01-2dac-4be6-c37d3af7e794" testName="RealEstate.Tests.Services.PropertyReadServiceTests.GetByIdAsync_WithCancellationToken_ShouldPassCancellationTokenToRepository" computerName="pkrvmsl9tci6h6u" duration="00:00:00.0010456" startTime="2025-08-09T01:57:40.5031377+00:00" endTime="2025-08-09T01:57:40.5032629+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b2627d6d-5d99-42a7-8ba0-4b2f932e5d6b" />
+    <UnitTestResult executionId="3e6cfe9b-c3bb-46ba-8deb-8b496c69cbdd" testId="ecd89069-c53a-5331-a787-4264da454c1c" testName="RealEstate.Tests.Seeders.MongoSeederTests.RunAsync_WithDisabledSeeding_ShouldNotSeedData" computerName="pkrvmsl9tci6h6u" duration="00:00:03.3003562" startTime="2025-08-09T01:57:58.9074733+00:00" endTime="2025-08-09T01:58:02.2083823+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3e6cfe9b-c3bb-46ba-8deb-8b496c69cbdd" />
+    <UnitTestResult executionId="fdb804b3-ce98-40c9-ba9a-c22df1508fea" testId="677e8221-87a0-9427-31aa-7fcfe83043e7" testName="RealEstate.Tests.Services.PropertyReadServiceTests.GetByIdAsync_WithValidId_ShouldCallRepositoryAndReturnResult" computerName="pkrvmsl9tci6h6u" duration="00:00:00.0274070" startTime="2025-08-09T01:57:40.4453883+00:00" endTime="2025-08-09T01:57:40.4634066+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fdb804b3-ce98-40c9-ba9a-c22df1508fea" />
+    <UnitTestResult executionId="f4530992-7248-496f-b7a8-275c2caf714b" testId="fe7730aa-0f02-cf08-af13-f665e10a1fa5" testName="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithPriceRange_ShouldReturnPropertiesInRange" computerName="pkrvmsl9tci6h6u" duration="00:00:03.1918776" startTime="2025-08-09T01:58:16.0965293+00:00" endTime="2025-08-09T01:58:19.2884410+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f4530992-7248-496f-b7a8-275c2caf714b" />
+    <UnitTestResult executionId="230d87f8-eb82-40fd-92e4-95c8b0f640e6" testId="e6f2185d-7461-41ef-211a-4566f4d9d4f5" testName="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithOperationTypeFilter_ShouldReturnMatchingProperties" computerName="pkrvmsl9tci6h6u" duration="00:00:18.6510022" startTime="2025-08-09T01:57:40.3114456+00:00" endTime="2025-08-09T01:57:58.9570174+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="230d87f8-eb82-40fd-92e4-95c8b0f640e6" />
+    <UnitTestResult executionId="d52346e0-ff8b-448a-993f-ab002a807c29" testId="227523f7-b8fc-0a02-fdfb-6ba7b4d34f88" testName="RealEstate.Tests.Seeders.MongoSeederTests.RunAsync_WithExistingData_ShouldNotSeedAgain" computerName="pkrvmsl9tci6h6u" duration="00:00:03.2339821" startTime="2025-08-09T01:58:08.6606018+00:00" endTime="2025-08-09T01:58:11.8945753+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d52346e0-ff8b-448a-993f-ab002a807c29" />
+    <UnitTestResult executionId="c3cc5ce7-1427-4684-a3a4-d1f820b42b94" testId="5e5764b5-7b5d-47e6-d6d8-8d377adeab3c" testName="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithNegativePage_ShouldNormalizeToDefaultPage" computerName="pkrvmsl9tci6h6u" duration="00:00:00.0018976" startTime="2025-08-09T01:57:40.4649469+00:00" endTime="2025-08-09T01:57:40.4655491+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="c3cc5ce7-1427-4684-a3a4-d1f820b42b94" />
+    <UnitTestResult executionId="39a702b3-c184-4078-838f-70a6741f2164" testId="a5eae8fc-f3e5-b291-fe6d-2e5e37308e3a" testName="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithCancellationToken_ShouldPassCancellationTokenToRepository" computerName="pkrvmsl9tci6h6u" duration="00:00:00.0009240" startTime="2025-08-09T01:57:40.5023397+00:00" endTime="2025-08-09T01:57:40.5024603+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="39a702b3-c184-4078-838f-70a6741f2164" />
+    <UnitTestResult executionId="b5576043-48f7-4a21-9f1c-f5ccabad1152" testId="5892ad00-a6a6-45e1-9399-e51f70071149" testName="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithNoFilters_ShouldReturnAllProperties" computerName="pkrvmsl9tci6h6u" duration="00:00:03.2244959" startTime="2025-08-09T01:58:09.6712517+00:00" endTime="2025-08-09T01:58:12.8952545+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b5576043-48f7-4a21-9f1c-f5ccabad1152" />
+    <UnitTestResult executionId="be8e9a05-40bb-4590-b179-e27ff76b86fe" testId="794539f1-a6f4-e915-7bcf-3d13c0372983" testName="RealEstate.Tests.Services.PropertyReadServiceTests.GetByIdAsync_WithNonExistentId_ShouldReturnNull" computerName="pkrvmsl9tci6h6u" duration="00:00:00.0017843" startTime="2025-08-09T01:57:40.4658759+00:00" endTime="2025-08-09T01:57:40.4673628+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="be8e9a05-40bb-4590-b179-e27ff76b86fe" />
+    <UnitTestResult executionId="b4433e52-ef38-4dbe-b416-e43b28b3132b" testId="03fab0e3-400c-8def-64b9-a860a6f45c78" testName="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithZeroPageSize_ShouldNormalizeToDefaultPageSize" computerName="pkrvmsl9tci6h6u" duration="00:00:00.0012692" startTime="2025-08-09T01:57:40.4688635+00:00" endTime="2025-08-09T01:57:40.4698801+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b4433e52-ef38-4dbe-b416-e43b28b3132b" />
+    <UnitTestResult executionId="96696b12-db77-4c7a-b357-c03c42fbd632" testId="b19b90a7-38b9-d75d-dbb8-867fb7bf3ea0" testName="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithNameFilter_ShouldReturnMatchingProperties" computerName="pkrvmsl9tci6h6u" duration="00:00:04.2509352" startTime="2025-08-09T01:57:58.9573533+00:00" endTime="2025-08-09T01:58:03.2083760+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="96696b12-db77-4c7a-b357-c03c42fbd632" />
+    <UnitTestResult executionId="1dc63be9-18f5-4ffe-9d14-a0f0e0459676" testId="fdd801d8-47a3-e02d-0b1e-0c230dfef1c1" testName="Test1" computerName="pkrvmsl9tci6h6u" duration="00:00:00.0252950" startTime="2025-08-09T01:57:39.9925396+00:00" endTime="2025-08-09T01:57:40.0176783+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1dc63be9-18f5-4ffe-9d14-a0f0e0459676" />
+    <UnitTestResult executionId="dbe34664-f888-4e86-8faf-9e2ad2aa0019" testId="05bc8798-bff5-9123-7c33-e8bddbab33fc" testName="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithMultipleFilters_ShouldReturnMatchingProperties" computerName="pkrvmsl9tci6h6u" duration="00:00:03.2003179" startTime="2025-08-09T01:58:12.8958364+00:00" endTime="2025-08-09T01:58:16.0960948+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dbe34664-f888-4e86-8faf-9e2ad2aa0019" />
+    <UnitTestResult executionId="47c7eb80-c5c6-4929-9896-29ddfb3484cc" testId="86f69e22-2b96-fa92-25c7-f65e42424d4c" testName="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithValidQuery_ShouldCallRepositoryAndReturnResult" computerName="pkrvmsl9tci6h6u" duration="00:00:00.0068359" startTime="2025-08-09T01:57:40.5027299+00:00" endTime="2025-08-09T01:57:40.5028822+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="47c7eb80-c5c6-4929-9896-29ddfb3484cc" />
+    <UnitTestResult executionId="deb5723a-7c9d-4a2f-8a18-98463f099b5e" testId="85ba9725-7246-2326-1270-46e87b347fc7" testName="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithEmptyQuery_ShouldPassEmptyQueryToRepository" computerName="pkrvmsl9tci6h6u" duration="00:00:00.0025003" startTime="2025-08-09T01:57:40.5040087+00:00" endTime="2025-08-09T01:57:40.5041258+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="deb5723a-7c9d-4a2f-8a18-98463f099b5e" />
+    <UnitTestResult executionId="55f192b3-9b44-4db2-a1f5-ab76d5e60eaa" testId="f16e8c4b-d0b0-816f-4711-740f429a0d5c" testName="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithNegativePageSize_ShouldNormalizeToDefaultPageSize" computerName="pkrvmsl9tci6h6u" duration="00:00:00.1216190" startTime="2025-08-09T01:57:40.3118488+00:00" endTime="2025-08-09T01:57:40.4355529+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="55f192b3-9b44-4db2-a1f5-ab76d5e60eaa" />
+    <UnitTestResult executionId="f2e4e1d5-fca3-4c37-abca-30150f26877b" testId="329c49ca-0921-e366-4fa6-615969bb4bfa" testName="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_ShouldOrderByPriceAscending" computerName="pkrvmsl9tci6h6u" duration="00:00:03.2143476" startTime="2025-08-09T01:58:28.8722539+00:00" endTime="2025-08-09T01:58:32.0864473+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f2e4e1d5-fca3-4c37-abca-30150f26877b" />
+    <UnitTestResult executionId="2cec51f9-167c-49fb-bfc7-36ec7fd0f78b" testId="3846ae26-cb88-9d8a-7735-b2d30a100495" testName="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithPagination_ShouldReturnCorrectPage" computerName="pkrvmsl9tci6h6u" duration="00:00:03.2316760" startTime="2025-08-09T01:58:06.4391093+00:00" endTime="2025-08-09T01:58:09.6709351+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="2cec51f9-167c-49fb-bfc7-36ec7fd0f78b" />
+    <UnitTestResult executionId="b016f123-00f3-43f5-a4a9-1f26d8e2389b" testId="81400381-4464-5199-2dee-600cbd8d3223" testName="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.GetByIdAsync_WithValidId_ShouldReturnPropertyWithImages" computerName="pkrvmsl9tci6h6u" duration="00:00:03.1941904" startTime="2025-08-09T01:58:25.6773192+00:00" endTime="2025-08-09T01:58:28.8716622+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b016f123-00f3-43f5-a4a9-1f26d8e2389b" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithNegativePageSize_ShouldNormalizeToDefaultPageSize" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="f16e8c4b-d0b0-816f-4711-740f429a0d5c">
+      <Execution id="55f192b3-9b44-4db2-a1f5-ab76d5e60eaa" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Services.PropertyReadServiceTests" name="SearchAsync_WithNegativePageSize_ShouldNormalizeToDefaultPageSize" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_ShouldReturnOnlyFirstEnabledImage" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="64b8a0d5-d080-0d51-5842-31c33209f72a">
+      <Execution id="91ab5f51-6817-4773-a58c-23b5b573f178" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests" name="SearchAsync_ShouldReturnOnlyFirstEnabledImage" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithZeroPage_ShouldNormalizeToDefaultPage" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="43b2e8bb-aeb6-4dd7-78a2-f3e50119448d">
+      <Execution id="3bcd4181-802c-4d63-baf4-c02bf0273a7f" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Services.PropertyReadServiceTests" name="SearchAsync_WithZeroPage_ShouldNormalizeToDefaultPage" />
+    </UnitTest>
+    <UnitTest name="Test1" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="fdd801d8-47a3-e02d-0b1e-0c230dfef1c1">
+      <Execution id="1dc63be9-18f5-4ffe-9d14-a0f0e0459676" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://nunit3testexecutor/" className="RealEstate.Tests.Tests" name="Test1" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithNoFilters_ShouldReturnAllProperties" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="5892ad00-a6a6-45e1-9399-e51f70071149">
+      <Execution id="b5576043-48f7-4a21-9f1c-f5ccabad1152" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests" name="SearchAsync_WithNoFilters_ShouldReturnAllProperties" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithNameFilter_ShouldReturnMatchingProperties" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="b19b90a7-38b9-d75d-dbb8-867fb7bf3ea0">
+      <Execution id="96696b12-db77-4c7a-b357-c03c42fbd632" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests" name="SearchAsync_WithNameFilter_ShouldReturnMatchingProperties" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Seeders.MongoSeederTests.RunAsync_ShouldCreateProperIndexes" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="958451d4-4c33-3015-143b-102ac271bde2">
+      <Execution id="eac3e904-969f-47ac-8577-4f5c61ea6178" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Seeders.MongoSeederTests" name="RunAsync_ShouldCreateProperIndexes" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.GetByIdAsync_WithValidId_ShouldReturnPropertyWithImages" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="81400381-4464-5199-2dee-600cbd8d3223">
+      <Execution id="b016f123-00f3-43f5-a4a9-1f26d8e2389b" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests" name="GetByIdAsync_WithValidId_ShouldReturnPropertyWithImages" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Seeders.MongoSeederTests.RunAsync_WithEmptyDatabase_ShouldCreateIndexesAndSeedData" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="09955af6-96f5-b641-75ce-3cd423a0b5a0">
+      <Execution id="28e7222c-5e66-47ec-a3fe-aaa9aaacf438" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Seeders.MongoSeederTests" name="RunAsync_WithEmptyDatabase_ShouldCreateIndexesAndSeedData" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Services.PropertyReadServiceTests.GetByIdAsync_WithValidId_ShouldCallRepositoryAndReturnResult" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="677e8221-87a0-9427-31aa-7fcfe83043e7">
+      <Execution id="fdb804b3-ce98-40c9-ba9a-c22df1508fea" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Services.PropertyReadServiceTests" name="GetByIdAsync_WithValidId_ShouldCallRepositoryAndReturnResult" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithMultipleFilters_ShouldReturnMatchingProperties" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="05bc8798-bff5-9123-7c33-e8bddbab33fc">
+      <Execution id="dbe34664-f888-4e86-8faf-9e2ad2aa0019" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests" name="SearchAsync_WithMultipleFilters_ShouldReturnMatchingProperties" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithPagination_ShouldReturnCorrectPage" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="3846ae26-cb88-9d8a-7735-b2d30a100495">
+      <Execution id="2cec51f9-167c-49fb-bfc7-36ec7fd0f78b" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests" name="SearchAsync_WithPagination_ShouldReturnCorrectPage" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithValidQuery_ShouldCallRepositoryAndReturnResult" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="86f69e22-2b96-fa92-25c7-f65e42424d4c">
+      <Execution id="47c7eb80-c5c6-4929-9896-29ddfb3484cc" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Services.PropertyReadServiceTests" name="SearchAsync_WithValidQuery_ShouldCallRepositoryAndReturnResult" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithCancellationToken_ShouldPassCancellationTokenToRepository" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="a5eae8fc-f3e5-b291-fe6d-2e5e37308e3a">
+      <Execution id="39a702b3-c184-4078-838f-70a6741f2164" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Services.PropertyReadServiceTests" name="SearchAsync_WithCancellationToken_ShouldPassCancellationTokenToRepository" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithPriceRange_ShouldReturnPropertiesInRange" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="fe7730aa-0f02-cf08-af13-f665e10a1fa5">
+      <Execution id="f4530992-7248-496f-b7a8-275c2caf714b" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests" name="SearchAsync_WithPriceRange_ShouldReturnPropertiesInRange" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithOperationTypeFilter_ShouldReturnMatchingProperties" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="e6f2185d-7461-41ef-211a-4566f4d9d4f5">
+      <Execution id="230d87f8-eb82-40fd-92e4-95c8b0f640e6" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests" name="SearchAsync_WithOperationTypeFilter_ShouldReturnMatchingProperties" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithEmptyQuery_ShouldPassEmptyQueryToRepository" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="85ba9725-7246-2326-1270-46e87b347fc7">
+      <Execution id="deb5723a-7c9d-4a2f-8a18-98463f099b5e" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Services.PropertyReadServiceTests" name="SearchAsync_WithEmptyQuery_ShouldPassEmptyQueryToRepository" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_ShouldOrderByPriceAscending" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="329c49ca-0921-e366-4fa6-615969bb4bfa">
+      <Execution id="f2e4e1d5-fca3-4c37-abca-30150f26877b" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests" name="SearchAsync_ShouldOrderByPriceAscending" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithNegativePage_ShouldNormalizeToDefaultPage" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="5e5764b5-7b5d-47e6-d6d8-8d377adeab3c">
+      <Execution id="c3cc5ce7-1427-4684-a3a4-d1f820b42b94" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Services.PropertyReadServiceTests" name="SearchAsync_WithNegativePage_ShouldNormalizeToDefaultPage" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Seeders.MongoSeederTests.RunAsync_WithExistingData_ShouldNotSeedAgain" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="227523f7-b8fc-0a02-fdfb-6ba7b4d34f88">
+      <Execution id="d52346e0-ff8b-448a-993f-ab002a807c29" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Seeders.MongoSeederTests" name="RunAsync_WithExistingData_ShouldNotSeedAgain" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithZeroPageSize_ShouldNormalizeToDefaultPageSize" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="03fab0e3-400c-8def-64b9-a860a6f45c78">
+      <Execution id="b4433e52-ef38-4dbe-b416-e43b28b3132b" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Services.PropertyReadServiceTests" name="SearchAsync_WithZeroPageSize_ShouldNormalizeToDefaultPageSize" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Services.PropertyReadServiceTests.GetByIdAsync_WithCancellationToken_ShouldPassCancellationTokenToRepository" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="7c3a540a-5a01-2dac-4be6-c37d3af7e794">
+      <Execution id="b2627d6d-5d99-42a7-8ba0-4b2f932e5d6b" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Services.PropertyReadServiceTests" name="GetByIdAsync_WithCancellationToken_ShouldPassCancellationTokenToRepository" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Seeders.MongoSeederTests.RunAsync_WithDisabledSeeding_ShouldNotSeedData" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="ecd89069-c53a-5331-a787-4264da454c1c">
+      <Execution id="3e6cfe9b-c3bb-46ba-8deb-8b496c69cbdd" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Seeders.MongoSeederTests" name="RunAsync_WithDisabledSeeding_ShouldNotSeedData" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Services.PropertyReadServiceTests.GetByIdAsync_WithNonExistentId_ShouldReturnNull" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="794539f1-a6f4-e915-7bcf-3d13c0372983">
+      <Execution id="be8e9a05-40bb-4590-b179-e27ff76b86fe" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Services.PropertyReadServiceTests" name="GetByIdAsync_WithNonExistentId_ShouldReturnNull" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Seeders.MongoSeederTests.RunAsync_WithCustomSeedCount_ShouldSeedCorrectAmount" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="c49bf595-429b-71c5-b9cd-676b905ea180">
+      <Execution id="8a53c5fb-fc16-4fe4-9eaa-0c0b77b1fe41" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Seeders.MongoSeederTests" name="RunAsync_WithCustomSeedCount_ShouldSeedCorrectAmount" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.GetByIdAsync_WithNonExistentId_ShouldReturnNull" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="ad1fc722-274c-0d3a-8292-d41b51d0e748">
+      <Execution id="bc5f18af-899e-4c8a-8c97-26d818a024c0" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests" name="GetByIdAsync_WithNonExistentId_ShouldReturnNull" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests.SearchAsync_WithAddressFilter_ShouldReturnMatchingProperties" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="69dfb863-080b-7789-ba96-97e6d929ccf8">
+      <Execution id="91e71706-b7b8-4d5c-8285-e430fcfb17cd" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Repositories.PropertyRepositoryIntegrationTests" name="SearchAsync_WithAddressFilter_ShouldReturnMatchingProperties" />
+    </UnitTest>
+    <UnitTest name="RealEstate.Tests.Services.PropertyReadServiceTests.SearchAsync_WithPageSizeExceedingMax_ShouldNormalizeToMaxPageSize" storage="/home/runner/work/million/million/backend/realestate.tests/bin/release/net8.0/realestate.tests.dll" id="d84f2b75-a6ad-1036-3c21-66858f98e191">
+      <Execution id="5ed34053-33fa-480c-bccb-42f7f7953be8" />
+      <TestMethod codeBase="/home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="RealEstate.Tests.Services.PropertyReadServiceTests" name="SearchAsync_WithPageSizeExceedingMax_ShouldNormalizeToMaxPageSize" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="958451d4-4c33-3015-143b-102ac271bde2" executionId="eac3e904-969f-47ac-8577-4f5c61ea6178" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="09955af6-96f5-b641-75ce-3cd423a0b5a0" executionId="28e7222c-5e66-47ec-a3fe-aaa9aaacf438" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="64b8a0d5-d080-0d51-5842-31c33209f72a" executionId="91ab5f51-6817-4773-a58c-23b5b573f178" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d84f2b75-a6ad-1036-3c21-66858f98e191" executionId="5ed34053-33fa-480c-bccb-42f7f7953be8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ad1fc722-274c-0d3a-8292-d41b51d0e748" executionId="bc5f18af-899e-4c8a-8c97-26d818a024c0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c49bf595-429b-71c5-b9cd-676b905ea180" executionId="8a53c5fb-fc16-4fe4-9eaa-0c0b77b1fe41" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="69dfb863-080b-7789-ba96-97e6d929ccf8" executionId="91e71706-b7b8-4d5c-8285-e430fcfb17cd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="43b2e8bb-aeb6-4dd7-78a2-f3e50119448d" executionId="3bcd4181-802c-4d63-baf4-c02bf0273a7f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="7c3a540a-5a01-2dac-4be6-c37d3af7e794" executionId="b2627d6d-5d99-42a7-8ba0-4b2f932e5d6b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ecd89069-c53a-5331-a787-4264da454c1c" executionId="3e6cfe9b-c3bb-46ba-8deb-8b496c69cbdd" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="677e8221-87a0-9427-31aa-7fcfe83043e7" executionId="fdb804b3-ce98-40c9-ba9a-c22df1508fea" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fe7730aa-0f02-cf08-af13-f665e10a1fa5" executionId="f4530992-7248-496f-b7a8-275c2caf714b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="e6f2185d-7461-41ef-211a-4566f4d9d4f5" executionId="230d87f8-eb82-40fd-92e4-95c8b0f640e6" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="227523f7-b8fc-0a02-fdfb-6ba7b4d34f88" executionId="d52346e0-ff8b-448a-993f-ab002a807c29" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5e5764b5-7b5d-47e6-d6d8-8d377adeab3c" executionId="c3cc5ce7-1427-4684-a3a4-d1f820b42b94" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a5eae8fc-f3e5-b291-fe6d-2e5e37308e3a" executionId="39a702b3-c184-4078-838f-70a6741f2164" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5892ad00-a6a6-45e1-9399-e51f70071149" executionId="b5576043-48f7-4a21-9f1c-f5ccabad1152" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="794539f1-a6f4-e915-7bcf-3d13c0372983" executionId="be8e9a05-40bb-4590-b179-e27ff76b86fe" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="03fab0e3-400c-8def-64b9-a860a6f45c78" executionId="b4433e52-ef38-4dbe-b416-e43b28b3132b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b19b90a7-38b9-d75d-dbb8-867fb7bf3ea0" executionId="96696b12-db77-4c7a-b357-c03c42fbd632" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="fdd801d8-47a3-e02d-0b1e-0c230dfef1c1" executionId="1dc63be9-18f5-4ffe-9d14-a0f0e0459676" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="05bc8798-bff5-9123-7c33-e8bddbab33fc" executionId="dbe34664-f888-4e86-8faf-9e2ad2aa0019" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="86f69e22-2b96-fa92-25c7-f65e42424d4c" executionId="47c7eb80-c5c6-4929-9896-29ddfb3484cc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="85ba9725-7246-2326-1270-46e87b347fc7" executionId="deb5723a-7c9d-4a2f-8a18-98463f099b5e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="f16e8c4b-d0b0-816f-4711-740f429a0d5c" executionId="55f192b3-9b44-4db2-a1f5-ab76d5e60eaa" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="329c49ca-0921-e366-4fa6-615969bb4bfa" executionId="f2e4e1d5-fca3-4c37-abca-30150f26877b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3846ae26-cb88-9d8a-7735-b2d30a100495" executionId="2cec51f9-167c-49fb-bfc7-36ec7fd0f78b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="81400381-4464-5199-2dee-600cbd8d3223" executionId="b016f123-00f3-43f5-a4a9-1f26d8e2389b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Completed">
+    <Counters total="28" executed="28" passed="28" failed="0" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>NUnit Adapter 4.5.0.0: Test execution started
+Running all tests in /home/runner/work/million/million/backend/RealEstate.Tests/bin/Release/net8.0/RealEstate.Tests.dll
+   NUnit3TestExecutor discovered 1 of 1 NUnit test cases using Current Discovery mode, Non-Explicit run
+NUnit Adapter 4.5.0.0: Test execution complete
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.3+b1b99bdeb3 (64-bit .NET 8.0.19)
+[xUnit.net 00:00:00.13]   Discovering: RealEstate.Tests
+[xUnit.net 00:00:00.17]   Discovered:  RealEstate.Tests
+[xUnit.net 00:00:00.21]   Starting:    RealEstate.Tests
+     Warning:
+     The component "Fluent Assertions" is governed by the rules defined in the Xceed License Agreement and
+     the Xceed Fluent Assertions Community License. You may use Fluent Assertions free of charge for
+     non-commercial use only. An active subscription is required to use Fluent Assertions for commercial use.
+     Please contact Xceed Sales mailto:sales@xceed.com to acquire a subscription at a very low cost.
+     A paid commercial license supports the development and continued increasing support of
+     Fluent Assertions users under both commercial and community licenses. Help us
+     keep Fluent Assertions at the forefront of unit testing.
+     For more information, visit https://xceed.com/products/unit-testing/fluent-assertions/
+[testcontainers.org 00:00:00.30] Connected to Docker:
+  Host: unix:///var/run/docker.sock
+  Server Version: 28.0.4
+  Kernel Version: 6.11.0-1018-azure
+  API Version: 1.48
+  Operating System: Ubuntu 24.04.2 LTS
+  Total Memory: 15.62 GB
+[testcontainers.org 00:00:00.34] Searching Docker registry credential in CredHelpers
+[testcontainers.org 00:00:00.34] Searching Docker registry credential in CredsStore
+[testcontainers.org 00:00:00.34] Searching Docker registry credential in Auths
+[testcontainers.org 00:00:00.34] Searching Docker registry credential in Auths
+[testcontainers.org 00:00:00.34] Docker registry credential https://index.docker.io/v1/ found
+[testcontainers.org 00:00:02.57] Docker image testcontainers/ryuk:0.12.0 created
+[testcontainers.org 00:00:02.64] Docker container 65aeb0ed24ed created
+[testcontainers.org 00:00:02.67] Start Docker container 65aeb0ed24ed
+[testcontainers.org 00:00:02.97] Wait for Docker container 65aeb0ed24ed to complete readiness checks
+[testcontainers.org 00:00:02.98] Docker container 65aeb0ed24ed ready
+[testcontainers.org 00:00:14.71] Docker image mongo:7.0 created
+[testcontainers.org 00:00:14.71] Docker image mongo:7.0 created
+[testcontainers.org 00:00:14.72] Docker container 2beeecce42f9 created
+[testcontainers.org 00:00:14.72] Docker container a6519a6644c6 created
+[testcontainers.org 00:00:14.73] Start Docker container a6519a6644c6
+[testcontainers.org 00:00:14.73] Start Docker container 2beeecce42f9
+[testcontainers.org 00:00:14.89] Wait for Docker container a6519a6644c6 to complete readiness checks
+[testcontainers.org 00:00:14.92] Wait for Docker container 2beeecce42f9 to complete readiness checks
+[testcontainers.org 00:00:17.94] Docker container a6519a6644c6 ready
+[testcontainers.org 00:00:17.95] Docker container 2beeecce42f9 ready
+[testcontainers.org 00:00:18.35] Docker container 73c94e1f4af9 created
+[testcontainers.org 00:00:18.35] Start Docker container 73c94e1f4af9
+[testcontainers.org 00:00:18.39] Docker container ba8b27a53975 created
+[testcontainers.org 00:00:18.39] Start Docker container ba8b27a53975
+[testcontainers.org 00:00:18.50] Wait for Docker container 73c94e1f4af9 to complete readiness checks
+[testcontainers.org 00:00:18.53] Wait for Docker container ba8b27a53975 to complete readiness checks
+[testcontainers.org 00:00:21.52] Docker container 73c94e1f4af9 ready
+[testcontainers.org 00:00:21.64] Docker container 2eddf2898503 created
+[testcontainers.org 00:00:21.64] Start Docker container 2eddf2898503
+[testcontainers.org 00:00:21.77] Wait for Docker container 2eddf2898503 to complete readiness checks
+[testcontainers.org 00:00:22.57] Docker container ba8b27a53975 ready
+[testcontainers.org 00:00:22.65] Docker container 053d4be32d83 created
+[testcontainers.org 00:00:22.65] Start Docker container 053d4be32d83
+[testcontainers.org 00:00:22.79] Wait for Docker container 053d4be32d83 to complete readiness checks
+[testcontainers.org 00:00:24.78] Docker container 2eddf2898503 ready
+[testcontainers.org 00:00:24.88] Docker container 490a74e92e03 created
+[testcontainers.org 00:00:24.88] Start Docker container 490a74e92e03
+[testcontainers.org 00:00:24.99] Wait for Docker container 490a74e92e03 to complete readiness checks
+[testcontainers.org 00:00:25.80] Docker container 053d4be32d83 ready
+[testcontainers.org 00:00:25.88] Docker container 57da0d3137e1 created
+[testcontainers.org 00:00:25.88] Start Docker container 57da0d3137e1
+[testcontainers.org 00:00:26.01] Wait for Docker container 57da0d3137e1 to complete readiness checks
+[testcontainers.org 00:00:28.01] Docker container 490a74e92e03 ready
+[testcontainers.org 00:00:28.09] Docker container 8d63513a11c0 created
+[testcontainers.org 00:00:28.09] Start Docker container 8d63513a11c0
+[testcontainers.org 00:00:28.20] Wait for Docker container 8d63513a11c0 to complete readiness checks
+[testcontainers.org 00:00:29.03] Docker container 57da0d3137e1 ready
+[testcontainers.org 00:00:29.11] Docker container 89a8649141e1 created
+[testcontainers.org 00:00:29.11] Start Docker container 89a8649141e1
+[testcontainers.org 00:00:29.25] Wait for Docker container 89a8649141e1 to complete readiness checks
+[testcontainers.org 00:00:31.23] Docker container 8d63513a11c0 ready
+[testcontainers.org 00:00:32.27] Docker container 89a8649141e1 ready
+[testcontainers.org 00:00:32.33] Docker container 7fafdd508035 created
+[testcontainers.org 00:00:32.33] Start Docker container 7fafdd508035
+[testcontainers.org 00:00:32.45] Wait for Docker container 7fafdd508035 to complete readiness checks
+[testcontainers.org 00:00:35.47] Docker container 7fafdd508035 ready
+[testcontainers.org 00:00:35.53] Docker container 7702aea4270a created
+[testcontainers.org 00:00:35.53] Start Docker container 7702aea4270a
+[testcontainers.org 00:00:35.64] Wait for Docker container 7702aea4270a to complete readiness checks
+[testcontainers.org 00:00:38.66] Docker container 7702aea4270a ready
+[testcontainers.org 00:00:38.72] Docker container 1eee23e6a82e created
+[testcontainers.org 00:00:38.72] Start Docker container 1eee23e6a82e
+[testcontainers.org 00:00:38.84] Wait for Docker container 1eee23e6a82e to complete readiness checks
+[testcontainers.org 00:00:41.86] Docker container 1eee23e6a82e ready
+[testcontainers.org 00:00:41.92] Docker container b4458f4bb878 created
+[testcontainers.org 00:00:41.92] Start Docker container b4458f4bb878
+[testcontainers.org 00:00:42.04] Wait for Docker container b4458f4bb878 to complete readiness checks
+[testcontainers.org 00:00:45.05] Docker container b4458f4bb878 ready
+[testcontainers.org 00:00:45.11] Docker container 4a2481463c1a created
+[testcontainers.org 00:00:45.11] Start Docker container 4a2481463c1a
+[testcontainers.org 00:00:45.22] Wait for Docker container 4a2481463c1a to complete readiness checks
+[testcontainers.org 00:00:48.24] Docker container 4a2481463c1a ready
+[testcontainers.org 00:00:48.30] Docker container b4fba7db40db created
+[testcontainers.org 00:00:48.30] Start Docker container b4fba7db40db
+[testcontainers.org 00:00:48.44] Wait for Docker container b4fba7db40db to complete readiness checks
+[testcontainers.org 00:00:51.46] Docker container b4fba7db40db ready
+[xUnit.net 00:00:52.04]   Finished:    RealEstate.Tests
+</StdOut>
+    </Output>
+  </ResultSummary>
+</TestRun>

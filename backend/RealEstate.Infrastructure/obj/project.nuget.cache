@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "83XMeV3YcDo=",
+  "dgSpecHash": "xzot1xPqzUM=",
   "success": true,
   "projectFilePath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\landa\\.nuget\\packages\\dnsclient\\1.6.1\\dnsclient.1.6.1.nupkg.sha512",
+    "C:\\Users\\landa\\.nuget\\packages\\fluentvalidation\\12.0.0\\fluentvalidation.12.0.0.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\mapster\\7.4.0\\mapster.7.4.0.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\mapster.core\\1.2.1\\mapster.core.1.2.1.nupkg.sha512",
     "C:\\Users\\landa\\.nuget\\packages\\mapster.dependencyinjection\\1.0.1\\mapster.dependencyinjection.1.0.1.nupkg.sha512",

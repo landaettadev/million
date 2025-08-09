@@ -8,36 +8,34 @@ public class SearchPropertiesQueryValidator : AbstractValidator<SearchProperties
     {
         RuleFor(x => x.Page)
             .GreaterThan(0)
-            .WithMessage("Page must be greater than 0");
+            .WithMessage("Page must be greater than 0.");
 
         RuleFor(x => x.PageSize)
-            .GreaterThan(0)
-            .WithMessage("PageSize must be greater than 0")
-            .LessThanOrEqualTo(PagingDefaults.MaxPageSize)
-            .WithMessage($"PageSize cannot exceed {PagingDefaults.MaxPageSize}");
+            .InclusiveBetween(1, 50)
+            .WithMessage("PageSize must be between 1 and 50.");
 
         RuleFor(x => x.MinPrice)
             .GreaterThanOrEqualTo(0)
             .When(x => x.MinPrice.HasValue)
-            .WithMessage("MinPrice must be greater than or equal to 0");
+            .WithMessage("MinPrice must be greater than or equal to 0.");
 
         RuleFor(x => x.MaxPrice)
             .GreaterThanOrEqualTo(0)
             .When(x => x.MaxPrice.HasValue)
-            .WithMessage("MaxPrice must be greater than or equal to 0");
+            .WithMessage("MaxPrice must be greater than or equal to 0.");
 
         RuleFor(x => x)
-            .Must(x => !x.MinPrice.HasValue || !x.MaxPrice.HasValue || x.MinPrice <= x.MaxPrice)
-            .WithMessage("MinPrice cannot be greater than MaxPrice");
+            .Must(x => !x.MinPrice.HasValue || !x.MaxPrice.HasValue || x.MaxPrice >= x.MinPrice)
+            .WithMessage("MaxPrice must be greater than or equal to MinPrice.");
 
         RuleFor(x => x.Name)
             .MaximumLength(100)
             .When(x => !string.IsNullOrEmpty(x.Name))
-            .WithMessage("Name cannot exceed 100 characters");
+            .WithMessage("Name must not exceed 100 characters.");
 
         RuleFor(x => x.Address)
             .MaximumLength(200)
             .When(x => !string.IsNullOrEmpty(x.Address))
-            .WithMessage("Address cannot exceed 200 characters");
+            .WithMessage("Address must not exceed 200 characters.");
     }
 }

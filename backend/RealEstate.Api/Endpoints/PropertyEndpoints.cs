@@ -2,7 +2,6 @@ using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using RealEstate.Api.Middleware;
 using RealEstate.Application;
 
 namespace RealEstate.Api.Endpoints;
@@ -29,13 +28,8 @@ public static class PropertyEndpoints
             var validationResult = await validator.ValidateAsync(q, ctx.RequestAborted);
             if (!validationResult.IsValid)
             {
-                var errors = validationResult.Errors.Select(e => new ValidationError 
-                { 
-                    PropertyName = e.PropertyName, 
-                    ErrorMessage = e.ErrorMessage 
-                }).ToArray();
-                
-                throw new RealEstate.Api.Middleware.ValidationException("Invalid query parameters", errors);
+                var errorMessages = validationResult.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}");
+                throw new ValidationException(string.Join("; ", errorMessages));
             }
 
             var result = await service.SearchAsync(q, ctx.RequestAborted);
@@ -48,13 +42,8 @@ public static class PropertyEndpoints
             var idValidationResult = await idValidator.ValidateAsync(id, ctx.RequestAborted);
             if (!idValidationResult.IsValid)
             {
-                var errors = idValidationResult.Errors.Select(e => new ValidationError 
-                { 
-                    PropertyName = e.PropertyName, 
-                    ErrorMessage = e.ErrorMessage 
-                }).ToArray();
-                
-                throw new RealEstate.Api.Middleware.ValidationException("Invalid property ID", errors);
+                var errorMessages = idValidationResult.Errors.Select(e => $"{e.PropertyName}: {e.ErrorMessage}");
+                throw new ValidationException(string.Join("; ", errorMessages));
             }
 
             var item = await service.GetByIdAsync(id, ctx.RequestAborted);

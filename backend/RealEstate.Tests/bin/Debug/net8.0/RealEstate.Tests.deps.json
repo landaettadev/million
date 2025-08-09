@@ -461,6 +461,17 @@
           "lib/net6.0/FluentAssertions.dll": {}
         }
       },
+      "FluentValidation/12.0.0": {
+        "runtime": {
+          "lib/net8.0/FluentValidation.dll": {
+            "assemblyVersion": "12.0.0.0",
+            "fileVersion": "12.0.0.0"
+          }
+        },
+        "compile": {
+          "lib/net8.0/FluentValidation.dll": {}
+        }
+      },
       "Mapster/7.4.0": {
         "dependencies": {
           "Mapster.Core": "1.2.1"
@@ -1347,6 +1358,10 @@
         }
       },
       "RealEstate.Application/1.0.0": {
+        "dependencies": {
+          "FluentValidation": "12.0.0",
+          "MongoDB.Driver": "3.4.2"
+        },
         "runtime": {
           "RealEstate.Application.dll": {
             "assemblyVersion": "1.0.0.0",
@@ -3229,6 +3244,13 @@
       "sha512": "sha512-VN3eH+jnwSBbEDK1/Z7Sg8Mw6O/zHLKK58OueRpG4rIzLxtlJYTUkUieGee5C4Ymhjkiim0ag2H/0Nc8PfNmaA==",
       "path": "fluentassertions/8.5.0",
       "hashPath": "fluentassertions.8.5.0.nupkg.sha512"
+    },
+    "FluentValidation/12.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-8NVLxtMUXynRHJIX3Hn1ACovaqZIJASufXIIFkD0EUbcd5PmMsL1xUD5h548gCezJ5BzlITaR9CAMrGe29aWpA==",
+      "path": "fluentvalidation/12.0.0",
+      "hashPath": "fluentvalidation.12.0.0.nupkg.sha512"
     },
     "Mapster/7.4.0": {
       "type": "package",

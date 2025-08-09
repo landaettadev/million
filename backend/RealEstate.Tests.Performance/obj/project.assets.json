@@ -1875,6 +1875,19 @@
           }
         }
       },
+      "NBomber.Http/6.0.0": {
+        "type": "package",
+        "dependencies": {
+          "FSharp.Core": "9.0.201",
+          "NBomber.Contracts": "6.0.0"
+        },
+        "compile": {
+          "lib/netstandard2.1/NBomber.Http.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard2.1/NBomber.Http.dll": {}
+        }
+      },
       "NETStandard.Library/1.6.1": {
         "type": "package",
         "dependencies": {
@@ -6490,6 +6503,20 @@
         "nbomber_icon.png"
       ]
     },
+    "NBomber.Http/6.0.0": {
+      "sha512": "4ZVAv+rmOwbE/dSlEdSaSg6TyjQhNvbCxx3waRIkGQXre9PoN90bZOVwBM5Etn9l3amXi77R1Bqr0BKQ1OGO/w==",
+      "type": "package",
+      "path": "nbomber.http/6.0.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "LICENSE",
+        "lib/netstandard2.1/NBomber.Http.dll",
+        "nbomber.http.6.0.0.nupkg.sha512",
+        "nbomber.http.nuspec",
+        "nbomber_icon.png"
+      ]
+    },
     "NETStandard.Library/1.6.1": {
       "sha512": "WcSp3+vP+yHNgS8EV5J7pZ9IRpeDuARBPN28by8zqff1wJQXm26PVU8L3/fYLBJVU7BtDyqNVWq2KlCVvSSR4A==",
       "type": "package",
@@ -10933,7 +10960,8 @@
       "FluentAssertions >= 6.12.0",
       "Microsoft.AspNetCore.Mvc.Testing >= 8.0.8",
       "Microsoft.NET.Test.Sdk >= 17.6.0",
-      "NBomber >= 5.10.2",
+      "NBomber >= 6.0.0",
+      "NBomber.Http >= 6.0.0",
       "RealEstate.Api >= 1.0.0",
       "RealEstate.Application >= 1.0.0",
       "RealEstate.Infrastructure >= 1.0.0",
@@ -11025,7 +11053,11 @@
           },
           "NBomber": {
             "target": "Package",
-            "version": "[5.10.2, )"
+            "version": "[6.0.0, )"
+          },
+          "NBomber.Http": {
+            "target": "Package",
+            "version": "[6.0.0, )"
           },
           "Testcontainers.MongoDb": {
             "target": "Package",
@@ -11061,17 +11093,5 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.302/PortableRuntimeIdentifierGraph.json"
       }
     }
-  },
-  "logs": [
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "RealEstate.Tests.Performance depends on NBomber (>= 5.10.2) but NBomber 5.10.2 was not found. NBomber 6.0.0 was resolved instead.",
-      "libraryId": "NBomber",
-      "targetGraphs": [
-        "net8.0"
-      ]
-    }
-  ]
+  }
 }
