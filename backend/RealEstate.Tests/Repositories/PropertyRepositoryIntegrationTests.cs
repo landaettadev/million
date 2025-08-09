@@ -71,6 +71,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         var result = await _repository.SearchAsync(new SearchPropertiesQuery(Address: "Park"));
 
         // Assert
+        // Only one address contains "Park"
         result.Items.Should().HaveCount(1);
         result.Items.Should().OnlyContain(p => p.Address.Contains("Park", StringComparison.OrdinalIgnoreCase));
     }
@@ -133,6 +134,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         ));
 
         // Assert
+        // Two properties match name contains "Luxury" and Sale, but with MinPrice >= 2,000,000 both still match
         result.Items.Should().HaveCount(2);
         result.Items.Should().OnlyContain(p => 
             p.Name.Contains("Luxury", StringComparison.OrdinalIgnoreCase) &&
