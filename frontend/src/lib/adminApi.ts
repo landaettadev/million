@@ -54,6 +54,17 @@ export async function deleteOwner(id: string) {
   if (!res.ok && res.status !== 204) throw new Error('Failed to delete owner');
 }
 
+export type UpdateOwnerDto = CreateOwnerDto;
+
+export async function updateOwner(id: string, dto: UpdateOwnerDto) {
+  const res = await fetchWithAuth(`${baseUrl}/api/admin/owners/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dto),
+  });
+  if (!res.ok && res.status !== 204) throw new Error('Failed to update owner');
+}
+
 // Images
 export type AddImageDto = {
   propertyId: string;
