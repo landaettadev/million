@@ -77,6 +77,8 @@ builder.Services.AddScoped<IValidator<SearchPropertiesQuery>, SearchPropertiesQu
 builder.Services.AddScoped<IValidator<string>, PropertyIdValidator>();
 builder.Services.AddScoped<IValidator<CreatePropertyDto>, CreatePropertyValidator>();
 builder.Services.AddScoped<IValidator<UpdatePropertyDto>, UpdatePropertyValidator>();
+builder.Services.AddScoped<IValidator<CreateOwnerDto>, CreateOwnerValidator>();
+builder.Services.AddScoped<IValidator<UpdateOwnerDto>, UpdateOwnerValidator>();
 
 // Application + Infrastructure
 builder.Services.AddInfrastructure(builder.Configuration);
@@ -158,6 +160,8 @@ app.MapPropertyEndpoints();
 app.MapAuthEndpoints();
 app.MapAdminEndpoints();
 app.MapAdminPropertyEndpoints();
+app.MapAdminOwnerEndpoints();
+app.MapAdminImageEndpoints();
 
 // Seed on start
 using (var scope = app.Services.CreateScope())
