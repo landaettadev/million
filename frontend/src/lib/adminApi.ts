@@ -182,4 +182,28 @@ export async function deleteImage(id: string) {
   if (!res.ok && res.status !== 204) throw new Error('Failed to delete image');
 }
 
+// Presigned upload (SAS)
+export type PresignUploadRequest = {
+  fileName: string;
+  contentType: string;
+  expiresSeconds?: number; // default 900
+};
+
+export type PresignUploadResponse = {
+  blobName: string;
+  uploadUrl: string;
+  expiresAt: string;
+  method: 'PUT';
+};
+
+export async function presignImageUpload(req: PresignUploadRequest) {
+  const res = await fetchWithAuth(`${baseUrl}/api/admin/images/presign`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(req),
+  });
+  if (!res.ok) throw new Error('Failed to presign upload');
+  return res.json() as Promise<PresignUploadResponse>;
+}
+
 
