@@ -2,11 +2,18 @@
 
 import { withAdminAuth } from '../../../../src/lib/auth/AdminAuthContext';
 import { Plus, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
-import { createProperty, deleteProperty } from '../../../../src/lib/adminApi';
+import { createProperty, deleteProperty, addImage, deleteImage } from '../../../../src/lib/adminApi';
 import { useState } from 'react';
 
 function PropertiesPage() {
   const [isCreating, setIsCreating] = useState(false);
+  const [showAddImageModal, setShowAddImageModal] = useState(false);
+  const [showDeleteImageModal, setShowDeleteImageModal] = useState(false);
+  const [activePropertyId, setActivePropertyId] = useState<string | null>(null);
+  const [imageForm, setImageForm] = useState({ url: '', order: 1, enabled: true });
+  const [imageIdToDelete, setImageIdToDelete] = useState('');
+  const [isSavingImage, setIsSavingImage] = useState(false);
+  const [isRemovingImage, setIsRemovingImage] = useState(false);
   const [properties, setProperties] = useState([
     { id: '1', name: 'Luxury Penthouse Downtown', address: '123 Main St, Miami, FL', price: '$2,500,000', type: 'Sale', status: 'Active', owner: 'John Doe', beds: 3, baths: 2, sqft: '2,500' },
     { id: '2', name: 'Modern Villa Ocean View', address: '456 Ocean Dr, Miami Beach, FL', price: '$4,200,000', type: 'Sale', status: 'Active', owner: 'Jane Smith', beds: 5, baths: 4, sqft: '4,200' },
@@ -37,6 +44,44 @@ function PropertiesPage() {
   const handleDelete = async (id: string) => {
     await deleteProperty(id);
     setProperties(properties.filter(p => p.id !== id));
+  };
+
+  const openAddImage = (propertyId: string) => {
+    setActivePropertyId(propertyId);
+    setImageForm({ url: '', order: 1, enabled: true });
+    setShowAddImageModal(true);
+  };
+
+  const handleAddImage = async () => {
+    if (!activePropertyId || !imageForm.url) return;
+    setIsSavingImage(true);
+    try {
+      await addImage({
+        propertyId: activePropertyId,
+        file: imageForm.url,
+        enabled: imageForm.enabled,
+        order: imageForm.order,
+      });
+      setShowAddImageModal(false);
+    } finally {
+      setIsSavingImage(false);
+    }
+  };
+
+  const openDeleteImage = () => {
+    setImageIdToDelete('');
+    setShowDeleteImageModal(true);
+  };
+
+  const handleDeleteImage = async () => {
+    if (!imageIdToDelete) return;
+    setIsRemovingImage(true);
+    try {
+      await deleteImage(imageIdToDelete);
+      setShowDeleteImageModal(false);
+    } finally {
+      setIsRemovingImage(false);
+    }
   };
 
   return (
@@ -104,6 +149,8 @@ function PropertiesPage() {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                     <div className="flex items-center gap-2">
+                      <button onClick={() => openAddImage(property.id)} className="text-gray-400 hover:text-white" title="Add image"><Plus className="w-4 h-4" /></button>
+                      <button onClick={() => openDeleteImage()} className="text-gray-400 hover:text-white" title="Delete image by ID"><Trash2 className="w-4 h-4" /></button>
                       <button className="text-gray-400 hover:text-white" title="View"><Eye className="w-4 h-4" /></button>
                       <button className="text-gray-400 hover:text-white" title="Edit"><Edit className="w-4 h-4" /></button>
                       <button onClick={() => handleDelete(property.id)} className="text-gray-400 hover:text-red-400" title="Delete"><Trash2 className="w-4 h-4" /></button>
@@ -115,6 +162,54 @@ function PropertiesPage() {
           </table>
         </div>
       </div>
+
+      {showAddImageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowAddImageModal(false)} />
+          <div className="relative bg-neutral-900 border border-white/10 rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold text-white mb-4">Add Image</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Image URL</label>
+                <input value={imageForm.url} onChange={e => setImageForm({ ...imageForm, url: e.target.value })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm text-gray-300 mb-1">Order</label>
+                  <input type="number" min={1} value={imageForm.order} onChange={e => setImageForm({ ...imageForm, order: Number(e.target.value) })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+                </div>
+                <div className="flex items-center gap-2 pt-6">
+                  <input id="enabled" type="checkbox" checked={imageForm.enabled} onChange={e => setImageForm({ ...imageForm, enabled: e.target.checked })} />
+                  <label htmlFor="enabled" className="text-sm text-gray-300">Enabled</label>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={() => setShowAddImageModal(false)} className="px-4 py-2 border border-white/20 rounded-lg text-gray-300 hover:bg-white/10">Cancel</button>
+                <button onClick={handleAddImage} disabled={isSavingImage} className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 disabled:opacity-50">{isSavingImage ? 'Saving...' : 'Add'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteImageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowDeleteImageModal(false)} />
+          <div className="relative bg-neutral-900 border border-white/10 rounded-xl p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold text-white mb-4">Delete Image</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Image ID</label>
+                <input value={imageIdToDelete} onChange={e => setImageIdToDelete(e.target.value)} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button onClick={() => setShowDeleteImageModal(false)} className="px-4 py-2 border border-white/20 rounded-lg text-gray-300 hover:bg-white/10">Cancel</button>
+                <button onClick={handleDeleteImage} disabled={isRemovingImage} className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 disabled:opacity-50">{isRemovingImage ? 'Deleting...' : 'Delete'}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
