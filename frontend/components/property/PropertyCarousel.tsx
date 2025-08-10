@@ -1,8 +1,8 @@
 "use client"
 
 import { useRef, useState } from "react"
-import { PropertyCard } from "@/components/property/PropertyCard"
-import type { PropertyLiteDto } from "@/lib/types"
+import { PropertyCard } from "./PropertyCard"
+import type { PropertyLiteDto } from "../../lib/types"
 
 interface PropertyCarouselProps {
   items: PropertyLiteDto[]

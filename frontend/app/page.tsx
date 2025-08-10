@@ -3,10 +3,10 @@
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Star, TrendingUp } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { PropertyCard } from '@/components/property/PropertyCard'
-import { api } from '@/lib/api'
-import type { PropertyLiteDto } from '@/lib/types'
+import { Button } from '../components/ui/Button'
+import { PropertyCard } from '../components/property/PropertyCard'
+import { api } from '../lib/api'
+import type { PropertyLiteDto } from '../lib/types'
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true)
