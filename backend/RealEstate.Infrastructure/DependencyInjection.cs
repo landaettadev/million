@@ -15,6 +15,8 @@ public static class DependencyInjection
         services.AddScoped<IPropertyRepository, PropertyRepository>();
         services.AddScoped<IPropertyWriteService, PropertyWriteService>();
         services.AddScoped<IAdminUserRepository, AdminUserRepository>();
+        services.AddScoped<IOwnerWriteService, OwnerWriteService>();
+        services.AddScoped<IImageWriteService, ImageWriteService>();
         services.AddSingleton<MongoSeeder>();
 
         return services;
