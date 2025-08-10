@@ -2,6 +2,79 @@ import { fetchWithAuth } from './auth/fetchWithAuth';
 
 const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
+// Analytics
+export type DashboardAnalyticsDto = {
+  totalProperties: number;
+  totalOwners: number;
+  activeProperties: number;
+  pendingProperties: number;
+  totalRevenue: number;
+  monthlyRevenue: number;
+  yearlyRevenue: number;
+  propertiesByMonth: { label: string; value: number; count: number }[];
+  revenueByMonth: { label: string; value: number; count: number }[];
+  propertiesByOperationType: { label: string; value: number; count: number }[];
+};
+
+export type PropertyAnalyticsDto = {
+  totalProperties: number;
+  saleProperties: number;
+  rentProperties: number;
+  averagePrice: number;
+  averageRentPrice: number;
+  averageSalePrice: number;
+  propertiesByLocation: { label: string; value: number; count: number }[];
+  propertiesByPriceRange: { label: string; value: number; count: number }[];
+  propertiesByBedrooms: { label: string; value: number; count: number }[];
+  propertiesByBathrooms: { label: string; value: number; count: number }[];
+};
+
+export type OwnerAnalyticsDto = {
+  totalOwners: number;
+  activeOwners: number;
+  newOwnersThisMonth: number;
+  averagePropertiesPerOwner: number;
+  ownersByMonth: { label: string; value: number; count: number }[];
+  topOwnersByProperties: { label: string; value: number; count: number }[];
+};
+
+export type RevenueAnalyticsDto = {
+  totalRevenue: number;
+  averageRevenue: number;
+  revenueGrowth: number;
+  revenueByPeriod: { label: string; value: number; count: number }[];
+  revenueByOperationType: { label: string; value: number; count: number }[];
+  revenueByLocation: { label: string; value: number; count: number }[];
+};
+
+export async function getDashboardAnalytics(params?: { startDate?: string; endDate?: string }) {
+  const url = new URL(`${baseUrl}/api/admin/analytics/dashboard`);
+  if (params?.startDate) url.searchParams.set('startDate', params.startDate);
+  if (params?.endDate) url.searchParams.set('endDate', params.endDate);
+  const res = await fetchWithAuth(url.toString());
+  if (!res.ok) throw new Error('Failed to fetch dashboard analytics');
+  return res.json() as Promise<DashboardAnalyticsDto>;
+}
+
+export async function getPropertyAnalytics(params?: { startDate?: string; endDate?: string; operationType?: 'sale' | 'rent' }) {
+  const url = new URL(`${baseUrl}/api/admin/analytics/properties`);
+  if (params?.startDate) url.searchParams.set('startDate', params.startDate);
+  if (params?.endDate) url.searchParams.set('endDate', params.endDate);
+  if (params?.operationType) url.searchParams.set('operationType', params.operationType);
+  const res = await fetchWithAuth(url.toString());
+  if (!res.ok) throw new Error('Failed to fetch property analytics');
+  return res.json() as Promise<PropertyAnalyticsDto>;
+}
+
+export async function getOwnerAnalytics(params?: { startDate?: string; endDate?: string }) {
+  const url = new URL(`${baseUrl}/api/admin/analytics/owners`);
+  if (params?.startDate) url.searchParams.set('startDate', params.startDate);
+  if (params?.endDate) url.searchParams.set('endDate', params.endDate);
+  const res = await fetchWithAuth(url.toString());
+  if (!res.ok) throw new Error('Failed to fetch owner analytics');
+  return res.json() as Promise<OwnerAnalyticsDto>;
+}
+
 // Properties
 export type CreatePropertyDto = {
   ownerId: string;

@@ -19,6 +19,8 @@ public sealed class CollectionNames
     public string PropertyTraces { get; set; } = "propertyTraces";
     public string Owners { get; set; } = "owners";
     public string AdminUsers { get; set; } = "adminUsers";
+    public string RefreshTokens { get; set; } = "refreshTokens";
+    public string TokenBlacklist { get; set; } = "tokenBlacklist";
 }
 
 public sealed class MongoContext
@@ -29,6 +31,8 @@ public sealed class MongoContext
     public IMongoCollection<OwnerDocument> Owners { get; }
     public IMongoCollection<PropertyTraceDocument> PropertyTraces { get; }
     public IMongoCollection<AdminUserDocument> AdminUsers { get; }
+    public IMongoCollection<RefreshTokenDocument> RefreshTokens { get; }
+    public IMongoCollection<TokenBlacklistDocument> TokenBlacklist { get; }
 
     public MongoContext(MongoSettings settings)
     {
@@ -39,6 +43,8 @@ public sealed class MongoContext
         Owners = Database.GetCollection<OwnerDocument>(settings.CollectionNames.Owners);
         PropertyTraces = Database.GetCollection<PropertyTraceDocument>(settings.CollectionNames.PropertyTraces);
         AdminUsers = Database.GetCollection<AdminUserDocument>(settings.CollectionNames.AdminUsers);
+        RefreshTokens = Database.GetCollection<RefreshTokenDocument>(settings.CollectionNames.RefreshTokens);
+        TokenBlacklist = Database.GetCollection<TokenBlacklistDocument>(settings.CollectionNames.TokenBlacklist);
     }
 
     public MongoContext(IMongoDatabase database)
@@ -49,6 +55,8 @@ public sealed class MongoContext
         Owners = Database.GetCollection<OwnerDocument>("owners");
         PropertyTraces = Database.GetCollection<PropertyTraceDocument>("propertyTraces");
         AdminUsers = Database.GetCollection<AdminUserDocument>("adminUsers");
+        RefreshTokens = Database.GetCollection<RefreshTokenDocument>("refreshTokens");
+        TokenBlacklist = Database.GetCollection<TokenBlacklistDocument>("tokenBlacklist");
     }
 }
 
@@ -72,6 +80,10 @@ public sealed class PropertyDocument
     public int? Baths { get; set; }
     public int? HalfBaths { get; set; }
     public int? Sqft { get; set; }
+
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; } = false;
 }
 
 [BsonIgnoreExtraElements]
@@ -87,6 +99,11 @@ public sealed class PropertyImageDocument
     public string File { get; set; } = string.Empty;
     public bool Enabled { get; set; }
     public int Order { get; set; } = 1;
+    public long FileSize { get; set; }
+    public string ContentType { get; set; } = string.Empty;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; } = false;
 }
 
 [BsonIgnoreExtraElements]
@@ -100,6 +117,9 @@ public sealed class OwnerDocument
     public string Address { get; set; } = string.Empty;
     public string? Photo { get; set; }
     public DateTime? Birthday { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; } = false;
 }
 
 [BsonIgnoreExtraElements]
@@ -129,6 +149,43 @@ public sealed class AdminUserDocument
     public string Name { get; set; } = string.Empty;
     public string Role { get; set; } = "Admin";
     public string PasswordHash { get; set; } = string.Empty;
+    public List<RefreshTokenDocument> RefreshTokens { get; set; } = new();
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime? LastLoginAt { get; set; }
+}
+
+[BsonIgnoreExtraElements]
+public sealed class RefreshTokenDocument
+{
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; } = default!;
+
+    public string Token { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public DateTime ExpiresAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public bool IsRevoked { get; set; } = false;
+    public string? RevokedBy { get; set; }
+    public DateTime? RevokedAt { get; set; }
+    public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
+}
+
+[BsonIgnoreExtraElements]
+public sealed class TokenBlacklistDocument
+{
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; } = default!;
+
+    public string Token { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
+    public DateTime ExpiresAt { get; set; }
+    public DateTime BlacklistedAt { get; set; } = DateTime.UtcNow;
+    public string Reason { get; set; } = string.Empty; // "logout", "security", "expired"
+    public string? IpAddress { get; set; }
+    public string? UserAgent { get; set; }
 }
 
 public sealed class PropertyRepository : IPropertyRepository
@@ -143,7 +200,10 @@ public sealed class PropertyRepository : IPropertyRepository
     public async Task<PagedResult<PropertyLiteDto>> SearchAsync(SearchPropertiesQuery query, CancellationToken ct = default)
     {
         var fb = Builders<PropertyDocument>.Filter;
-        var filters = new List<FilterDefinition<PropertyDocument>>();
+        var filters = new List<FilterDefinition<PropertyDocument>>
+        {
+            fb.Eq(x => x.IsDeleted, false)
+        };
 
         if (!string.IsNullOrWhiteSpace(query.Name))
             filters.Add(fb.Regex(x => x.Name, new BsonRegularExpression(query.Name, "i")));
@@ -156,7 +216,7 @@ public sealed class PropertyRepository : IPropertyRepository
         if (query.OperationType.HasValue)
             filters.Add(fb.Eq(x => x.OperationType, query.OperationType.Value == OperationType.Sale ? "sale" : "rent"));
 
-        var filter = filters.Count > 0 ? fb.And(filters) : FilterDefinition<PropertyDocument>.Empty;
+        var filter = filters.Count > 0 ? fb.And(filters) : fb.Eq(x => x.IsDeleted, false);
 
         var skip = (query.Page - 1) * query.PageSize;
         var total = await _ctx.Properties.CountDocumentsAsync(filter, cancellationToken: ct);
@@ -173,7 +233,7 @@ public sealed class PropertyRepository : IPropertyRepository
         foreach (var property in properties)
         {
             var firstImage = await _ctx.PropertyImages
-                .Find(i => i.PropertyId == property.Id && i.Enabled)
+                .Find(i => i.PropertyId == property.Id && i.Enabled && !i.IsDeleted)
                 .SortBy(i => i.Order)
                 .Project(i => i.File)
                 .FirstOrDefaultAsync(ct);
@@ -198,11 +258,11 @@ public sealed class PropertyRepository : IPropertyRepository
 
     public async Task<PropertyDetailDto?> GetByIdAsync(string id, CancellationToken ct = default)
     {
-        var doc = await _ctx.Properties.Find(x => x.Id == id).FirstOrDefaultAsync(ct);
+        var doc = await _ctx.Properties.Find(x => x.Id == id && !x.IsDeleted).FirstOrDefaultAsync(ct);
         if (doc is null) return null;
 
         var images = await _ctx.PropertyImages
-            .Find(i => i.PropertyId == id && i.Enabled)
+            .Find(i => i.PropertyId == id && i.Enabled && !i.IsDeleted)
             .SortBy(i => i.Order)
             .Project(i => i.File)
             .ToListAsync(ct);
