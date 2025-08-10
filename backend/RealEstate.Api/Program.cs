@@ -75,11 +75,14 @@ if (swaggerEnabled)
 // FluentValidation
 builder.Services.AddScoped<IValidator<SearchPropertiesQuery>, SearchPropertiesQueryValidator>();
 builder.Services.AddScoped<IValidator<string>, PropertyIdValidator>();
+builder.Services.AddScoped<IValidator<CreatePropertyDto>, CreatePropertyValidator>();
+builder.Services.AddScoped<IValidator<UpdatePropertyDto>, UpdatePropertyValidator>();
 
 // Application + Infrastructure
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IPropertyReadService, PropertyReadService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IPropertyWriteService, PropertyWriteService>();
 
 // JWT Auth
 var jwtKey = builder.Configuration["JWT:KEY"];
@@ -154,6 +157,7 @@ app.MapHealthChecks("/health");
 app.MapPropertyEndpoints();
 app.MapAuthEndpoints();
 app.MapAdminEndpoints();
+app.MapAdminPropertyEndpoints();
 
 // Seed on start
 using (var scope = app.Services.CreateScope())

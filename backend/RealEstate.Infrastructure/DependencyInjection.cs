@@ -13,6 +13,7 @@ public static class DependencyInjection
 
         services.AddSingleton<MongoContext>();
         services.AddScoped<IPropertyRepository, PropertyRepository>();
+        services.AddScoped<IPropertyWriteService, PropertyWriteService>();
         services.AddScoped<IAdminUserRepository, AdminUserRepository>();
         services.AddSingleton<MongoSeeder>();
 
