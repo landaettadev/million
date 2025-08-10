@@ -31,6 +31,27 @@ export async function deleteProperty(id: string) {
   if (!res.ok && res.status !== 204) throw new Error('Failed to delete property');
 }
 
+export type UpdatePropertyDto = {
+  name: string;
+  address: string;
+  price: number;
+  operationType: 'Sale' | 'Rent';
+  beds?: number;
+  baths?: number;
+  halfBaths?: number;
+  sqft?: number;
+  description?: string;
+};
+
+export async function updateProperty(id: string, dto: UpdatePropertyDto) {
+  const res = await fetchWithAuth(`${baseUrl}/api/admin/properties/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(dto),
+  });
+  if (!res.ok && res.status !== 204) throw new Error('Failed to update property');
+}
+
 // Owners
 export type CreateOwnerDto = {
   name: string;

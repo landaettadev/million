@@ -2,11 +2,14 @@
 
 import { withAdminAuth } from '../../../../src/lib/auth/AdminAuthContext';
 import { Plus, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
-import { createProperty, deleteProperty, addImage, deleteImage } from '../../../../src/lib/adminApi';
+import { createProperty, deleteProperty, addImage, deleteImage, updateProperty } from '../../../../src/lib/adminApi';
 import { useState } from 'react';
 
 function PropertiesPage() {
   const [isCreating, setIsCreating] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', address: '', price: 0, operationType: 'Sale' as 'Sale' | 'Rent', beds: 0, baths: 0, halfBaths: 0, sqft: 0, description: '' });
   const [showAddImageModal, setShowAddImageModal] = useState(false);
   const [showDeleteImageModal, setShowDeleteImageModal] = useState(false);
   const [activePropertyId, setActivePropertyId] = useState<string | null>(null);
@@ -44,6 +47,30 @@ function PropertiesPage() {
   const handleDelete = async (id: string) => {
     await deleteProperty(id);
     setProperties(properties.filter(p => p.id !== id));
+  };
+
+  const openEdit = (p: any) => {
+    setEditId(p.id);
+    setEditForm({
+      name: p.name,
+      address: p.address,
+      price: 100000,
+      operationType: (p.type === 'Sale' ? 'Sale' : 'Rent'),
+      beds: Number(p.beds || 0),
+      baths: Number(p.baths || 0),
+      halfBaths: 0,
+      sqft: Number((p.sqft || '0').replace(/[^0-9]/g, '')),
+      description: '',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editId) return;
+    await updateProperty(editId, editForm);
+    setProperties(properties.map(p => p.id === editId ? { ...p, name: editForm.name, address: editForm.address } : p));
+    setShowEditModal(false);
+    setEditId(null);
   };
 
   const openAddImage = (propertyId: string) => {
@@ -152,7 +179,7 @@ function PropertiesPage() {
                       <button onClick={() => openAddImage(property.id)} className="text-gray-400 hover:text-white" title="Add image"><Plus className="w-4 h-4" /></button>
                       <button onClick={() => openDeleteImage()} className="text-gray-400 hover:text-white" title="Delete image by ID"><Trash2 className="w-4 h-4" /></button>
                       <button className="text-gray-400 hover:text-white" title="View"><Eye className="w-4 h-4" /></button>
-                      <button className="text-gray-400 hover:text-white" title="Edit"><Edit className="w-4 h-4" /></button>
+                      <button onClick={() => openEdit(property)} className="text-gray-400 hover:text-white" title="Edit"><Edit className="w-4 h-4" /></button>
                       <button onClick={() => handleDelete(property.id)} className="text-gray-400 hover:text-red-400" title="Delete"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
@@ -162,6 +189,60 @@ function PropertiesPage() {
           </table>
         </div>
       </div>
+
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowEditModal(false)} />
+          <div className="relative bg-neutral-900 border border-white/10 rounded-xl p-6 w-full max-w-lg">
+            <h2 className="text-xl font-semibold text-white mb-4">Edit Property</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Name</label>
+                <input value={editForm.name} onChange={e => setEditForm({ ...editForm, name: e.target.value })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Address</label>
+                <input value={editForm.address} onChange={e => setEditForm({ ...editForm, address: e.target.value })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Price</label>
+                <input type="number" value={editForm.price} onChange={e => setEditForm({ ...editForm, price: Number(e.target.value) })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Operation</label>
+                <select value={editForm.operationType} onChange={e => setEditForm({ ...editForm, operationType: e.target.value as any })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white">
+                  <option value="Sale">Sale</option>
+                  <option value="Rent">Rent</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Beds</label>
+                <input type="number" value={editForm.beds} onChange={e => setEditForm({ ...editForm, beds: Number(e.target.value) })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Baths</label>
+                <input type="number" value={editForm.baths} onChange={e => setEditForm({ ...editForm, baths: Number(e.target.value) })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Half Baths</label>
+                <input type="number" value={editForm.halfBaths} onChange={e => setEditForm({ ...editForm, halfBaths: Number(e.target.value) })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+              </div>
+              <div>
+                <label className="block text-sm text-gray-300 mb-1">Sqft</label>
+                <input type="number" value={editForm.sqft} onChange={e => setEditForm({ ...editForm, sqft: Number(e.target.value) })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm text-gray-300 mb-1">Description</label>
+                <textarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-4">
+              <button onClick={() => setShowEditModal(false)} className="px-4 py-2 border border-white/20 rounded-lg text-gray-300 hover:bg-white/10">Cancel</button>
+              <button onClick={handleSaveEdit} className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAddImageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
