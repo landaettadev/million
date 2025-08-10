@@ -2,13 +2,42 @@
 
 import { withAdminAuth } from '../../../../src/lib/auth/AdminAuthContext';
 import { Plus, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
+import { createProperty, deleteProperty } from '../../../../src/lib/adminApi';
+import { useState } from 'react';
 
 function PropertiesPage() {
-  const properties = [
+  const [isCreating, setIsCreating] = useState(false);
+  const [properties, setProperties] = useState([
     { id: '1', name: 'Luxury Penthouse Downtown', address: '123 Main St, Miami, FL', price: '$2,500,000', type: 'Sale', status: 'Active', owner: 'John Doe', beds: 3, baths: 2, sqft: '2,500' },
     { id: '2', name: 'Modern Villa Ocean View', address: '456 Ocean Dr, Miami Beach, FL', price: '$4,200,000', type: 'Sale', status: 'Active', owner: 'Jane Smith', beds: 5, baths: 4, sqft: '4,200' },
     { id: '3', name: 'Contemporary Condo', address: '789 Biscayne Blvd, Miami, FL', price: '$850,000', type: 'Sale', status: 'Sold', owner: 'Mike Johnson', beds: 2, baths: 2, sqft: '1,200' },
-  ];
+  ]);
+
+  const handleNew = async () => {
+    try {
+      setIsCreating(true);
+      const res = await createProperty({
+        ownerId: '000000000000000000000001',
+        name: 'New Property',
+        address: 'Address TBD',
+        price: 100000,
+        operationType: 'Sale',
+        beds: 2,
+        baths: 1,
+        halfBaths: 0,
+        sqft: 900,
+        description: 'Created from admin panel',
+      });
+      setProperties([{ id: res.id, name: 'New Property', address: 'Address TBD', price: '$100,000', type: 'Sale', status: 'Active', owner: '-', beds: 2, baths: 1, sqft: '900' }, ...properties]);
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    await deleteProperty(id);
+    setProperties(properties.filter(p => p.id !== id));
+  };
 
   return (
     <div className="space-y-8">
@@ -17,9 +46,9 @@ function PropertiesPage() {
           <h1 className="text-3xl font-bold text-white">Properties</h1>
           <p className="text-gray-400 mt-2">Manage your property listings</p>
         </div>
-        <button className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 font-medium transition-colors">
+        <button onClick={handleNew} disabled={isCreating} className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 font-medium transition-colors disabled:opacity-50">
           <Plus className="w-4 h-4 mr-2" />
-          New Property
+          {isCreating ? 'Creating...' : 'New Property'}
         </button>
       </div>
 
@@ -77,7 +106,7 @@ function PropertiesPage() {
                     <div className="flex items-center gap-2">
                       <button className="text-gray-400 hover:text-white" title="View"><Eye className="w-4 h-4" /></button>
                       <button className="text-gray-400 hover:text-white" title="Edit"><Edit className="w-4 h-4" /></button>
-                      <button className="text-gray-400 hover:text-red-400" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={() => handleDelete(property.id)} className="text-gray-400 hover:text-red-400" title="Delete"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
                 </tr>
