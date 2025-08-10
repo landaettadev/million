@@ -1,9 +1,9 @@
 'use client'
 
 import { useCallback } from 'react'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
-import { Button } from '@/components/ui/Button'
+import { Input } from '../ui/Input'
+import { Select } from '../ui/Select'
+import { Button } from '../ui/Button'
 
 export type FiltersValue = {
   name?: string

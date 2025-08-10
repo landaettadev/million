@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { FiltersBar, type FiltersValue } from '@/components/property/FiltersBar'
-import { Pagination } from '@/components/property/Pagination'
-import { PropertyCarousel } from '@/components/property/PropertyCarousel'
-import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
-import { ErrorMessage } from '@/components/ui/ErrorMessage'
-import { api } from '@/lib/api'
-import type { PropertyListResponse } from '@/lib/types'
+import { FiltersBar, type FiltersValue } from '../../components/property/FiltersBar'
+import { Pagination } from '../../components/property/Pagination'
+import { PropertyCarousel } from '../../components/property/PropertyCarousel'
+import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
+import { ErrorMessage } from '../../components/ui/ErrorMessage'
+import { api } from '../../lib/api'
+import type { PropertyListResponse } from '../../lib/types'
 
 const PAGE_SIZE = 12
 

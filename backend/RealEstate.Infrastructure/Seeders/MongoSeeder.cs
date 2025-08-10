@@ -105,6 +105,26 @@ public sealed class MongoSeeder
             }
         }
         await _ctx.PropertyTraces.InsertManyAsync(traces, cancellationToken: ct);
+
+        // Seed Admin user (idempotent)
+        var seedAdminEmail = _config.GetValue<string>("Admin:Seed:Email");
+        var seedAdminPassword = _config.GetValue<string>("Admin:Seed:Password");
+        if (!string.IsNullOrWhiteSpace(seedAdminEmail) && !string.IsNullOrWhiteSpace(seedAdminPassword))
+        {
+            var existingAdmin = await _ctx.AdminUsers.Find(u => u.Email == seedAdminEmail).FirstOrDefaultAsync(ct);
+            if (existingAdmin is null)
+            {
+                var admin = new AdminUserDocument
+                {
+                    Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+                    Email = seedAdminEmail,
+                    Name = "Administrator",
+                    Role = "Admin",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(seedAdminPassword)
+                };
+                await _ctx.AdminUsers.InsertOneAsync(admin, cancellationToken: ct);
+            }
+        }
     }
 
     private static string GetRandomOwnerName(Random random)

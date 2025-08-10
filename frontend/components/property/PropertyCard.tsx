@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Skeleton } from '@/components/ui/Skeleton'
-import { formatPrice } from '@/lib/format'
-import type { PropertyLiteDto } from '@/lib/types'
+import { Skeleton } from '../ui/Skeleton'
+import { formatPrice } from '../../lib/format'
+import type { PropertyLiteDto } from '../../lib/types'
 
 type CardItem = PropertyLiteDto & {
   halfBaths?: number

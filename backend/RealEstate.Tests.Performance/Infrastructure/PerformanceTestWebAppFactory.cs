@@ -10,7 +10,7 @@ using Xunit;
 
 namespace RealEstate.Tests.Performance.Infrastructure;
 
-public class PerformanceTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public class PerformanceTestWebAppFactory : WebApplicationFactory<RealEstate.Api.Program>, IAsyncLifetime
 {
     private readonly MongoDbContainer _mongoContainer = new MongoDbBuilder()
         .WithImage("mongo:7.0")

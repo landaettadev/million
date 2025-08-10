@@ -18,6 +18,7 @@ public sealed class CollectionNames
     public string PropertyImages { get; set; } = "propertyImages";
     public string PropertyTraces { get; set; } = "propertyTraces";
     public string Owners { get; set; } = "owners";
+    public string AdminUsers { get; set; } = "adminUsers";
 }
 
 public sealed class MongoContext
@@ -27,6 +28,7 @@ public sealed class MongoContext
     public IMongoCollection<PropertyImageDocument> PropertyImages { get; }
     public IMongoCollection<OwnerDocument> Owners { get; }
     public IMongoCollection<PropertyTraceDocument> PropertyTraces { get; }
+    public IMongoCollection<AdminUserDocument> AdminUsers { get; }
 
     public MongoContext(MongoSettings settings)
     {
@@ -36,6 +38,7 @@ public sealed class MongoContext
         PropertyImages = Database.GetCollection<PropertyImageDocument>(settings.CollectionNames.PropertyImages);
         Owners = Database.GetCollection<OwnerDocument>(settings.CollectionNames.Owners);
         PropertyTraces = Database.GetCollection<PropertyTraceDocument>(settings.CollectionNames.PropertyTraces);
+        AdminUsers = Database.GetCollection<AdminUserDocument>(settings.CollectionNames.AdminUsers);
     }
 
     public MongoContext(IMongoDatabase database)
@@ -45,6 +48,7 @@ public sealed class MongoContext
         PropertyImages = Database.GetCollection<PropertyImageDocument>("propertyImages");
         Owners = Database.GetCollection<OwnerDocument>("owners");
         PropertyTraces = Database.GetCollection<PropertyTraceDocument>("propertyTraces");
+        AdminUsers = Database.GetCollection<AdminUserDocument>("adminUsers");
     }
 }
 
@@ -112,6 +116,19 @@ public sealed class PropertyTraceDocument
     public string Name { get; set; } = string.Empty;
     public decimal Value { get; set; }
     public decimal Tax { get; set; }
+}
+
+[BsonIgnoreExtraElements]
+public sealed class AdminUserDocument
+{
+    [BsonId]
+    [BsonRepresentation(BsonType.ObjectId)]
+    public string Id { get; set; } = default!;
+
+    public string Email { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Role { get; set; } = "Admin";
+    public string PasswordHash { get; set; } = string.Empty;
 }
 
 public sealed class PropertyRepository : IPropertyRepository

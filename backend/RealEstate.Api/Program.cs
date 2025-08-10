@@ -5,6 +5,9 @@ using RealEstate.Api.Middleware;
 using RealEstate.Application;
 using RealEstate.Application.Validators;
 using RealEstate.Infrastructure;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,8 +79,34 @@ builder.Services.AddScoped<IValidator<string>, PropertyIdValidator>();
 // Application + Infrastructure
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IPropertyReadService, PropertyReadService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// JWT Auth
+var jwtKey = builder.Configuration["JWT:KEY"];
+if (!string.IsNullOrEmpty(jwtKey))
+{
+    var key = Encoding.UTF8.GetBytes(jwtKey);
+    builder.Services
+        .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(key),
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ClockSkew = TimeSpan.FromSeconds(30)
+            };
+        });
+    builder.Services.AddAuthorization();
+}
 
 var app = builder.Build();
+
+// Health checks
+builder.Services.AddHealthChecks()
+    .AddCheck<RealEstate.Api.Health.MongoHealthCheck>("mongo");
 
 // Security Headers
 app.Use(async (context, next) =>
@@ -113,10 +142,17 @@ if (swaggerEnabled)
 var corsPolicy = app.Environment.IsProduction() ? "production" : "frontend";
 app.UseCors(corsPolicy);
 
-app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
+if (!string.IsNullOrEmpty(jwtKey))
+{
+    app.UseAuthentication();
+    app.UseAuthorization();
+}
+
+app.MapHealthChecks("/health");
 
 // Map endpoints
 app.MapPropertyEndpoints();
+app.MapAuthEndpoints();
 
 // Seed on start
 using (var scope = app.Services.CreateScope())
