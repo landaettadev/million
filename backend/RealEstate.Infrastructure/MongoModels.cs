@@ -97,6 +97,7 @@ public sealed class PropertyImageDocument
     public string PropertyId { get; set; } = default!;
 
     public string File { get; set; } = string.Empty;
+    public string? ThumbnailFile { get; set; }
     public bool Enabled { get; set; }
     public int Order { get; set; } = 1;
     public long FileSize { get; set; }

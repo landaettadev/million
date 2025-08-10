@@ -5,6 +5,8 @@ using Azure.Storage;
 using Azure.Storage.Blobs;
 using Azure.Storage.Sas;
 using Microsoft.Extensions.Configuration;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace RealEstate.Api.Endpoints;
 
@@ -16,17 +18,20 @@ public class AdminImageUploadEndpoints : ControllerBase
     private readonly IImageWriteService _imageWriteService;
     private readonly ILogger<AdminImageUploadEndpoints> _logger;
     private readonly IConfiguration _configuration;
+    private readonly MongoContext _ctx;
 
     public AdminImageUploadEndpoints(
         IImageStorageService imageStorageService,
         IImageWriteService imageWriteService,
         ILogger<AdminImageUploadEndpoints> logger,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        MongoContext ctx)
     {
         _imageStorageService = imageStorageService;
         _imageWriteService = imageWriteService;
         _logger = logger;
         _configuration = configuration;
+        _ctx = ctx;
     }
 
     [HttpPost("presign")]
@@ -106,7 +111,7 @@ public class AdminImageUploadEndpoints : ControllerBase
                 return BadRequest(new { error = "File size too large. Maximum size is 10MB." });
             }
 
-            // Upload to Azure Blob Storage
+            // Upload original to Azure Blob Storage
             string blobName;
             using (var stream = file.OpenReadStream())
             {
@@ -114,7 +119,34 @@ public class AdminImageUploadEndpoints : ControllerBase
                     stream, file.FileName, file.ContentType, ct);
             }
 
-            // Get the public URL
+            // Generate thumbnail (400px width) in memory and upload
+            string? thumbnailBlobName = null;
+            try
+            {
+                using var inStream = file.OpenReadStream();
+                using var image = SixLabors.ImageSharp.Image.Load(inStream);
+                var width = 400;
+                var height = (int)Math.Round(image.Height * (width / (double)image.Width));
+                image.Mutate(x => x.Resize(width, height));
+
+                using var outStream = new MemoryStream();
+                image.SaveAsJpeg(outStream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder
+                {
+                    Quality = 80
+                });
+                outStream.Position = 0;
+
+                var ext = Path.GetExtension(file.FileName);
+                var nameNoExt = Path.GetFileNameWithoutExtension(file.FileName);
+                var thumbFileName = $"{nameNoExt}-thumb{ext}";
+                thumbnailBlobName = await _imageStorageService.UploadImageAsync(outStream, thumbFileName, "image/jpeg", ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to generate thumbnail for {FileName}", file.FileName);
+            }
+
+            // Get the public URL (kept for response convenience)
             var imageUrl = await _imageStorageService.GetImageUrlAsync(blobName, ct);
 
             // Save image metadata to database
@@ -122,8 +154,11 @@ public class AdminImageUploadEndpoints : ControllerBase
             {
                 PropertyId = propertyId,
                 File = blobName, // Store blob name for reference
+                ThumbnailFile = thumbnailBlobName,
                 Enabled = enabled,
-                Order = order
+                Order = order,
+                FileSize = file.Length,
+                ContentType = file.ContentType
             };
 
             var imageId = await _imageWriteService.AddAsync(addImageDto, ct);
@@ -172,6 +207,109 @@ public class AdminImageUploadEndpoints : ControllerBase
         {
             _logger.LogError(ex, "Error deleting image {ImageId}", imageId);
             return StatusCode(500, new { error = "Failed to delete image", details = ex.Message });
+        }
+    }
+
+    // PURGE: permanently delete blob(s) and metadata
+    [HttpDelete("{imageId}/purge")]
+    public async Task<ActionResult> PurgeImage(string imageId, CancellationToken ct = default)
+    {
+        try
+        {
+            var doc = await _ctx.PropertyImages.Find(x => x.Id == imageId).FirstOrDefaultAsync(ct);
+            if (doc is null)
+            {
+                return NotFound(new { error = "Image not found" });
+            }
+
+            // delete blobs
+            if (!string.IsNullOrEmpty(doc.File))
+            {
+                await _imageStorageService.DeleteImageAsync(doc.File, ct);
+            }
+            if (!string.IsNullOrEmpty(doc.ThumbnailFile))
+            {
+                await _imageStorageService.DeleteImageAsync(doc.ThumbnailFile, ct);
+            }
+
+            // delete metadata
+            await _ctx.PropertyImages.DeleteOneAsync(x => x.Id == imageId, ct);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error purging image {ImageId}", imageId);
+            return StatusCode(500, new { error = "Failed to purge image", details = ex.Message });
+        }
+    }
+
+    // FINALIZE SAS upload: create thumbnail and register metadata
+    [HttpPost("finalize")]
+    public async Task<ActionResult<ImageUploadResponseDto>> FinalizeUpload(
+        [FromBody] FinalizeImageUploadRequestDto dto,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(dto.PropertyId) || string.IsNullOrWhiteSpace(dto.BlobName))
+            {
+                return BadRequest(new { error = "propertyId and blobName are required" });
+            }
+
+            // Download original
+            using var originalStream = await _imageStorageService.DownloadImageAsync(dto.BlobName, ct);
+
+            // Generate thumbnail
+            string? thumbnailBlobName = null;
+            try
+            {
+                using var image = Image.Load(originalStream);
+                var width = 400;
+                var height = (int)Math.Round(image.Height * (width / (double)image.Width));
+                image.Mutate(x => x.Resize(width, height));
+
+                using var outStream = new MemoryStream();
+                image.SaveAsJpeg(outStream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 80 });
+                outStream.Position = 0;
+
+                var ext = Path.GetExtension(dto.BlobName);
+                var nameNoExt = Path.GetFileNameWithoutExtension(dto.BlobName);
+                var thumbFileName = $"{nameNoExt}-thumb{ext}";
+                thumbnailBlobName = await _imageStorageService.UploadImageAsync(outStream, thumbFileName, "image/jpeg", ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to generate thumbnail for blob {Blob}", dto.BlobName);
+            }
+
+            // Save metadata
+            var addImageDto = new AddImageDto
+            {
+                PropertyId = dto.PropertyId,
+                File = dto.BlobName,
+                ThumbnailFile = thumbnailBlobName,
+                Enabled = dto.Enabled ?? true,
+                Order = dto.Order ?? 0,
+                FileSize = dto.FileSize ?? 0,
+                ContentType = dto.ContentType ?? "image/jpeg"
+            };
+            var imageId = await _imageWriteService.AddAsync(addImageDto, ct);
+
+            var imageUrl = await _imageStorageService.GetImageUrlAsync(dto.BlobName, ct);
+            return Ok(new ImageUploadResponseDto
+            {
+                ImageId = imageId,
+                BlobName = dto.BlobName,
+                ImageUrl = imageUrl,
+                FileName = Path.GetFileName(dto.BlobName),
+                FileSize = dto.FileSize ?? 0,
+                ContentType = dto.ContentType ?? "image/jpeg"
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error finalizing image upload for property {PropertyId}", dto.PropertyId);
+            return StatusCode(500, new { error = "Failed to finalize image upload", details = ex.Message });
         }
     }
 
@@ -325,6 +463,16 @@ public record PresignUploadResponseDto
     public string UploadUrl { get; init; } = string.Empty;
     public DateTimeOffset ExpiresAt { get; init; }
     public string Method { get; init; } = "PUT";
+}
+
+public record FinalizeImageUploadRequestDto
+{
+    public string PropertyId { get; init; } = string.Empty;
+    public string BlobName { get; init; } = string.Empty;
+    public bool? Enabled { get; init; }
+    public int? Order { get; init; }
+    public long? FileSize { get; init; }
+    public string? ContentType { get; init; }
 }
 
 public record BulkImageUploadResponseDto
