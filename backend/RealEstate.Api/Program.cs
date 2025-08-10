@@ -153,6 +153,7 @@ app.MapHealthChecks("/health");
 // Map endpoints
 app.MapPropertyEndpoints();
 app.MapAuthEndpoints();
+app.MapAdminEndpoints();
 
 // Seed on start
 using (var scope = app.Services.CreateScope())

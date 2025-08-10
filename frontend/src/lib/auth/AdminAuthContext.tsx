@@ -55,26 +55,53 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const fullEmail = email.includes('@') ? email : `${email}@millionluxury.com`;
-    
-    if (fullEmail === MOCK_ADMIN.email && password === MOCK_ADMIN.password) {
-      setUser(MOCK_ADMIN.user);
-      localStorage.setItem('admin_user', JSON.stringify(MOCK_ADMIN.user));
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+      const fullEmail = email.includes('@') ? email : `${email}@millionluxury.com`;
+
+      const res = await fetch(`${baseUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: fullEmail, password })
+      });
+
+      if (!res.ok) {
+        setIsLoading(false);
+        return false;
+      }
+
+      const data = await res.json();
+      const jwt: string | undefined = data?.token;
+      const apiUser = data?.user as { email: string; name: string; role: string } | undefined;
+
+      if (!jwt || !apiUser) {
+        setIsLoading(false);
+        return false;
+      }
+
+      const normalizedUser: AdminUser = {
+        id: 'admin',
+        email: apiUser.email,
+        name: apiUser.name,
+        role: 'admin'
+      };
+
+      setUser(normalizedUser);
+      localStorage.setItem('admin_user', JSON.stringify(normalizedUser));
+      localStorage.setItem('admin_token', jwt);
       setIsLoading(false);
       return true;
+    } catch {
+      setIsLoading(false);
+      return false;
     }
-    
-    setIsLoading(false);
-    return false;
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('admin_user');
+    localStorage.removeItem('admin_token');
   };
 
   const value: AdminAuthContextType = {

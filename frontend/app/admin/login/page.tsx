@@ -25,9 +25,9 @@ export default function LoginPage() {
     setError('');
     
     try {
-      const success = await login(email, password);
+              const success = await login(email, password);
       if (success) {
-        router.push('/admin/dashboard');
+                router.push('/admin/dashboard');
       } else {
         setError('Invalid email or password');
       }
