@@ -11,8 +11,14 @@ using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Asp.Versioning;
 using Serilog;
+using Serilog.Context;
 
 var builder = WebApplication.CreateBuilder(args);
+// Global request body size limit (10 MB). Per-endpoint overrides can be applied via attributes.
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 10 * 1024 * 1024; // 10 MB
+});
 
 // Serilog structured logging
 Log.Logger = new LoggerConfiguration()
@@ -185,6 +191,21 @@ if (!string.IsNullOrEmpty(jwtKey))
 
 // Request logging with Serilog (adds TraceId/correlation info to logs)
 app.UseSerilogRequestLogging();
+
+// Correlation/TraceId header propagation
+app.Use(async (ctx, next) =>
+{
+    var correlationId = ctx.Request.Headers["X-Correlation-Id"].FirstOrDefault()
+                        ?? ctx.TraceIdentifier;
+    ctx.Response.Headers["X-Correlation-Id"] = correlationId;
+    using (LogContext.PushProperty("CorrelationId", correlationId))
+    {
+        await next();
+    }
+});
+
+// Rate limiting for sensitive endpoints (e.g., login)
+app.UseRateLimiting();
 
 app.MapHealthChecks("/health");
 
