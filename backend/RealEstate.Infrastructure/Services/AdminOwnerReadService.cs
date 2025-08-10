@@ -95,8 +95,6 @@ public sealed class AdminOwnerReadService : IAdminOwnerReadService
         );
 
         return detail;
-
-        return owner;
     }
 
     public async Task<long> GetTotalCountAsync(CancellationToken ct = default)

@@ -9,14 +9,15 @@ using RealEstate.Tests.Integration.Infrastructure;
 namespace RealEstate.Tests.Integration.Endpoints;
 
 [TestFixture]
-public class AdminOwnersEndpointsIntegrationTests : IClassFixture<IntegrationTestWebAppFactory>
+public class AdminOwnersEndpointsIntegrationTests
 {
-    private readonly WebApplicationFactory<Program> _factory;
-    private readonly HttpClient _client;
+    private WebApplicationFactory<RealEstate.Api.Program> _factory = default!;
+    private HttpClient _client = default!;
 
-    public AdminOwnersEndpointsIntegrationTests(IntegrationTestWebAppFactory factory)
+    [SetUp]
+    public void Setup()
     {
-        _factory = factory;
+        _factory = new IntegrationTestWebAppFactory();
         _client = _factory.CreateClient();
         _client.DefaultRequestHeaders.Add("Authorization", "Bearer test.token");
     }

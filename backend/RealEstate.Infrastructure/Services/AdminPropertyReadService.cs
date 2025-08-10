@@ -63,48 +63,34 @@ public sealed class AdminPropertyReadService : IAdminPropertyReadService
 
     public async Task<AdminPropertyDetailDto?> GetByIdAsync(string id, CancellationToken ct = default)
     {
-        var property = await _ctx.Properties
-            .Aggregate()
-            .Match(p => p.Id == id && !p.IsDeleted)
-            .Lookup<PropertyDocument, OwnerDocument, PropertyWithOwner>(
-                _ctx.Owners,
-                p => p.OwnerId,
-                o => o.Id,
-                p => p.Owner)
-            .Unwind<PropertyWithOwner, PropertyWithOwner>(p => p.Owner)
-            .Lookup<PropertyWithOwner, PropertyImageDocument, PropertyWithOwnerAndImages>(
-                _ctx.PropertyImages,
-                p => p.Id,
-                i => i.PropertyId,
-                p => p.Images)
-            .Project(p => new AdminPropertyDetailDto(
-                p.Id,
-                p.OwnerId,
-                p.Owner.Name,
-                p.Owner.Address,
-                p.Name,
-                p.Address,
-                p.Price,
-                Enum.Parse<OperationType>(p.OperationType, true),
-                p.Description,
-                p.Beds,
-                p.Baths,
-                p.HalfBaths,
-                p.Sqft,
-                p.Images.Select(i => new AdminPropertyImageDto(
-                    i.Id,
-                    i.File,
-                    i.Enabled,
-                    i.Order,
-                    i.CreatedAt
-                )).ToList(),
-                p.CreatedAt,
-                p.UpdatedAt,
-                p.IsDeleted
-            ))
-            .FirstOrDefaultAsync(ct);
+        var doc = await _ctx.Properties.Find(p => p.Id == id && !p.IsDeleted).FirstOrDefaultAsync(ct);
+        if (doc is null) return null;
 
-        return property;
+        var owner = await _ctx.Owners.Find(o => o.Id == doc.OwnerId && !o.IsDeleted).FirstOrDefaultAsync(ct);
+        var images = await _ctx.PropertyImages
+            .Find(i => i.PropertyId == id && !i.IsDeleted)
+            .SortBy(i => i.Order)
+            .ToListAsync(ct);
+
+        return new AdminPropertyDetailDto(
+            doc.Id,
+            doc.OwnerId,
+            owner?.Name ?? string.Empty,
+            owner?.Address ?? string.Empty,
+            doc.Name,
+            doc.Address,
+            doc.Price,
+            Enum.TryParse<OperationType>(doc.OperationType, true, out var op) ? op : OperationType.Sale,
+            doc.Description,
+            doc.Beds,
+            doc.Baths,
+            doc.HalfBaths,
+            doc.Sqft,
+            images.Select(i => new AdminPropertyImageDto(i.Id, i.File, i.Enabled, i.Order, i.CreatedAt)).ToList(),
+            doc.CreatedAt,
+            doc.UpdatedAt,
+            doc.IsDeleted
+        );
     }
 
     public async Task<long> GetTotalCountAsync(CancellationToken ct = default)

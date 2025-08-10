@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using RealEstate.Application;
 using RealEstate.Application.Interfaces;
 using RealEstate.Application.DTOs;
 using Azure.Storage;
@@ -7,6 +8,9 @@ using Azure.Storage.Sas;
 using Microsoft.Extensions.Configuration;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using RealEstate.Infrastructure;
+using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
 
 namespace RealEstate.Api.Endpoints;
 
@@ -150,16 +154,15 @@ public class AdminImageUploadEndpoints : ControllerBase
             var imageUrl = await _imageStorageService.GetImageUrlAsync(blobName, ct);
 
             // Save image metadata to database
-            var addImageDto = new AddImageDto
-            {
-                PropertyId = propertyId,
-                File = blobName, // Store blob name for reference
-                ThumbnailFile = thumbnailBlobName,
-                Enabled = enabled,
-                Order = order,
-                FileSize = file.Length,
-                ContentType = file.ContentType
-            };
+            var addImageDto = new AddImageDto(
+                PropertyId: propertyId,
+                File: blobName,
+                Enabled: enabled,
+                Order: order,
+                FileSize: file.Length,
+                ContentType: file.ContentType,
+                ThumbnailFile: thumbnailBlobName
+            );
 
             var imageId = await _imageWriteService.AddAsync(addImageDto, ct);
 
@@ -283,16 +286,15 @@ public class AdminImageUploadEndpoints : ControllerBase
             }
 
             // Save metadata
-            var addImageDto = new AddImageDto
-            {
-                PropertyId = dto.PropertyId,
-                File = dto.BlobName,
-                ThumbnailFile = thumbnailBlobName,
-                Enabled = dto.Enabled ?? true,
-                Order = dto.Order ?? 0,
-                FileSize = dto.FileSize ?? 0,
-                ContentType = dto.ContentType ?? "image/jpeg"
-            };
+            var addImageDto = new AddImageDto(
+                PropertyId: dto.PropertyId,
+                File: dto.BlobName,
+                Enabled: dto.Enabled ?? true,
+                Order: dto.Order ?? 0,
+                FileSize: dto.FileSize ?? 0,
+                ContentType: dto.ContentType ?? "image/jpeg",
+                ThumbnailFile: thumbnailBlobName
+            );
             var imageId = await _imageWriteService.AddAsync(addImageDto, ct);
 
             var imageUrl = await _imageStorageService.GetImageUrlAsync(dto.BlobName, ct);
@@ -368,13 +370,12 @@ public class AdminImageUploadEndpoints : ControllerBase
                     var imageUrl = await _imageStorageService.GetImageUrlAsync(blobName, ct);
 
                     // Save image metadata to database
-                    var addImageDto = new AddImageDto
-                    {
-                        PropertyId = propertyId,
-                        File = blobName,
-                        Enabled = true,
-                        Order = results.Count
-                    };
+                    var addImageDto = new AddImageDto(
+                        PropertyId: propertyId,
+                        File: blobName,
+                        Enabled: true,
+                        Order: results.Count
+                    );
 
                     var imageId = await _imageWriteService.AddAsync(addImageDto, ct);
 
