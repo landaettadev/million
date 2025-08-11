@@ -1,6 +1,8 @@
 import { fetchWithAuth } from './auth/fetchWithAuth';
 
-const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+// Prefer NEXT_PUBLIC_API_BASE (host only), fallback to NEXT_PUBLIC_API_BASE_URL (may include /api)
+const rawBase = (process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
+const apiBase = rawBase.endsWith('/api') ? rawBase : `${rawBase}/api`;
 
 // Analytics
 export type DashboardAnalyticsDto = {
@@ -48,7 +50,7 @@ export type RevenueAnalyticsDto = {
 };
 
 export async function getDashboardAnalytics(params?: { startDate?: string; endDate?: string }) {
-  const url = new URL(`${baseUrl}/api/admin/analytics/dashboard`);
+  const url = new URL(`${apiBase}/admin/analytics/dashboard`);
   if (params?.startDate) url.searchParams.set('startDate', params.startDate);
   if (params?.endDate) url.searchParams.set('endDate', params.endDate);
   const res = await fetchWithAuth(url.toString());
@@ -57,7 +59,7 @@ export async function getDashboardAnalytics(params?: { startDate?: string; endDa
 }
 
 export async function getPropertyAnalytics(params?: { startDate?: string; endDate?: string; operationType?: 'sale' | 'rent' }) {
-  const url = new URL(`${baseUrl}/api/admin/analytics/properties`);
+  const url = new URL(`${apiBase}/admin/analytics/properties`);
   if (params?.startDate) url.searchParams.set('startDate', params.startDate);
   if (params?.endDate) url.searchParams.set('endDate', params.endDate);
   if (params?.operationType) url.searchParams.set('operationType', params.operationType);
@@ -67,7 +69,7 @@ export async function getPropertyAnalytics(params?: { startDate?: string; endDat
 }
 
 export async function getOwnerAnalytics(params?: { startDate?: string; endDate?: string }) {
-  const url = new URL(`${baseUrl}/api/admin/analytics/owners`);
+  const url = new URL(`${apiBase}/admin/analytics/owners`);
   if (params?.startDate) url.searchParams.set('startDate', params.startDate);
   if (params?.endDate) url.searchParams.set('endDate', params.endDate);
   const res = await fetchWithAuth(url.toString());
@@ -90,17 +92,26 @@ export type CreatePropertyDto = {
 };
 
 export async function createProperty(dto: CreatePropertyDto) {
-  const res = await fetchWithAuth(`${baseUrl}/api/admin/properties`, {
+  const res = await fetchWithAuth(`${apiBase}/admin/properties`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dto),
   });
-  if (!res.ok) throw new Error('Failed to create property');
+  if (!res.ok) {
+    let message = 'Failed to create property';
+    try {
+      const data = await res.json();
+      message = data?.error || data?.title || message;
+    } catch {
+      try { message = await res.text(); } catch { /* ignore */ }
+    }
+    throw new Error(message);
+  }
   return res.json() as Promise<{ id: string }>;
 }
 
 export async function deleteProperty(id: string) {
-  const res = await fetchWithAuth(`${baseUrl}/api/admin/properties/${id}`, { method: 'DELETE' });
+  const res = await fetchWithAuth(`${apiBase}/admin/properties/${id}`, { method: 'DELETE' });
   if (!res.ok && res.status !== 204) throw new Error('Failed to delete property');
 }
 
@@ -117,7 +128,7 @@ export type UpdatePropertyDto = {
 };
 
 export async function updateProperty(id: string, dto: UpdatePropertyDto) {
-  const res = await fetchWithAuth(`${baseUrl}/api/admin/properties/${id}`, {
+  const res = await fetchWithAuth(`${apiBase}/admin/properties/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dto),
@@ -134,7 +145,7 @@ export type CreateOwnerDto = {
 };
 
 export async function createOwner(dto: CreateOwnerDto) {
-  const res = await fetchWithAuth(`${baseUrl}/api/admin/owners`, {
+  const res = await fetchWithAuth(`${apiBase}/admin/owners`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dto),
@@ -144,19 +155,57 @@ export async function createOwner(dto: CreateOwnerDto) {
 }
 
 export async function deleteOwner(id: string) {
-  const res = await fetchWithAuth(`${baseUrl}/api/admin/owners/${id}`, { method: 'DELETE' });
+  const res = await fetchWithAuth(`${apiBase}/admin/owners/${id}`, { method: 'DELETE' });
   if (!res.ok && res.status !== 204) throw new Error('Failed to delete owner');
 }
 
 export type UpdateOwnerDto = CreateOwnerDto;
 
 export async function updateOwner(id: string, dto: UpdateOwnerDto) {
-  const res = await fetchWithAuth(`${baseUrl}/api/admin/owners/${id}`, {
+  const res = await fetchWithAuth(`${apiBase}/admin/owners/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dto),
   });
   if (!res.ok && res.status !== 204) throw new Error('Failed to update owner');
+}
+
+// Owners - Read
+export type AdminOwnerDto = {
+  id: string;
+  name: string;
+  address: string;
+  photo?: string | null;
+  birthday?: string | null;
+  propertiesCount: number;
+  createdAt: string;
+  updatedAt?: string | null;
+  isDeleted: boolean;
+};
+
+export type PagedResult<T> = {
+  items: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+};
+
+export async function getOwners(params?: {
+  searchTerm?: string;
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+  page?: number;
+  pageSize?: number;
+}) {
+  const url = new URL(`${apiBase}/admin/owners`);
+  if (params?.searchTerm) url.searchParams.set('searchTerm', params.searchTerm);
+  if (params?.sortBy) url.searchParams.set('sortBy', params.sortBy);
+  if (params?.sortDirection) url.searchParams.set('sortDirection', params.sortDirection);
+  if (params?.page) url.searchParams.set('page', String(params.page));
+  if (params?.pageSize) url.searchParams.set('pageSize', String(params.pageSize));
+  const res = await fetchWithAuth(url.toString());
+  if (!res.ok) throw new Error('Failed to fetch owners');
+  return res.json() as Promise<PagedResult<AdminOwnerDto>>;
 }
 
 // Images
@@ -168,7 +217,7 @@ export type AddImageDto = {
 };
 
 export async function addImage(dto: AddImageDto) {
-  const res = await fetchWithAuth(`${baseUrl}/api/admin/images`, {
+  const res = await fetchWithAuth(`${apiBase}/admin/images`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(dto),
@@ -178,8 +227,27 @@ export async function addImage(dto: AddImageDto) {
 }
 
 export async function deleteImage(id: string) {
-  const res = await fetchWithAuth(`${baseUrl}/api/admin/images/${id}`, { method: 'DELETE' });
+  const res = await fetchWithAuth(`${apiBase}/admin/images/${id}`, { method: 'DELETE' });
   if (!res.ok && res.status !== 204) throw new Error('Failed to delete image');
+}
+
+export type PropertyImageDto = {
+  id: string;
+  propertyId: string;
+  blobName: string;
+  imageUrl: string;
+  enabled: boolean;
+  order: number;
+  fileName: string;
+  fileSize: number;
+  contentType: string;
+  createdAt: string;
+};
+
+export async function getPropertyImages(propertyId: string) {
+  const res = await fetchWithAuth(`${apiBase}/admin/properties/${propertyId}/images`);
+  if (!res.ok) throw new Error('Failed to fetch property images');
+  return res.json() as Promise<PropertyImageDto[]>;
 }
 
 // Presigned upload (SAS)
@@ -197,13 +265,78 @@ export type PresignUploadResponse = {
 };
 
 export async function presignImageUpload(req: PresignUploadRequest) {
-  const res = await fetchWithAuth(`${baseUrl}/api/admin/images/presign`, {
+  const res = await fetchWithAuth(`${apiBase}/admin/images/presign`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(req),
   });
   if (!res.ok) throw new Error('Failed to presign upload');
   return res.json() as Promise<PresignUploadResponse>;
+}
+
+// Direct multipart upload to backend (saves to Azure Blob and DB)
+export async function uploadPropertyImage(params: {
+  propertyId: string;
+  file: File;
+  enabled?: boolean;
+  order?: number;
+}) {
+  const form = new FormData();
+  form.append('File', params.file);
+  form.append('PropertyId', params.propertyId);
+  form.append('Enabled', String(params.enabled ?? true));
+  form.append('Order', String(params.order ?? 0));
+  const res = await fetchWithAuth(`${apiBase}/admin/images/upload`, {
+    method: 'POST',
+    body: form,
+  });
+  if (!res.ok) throw new Error('Failed to upload image');
+  return res.json() as Promise<{ imageId: string; blobName: string; imageUrl: string; fileName: string; fileSize: number; contentType: string }>;
+}
+
+// Admin properties read
+export type AdminPropertyDto = {
+  id: string;
+  ownerId: string;
+  ownerName: string;
+  name: string;
+  address: string;
+  price: number;
+  operationType: 'Sale' | 'Rent';
+  description?: string | null;
+  beds?: number | null;
+  baths?: number | null;
+  halfBaths?: number | null;
+  sqft?: number | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  isDeleted: boolean;
+};
+
+export async function getAdminProperties(params?: {
+  searchTerm?: string;
+  ownerId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  operationType?: 'Sale' | 'Rent';
+  sortBy?: string;
+  sortDirection?: 'asc' | 'desc';
+  page?: number;
+  pageSize?: number;
+}) {
+  const url = new URL(`${apiBase}/admin/properties`);
+  if (params?.searchTerm) url.searchParams.set('searchTerm', params.searchTerm);
+  if (params?.ownerId) url.searchParams.set('ownerId', params.ownerId);
+  if (params?.minPrice != null) url.searchParams.set('minPrice', String(params.minPrice));
+  if (params?.maxPrice != null) url.searchParams.set('maxPrice', String(params.maxPrice));
+  if (params?.operationType) url.searchParams.set('operationType', params.operationType);
+  if (params?.sortBy) url.searchParams.set('sortBy', params.sortBy);
+  if (params?.sortDirection) url.searchParams.set('sortDirection', params.sortDirection);
+  if (params?.page) url.searchParams.set('page', String(params.page));
+  if (params?.pageSize) url.searchParams.set('pageSize', String(params.pageSize));
+  const res = await fetchWithAuth(url.toString());
+  if (!res.ok) throw new Error('Failed to fetch properties');
+  return res.json() as Promise<PagedResult<AdminPropertyDto>>;
 }
 
 

@@ -123,11 +123,11 @@ export async function getProperties(params: GetPropertiesParams = {}): Promise<P
   }
 
   if (typeof minPrice === 'number') {
-    results = results.filter((p) => p.price >= minPrice)
+    results = results.filter((p) => (p.price ?? 0) >= minPrice)
   }
 
   if (typeof maxPrice === 'number') {
-    results = results.filter((p) => p.price <= maxPrice)
+    results = results.filter((p) => (p.price ?? 0) <= maxPrice)
   }
 
   if (operationType) {
@@ -135,7 +135,7 @@ export async function getProperties(params: GetPropertiesParams = {}): Promise<P
   }
 
   // Sort by price asc
-  results.sort((a, b) => a.price - b.price)
+  results.sort((a, b) => (a.price ?? 0) - (b.price ?? 0))
 
   const total = results.length
   const start = (page - 1) * pageSize

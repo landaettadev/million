@@ -12,7 +12,7 @@ jest.mock('../../components/property/PropertyCarousel', () => ({
         <div key={item.id} data-testid={`property-${item.id}`}>
           <h3>{item.name}</h3>
           <p>{item.address}</p>
-          <p>${item.price.toLocaleString()}</p>
+          <p>${item.price?.toLocaleString() || 'Price on request'}</p>
         </div>
       ))}
     </div>

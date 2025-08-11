@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using MongoDB.Driver;
 using RealEstate.Application;
+using RealEstate.Application.Interfaces;
 using RealEstate.Infrastructure;
 
 namespace RealEstate.Infrastructure.Services;
@@ -8,35 +9,50 @@ namespace RealEstate.Infrastructure.Services;
 public sealed class AdminPropertyReadService : IAdminPropertyReadService
 {
     private readonly MongoContext _ctx;
+    private readonly IImageStorageService _imageStorageService;
 
-    public AdminPropertyReadService(MongoContext ctx)
+    public AdminPropertyReadService(MongoContext ctx, IImageStorageService imageStorageService)
     {
         _ctx = ctx;
+        _imageStorageService = imageStorageService;
     }
 
     public async Task<PagedResult<AdminPropertyDto>> SearchAsync(AdminPropertySearchQuery query, CancellationToken ct = default)
     {
         var filter = BuildFilter(query);
-        var sort = BuildSort(query.SortBy, query.SortDirection);
         var skip = (query.Page - 1) * query.PageSize;
 
-        var properties = await _ctx.Properties
-            .Aggregate()
-            .Match(filter)
-            .Lookup<PropertyDocument, OwnerDocument, PropertyWithOwner>(
-                _ctx.Owners,
-                p => p.OwnerId,
-                o => o.Id,
-                p => p.Owner)
-            .Unwind<PropertyWithOwner, PropertyWithOwner>(p => p.Owner)
-            .Project(p => new AdminPropertyDto(
+        // Use a simpler approach: fetch properties first, then get owners separately
+        var propertyDocs = await _ctx.Properties
+            .Find(filter)
+            .Skip(skip)
+            .Limit(query.PageSize)
+            .ToListAsync(ct);
+
+        var totalCount = await _ctx.Properties.CountDocumentsAsync(filter, cancellationToken: ct);
+
+        // Get all unique owner IDs from the properties
+        var ownerIds = propertyDocs.Select(p => p.OwnerId).Distinct().ToList();
+        
+        // Fetch all owners in one query
+        var owners = await _ctx.Owners
+            .Find(o => ownerIds.Contains(o.Id) && !o.IsDeleted)
+            .ToListAsync(ct);
+        
+        var ownerDict = owners.ToDictionary(o => o.Id, o => o);
+
+        // Build the result DTOs
+        var properties = propertyDocs.Select(p => 
+        {
+            var owner = ownerDict.GetValueOrDefault(p.OwnerId);
+            return new AdminPropertyDto(
                 p.Id,
                 p.OwnerId,
-                p.Owner.Name,
+                owner?.Name ?? "Unknown Owner",
                 p.Name,
                 p.Address,
                 p.Price,
-                Enum.Parse<OperationType>(p.OperationType, true),
+                string.Equals(p.OperationType, "sale", StringComparison.OrdinalIgnoreCase) ? OperationType.Sale : OperationType.Rent,
                 p.Description,
                 p.Beds,
                 p.Baths,
@@ -45,13 +61,8 @@ public sealed class AdminPropertyReadService : IAdminPropertyReadService
                 p.CreatedAt,
                 p.UpdatedAt,
                 p.IsDeleted
-            ))
-            .Sort(BuildSort(query.SortBy, query.SortDirection))
-            .Skip(skip)
-            .Limit(query.PageSize)
-            .ToListAsync(ct);
-
-        var totalCount = await _ctx.Properties.CountDocumentsAsync(filter, cancellationToken: ct);
+            );
+        }).ToList();
 
         return new PagedResult<AdminPropertyDto>(
             properties,
@@ -80,13 +91,24 @@ public sealed class AdminPropertyReadService : IAdminPropertyReadService
             doc.Name,
             doc.Address,
             doc.Price,
-            Enum.TryParse<OperationType>(doc.OperationType, true, out var op) ? op : OperationType.Sale,
+            string.Equals(doc.OperationType, "sale", StringComparison.OrdinalIgnoreCase) ? OperationType.Sale : OperationType.Rent,
             doc.Description,
             doc.Beds,
             doc.Baths,
             doc.HalfBaths,
             doc.Sqft,
-            images.Select(i => new AdminPropertyImageDto(i.Id, i.File, i.Enabled, i.Order, i.CreatedAt)).ToList(),
+            await Task.WhenAll(images.Select(async i => new AdminPropertyImageDto(
+                i.Id, 
+                i.PropertyId, 
+                i.File, 
+                await _imageStorageService.GetImageUrlAsync(i.File, ct), 
+                i.Enabled, 
+                i.Order, 
+                i.File, // Use file name as filename for now
+                i.FileSize, 
+                i.ContentType, 
+                i.CreatedAt
+            ))),
             doc.CreatedAt,
             doc.UpdatedAt,
             doc.IsDeleted

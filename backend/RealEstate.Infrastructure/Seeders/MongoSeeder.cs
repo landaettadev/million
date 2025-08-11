@@ -30,6 +30,34 @@ public sealed class MongoSeeder
         var insertIfEmpty = _config.GetValue<bool>("Seed:InsertIfEmpty");
         if (!seedEnabled) return;
 
+        // Seed Admin user (idempotent) - do this BEFORE early return based on properties count
+        var seedAdminEmail = _config.GetValue<string>("Admin:Seed:Email");
+        var seedAdminPassword = _config.GetValue<string>("Admin:Seed:Password");
+        if (!string.IsNullOrWhiteSpace(seedAdminEmail) && !string.IsNullOrWhiteSpace(seedAdminPassword))
+        {
+            var existingAdmin = await _ctx.AdminUsers.Find(u => u.Email == seedAdminEmail).FirstOrDefaultAsync(ct);
+            if (existingAdmin is null)
+            {
+                var admin = new AdminUserDocument
+                {
+                    Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+                    Email = seedAdminEmail,
+                    Name = "Administrator",
+                    Role = "Admin",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(seedAdminPassword)
+                };
+                await _ctx.AdminUsers.InsertOneAsync(admin, cancellationToken: ct);
+            }
+            else
+            {
+                var update = Builders<AdminUserDocument>.Update
+                    .Set(x => x.Role, "Admin")
+                    .Set(x => x.Name, string.IsNullOrWhiteSpace(existingAdmin.Name) ? "Administrator" : existingAdmin.Name)
+                    .Set(x => x.PasswordHash, BCrypt.Net.BCrypt.HashPassword(seedAdminPassword));
+                await _ctx.AdminUsers.UpdateOneAsync(x => x.Id == existingAdmin.Id, update, cancellationToken: ct);
+            }
+        }
+
         var count = await _ctx.Properties.CountDocumentsAsync(FilterDefinition<PropertyDocument>.Empty, cancellationToken: ct);
         if (count > 0 && insertIfEmpty) return;
 
@@ -106,25 +134,7 @@ public sealed class MongoSeeder
         }
         await _ctx.PropertyTraces.InsertManyAsync(traces, cancellationToken: ct);
 
-        // Seed Admin user (idempotent)
-        var seedAdminEmail = _config.GetValue<string>("Admin:Seed:Email");
-        var seedAdminPassword = _config.GetValue<string>("Admin:Seed:Password");
-        if (!string.IsNullOrWhiteSpace(seedAdminEmail) && !string.IsNullOrWhiteSpace(seedAdminPassword))
-        {
-            var existingAdmin = await _ctx.AdminUsers.Find(u => u.Email == seedAdminEmail).FirstOrDefaultAsync(ct);
-            if (existingAdmin is null)
-            {
-                var admin = new AdminUserDocument
-                {
-                    Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-                    Email = seedAdminEmail,
-                    Name = "Administrator",
-                    Role = "Admin",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(seedAdminPassword)
-                };
-                await _ctx.AdminUsers.InsertOneAsync(admin, cancellationToken: ct);
-            }
-        }
+        // Admin user seeding done earlier to avoid early return preventing it
     }
 
     private static string GetRandomOwnerName(Random random)

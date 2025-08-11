@@ -57,10 +57,11 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     setIsLoading(true);
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+      const apiBase = (process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '');
+      const loginUrl = apiBase ? `${apiBase}/admin/auth/login` : '/api/admin/auth/login';
       const fullEmail = email.includes('@') ? email : `${email}@millionluxury.com`;
 
-      const res = await fetch(`${baseUrl}/auth/login`, {
+      const res = await fetch(loginUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: fullEmail, password })

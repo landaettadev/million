@@ -1,15 +1,28 @@
 'use client';
 
 import { withAdminAuth } from '../../../../src/lib/auth/AdminAuthContext';
-import { createOwner, deleteOwner, updateOwner } from '../../../../src/lib/adminApi';
+import { createOwner, deleteOwner, updateOwner, getOwners, type AdminOwnerDto } from '../../../../src/lib/adminApi';
 import { Plus, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 function OwnersAdminPage() {
-  const [owners, setOwners] = useState<Array<{ id: string; name: string; email?: string; phone?: string; properties?: number; totalValue?: string }>>([
-    { id: '1', name: 'John Doe', properties: 3, totalValue: '$8,200,000' },
-    { id: '2', name: 'Jane Smith', properties: 2, totalValue: '$5,800,000' },
-  ]);
+  const [owners, setOwners] = useState<AdminOwnerDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  // Load owners from API
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const result = await getOwners({ page: 1, pageSize: 50 });
+        if (active) setOwners(result.items);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    load();
+    return () => { active = false; };
+  }, []);
   const [isCreating, setIsCreating] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({ name: '', address: '' });
@@ -20,7 +33,9 @@ function OwnersAdminPage() {
     try {
       setIsCreating(true);
       const res = await createOwner({ name: form.name, address: form.address });
-      setOwners([{ id: res.id, name: form.name, properties: 0, totalValue: '$0' }, ...owners]);
+      // Reload list to reflect persisted state
+      const result = await getOwners({ page: 1, pageSize: 50 });
+      setOwners(result.items);
       setShowModal(false);
       setForm({ name: '', address: '' });
     } finally {
@@ -30,7 +45,8 @@ function OwnersAdminPage() {
 
   const handleDelete = async (id: string) => {
     await deleteOwner(id);
-    setOwners(owners.filter(o => o.id !== id));
+    const result = await getOwners({ page: 1, pageSize: 50 });
+    setOwners(result.items);
   };
 
   const openEdit = (owner: { id: string; name: string }) => {
@@ -48,7 +64,8 @@ function OwnersAdminPage() {
     setIsCreating(true);
     try {
       await updateOwner(editId, { name: form.name, address: form.address });
-      setOwners(owners.map(o => (o.id === editId ? { ...o, name: form.name } : o)));
+      const result = await getOwners({ page: 1, pageSize: 50 });
+      setOwners(result.items);
       setShowModal(false);
       setEditId(null);
       setForm({ name: '', address: '' });
@@ -67,7 +84,9 @@ function OwnersAdminPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {owners.map((owner) => (
+        {loading ? (
+          <div className="text-gray-400">Loading owners…</div>
+        ) : owners.map((owner) => (
           <div key={owner.id} className="bg-neutral-900 border border-white/10 rounded-xl p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-lg font-semibold text-white">{owner.name}</h3>
@@ -76,10 +95,10 @@ function OwnersAdminPage() {
               </button>
             </div>
             <div className="pt-2">
-              <button onClick={() => openEdit(owner)} className="text-xs text-gray-300 underline">Edit</button>
+              <button onClick={() => openEdit({ id: owner.id, name: owner.name })} className="text-xs text-gray-300 underline">Edit</button>
             </div>
-            <div className="text-sm text-gray-400">Properties: {owner.properties ?? 0}</div>
-            <div className="text-sm text-gray-400">Total Value: {owner.totalValue ?? '-'}</div>
+            <div className="text-sm text-gray-400">Properties: {owner.propertiesCount ?? 0}</div>
+            <div className="text-sm text-gray-400">Address: {owner.address ?? '-'}</div>
           </div>
         ))}
       </div>
