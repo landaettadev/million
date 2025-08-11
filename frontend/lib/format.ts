@@ -1,4 +1,9 @@
-export function formatPriceUSD(value: number): string {
+export function formatPriceUSD(value: number | undefined | null): string {
+  // Handle undefined, null, or invalid values
+  if (value == null || typeof value !== 'number' || isNaN(value)) {
+    return 'Price on request'
+  }
+  
   if (value >= 1_000_000) {
     const v = value / 1_000_000
     return `$${v.toFixed(v < 10 ? 1 : 0)}M`

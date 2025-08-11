@@ -66,6 +66,13 @@ public sealed class PropertyWriteService : IPropertyWriteService
         var res = await _ctx.Properties.UpdateOneAsync(x => x.Id == id && x.IsDeleted, update, cancellationToken: ct);
         return res.ModifiedCount > 0;
     }
+
+    public async Task<bool> SetFeaturedAsync(string id, bool isFeatured, CancellationToken ct = default)
+    {
+        var update = Builders<PropertyDocument>.Update.Set(x => x.IsFeatured, isFeatured).Set(x => x.UpdatedAt, DateTime.UtcNow);
+        var res = await _ctx.Properties.UpdateOneAsync(x => x.Id == id && !x.IsDeleted, update, cancellationToken: ct);
+        return res.ModifiedCount > 0;
+    }
 }
 
 

@@ -10,7 +10,9 @@ import type { PropertyLiteDto } from '../lib/types'
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true)
+  const [loadingFeatured, setLoadingFeatured] = useState(true)
   const [all, setAll] = useState<PropertyLiteDto[]>([])
+  const [featured, setFeatured] = useState<PropertyLiteDto[]>([])
   const [reducedMotion, setReducedMotion] = useState(false)
 
   useEffect(() => {
@@ -26,9 +28,27 @@ export default function HomePage() {
     }
   }, [])
 
-  const featured = useMemo(() => {
-    return [...all].sort((a, b) => b.price - a.price).slice(0, 3)
-  }, [all])
+  // Load featured properties separately
+  useEffect(() => {
+    let active = true
+    const loadFeatured = async () => {
+      setLoadingFeatured(true)
+      try {
+        const featuredProps = await api.getFeaturedProperties(3)
+        if (active) setFeatured(featuredProps)
+      } catch (error) {
+        console.error('Failed to load featured properties:', error)
+        // No fallback during initial load to avoid dependencies
+        if (active) setFeatured([])
+      } finally {
+        if (active) setLoadingFeatured(false)
+      }
+    }
+    loadFeatured()
+    return () => {
+      active = false
+    }
+  }, [])
 
   const latest = useMemo(() => {
     return [...all].slice(0, 6)
@@ -131,15 +151,15 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {loading
+            {loadingFeatured
               ? Array.from({ length: 3 }).map((_, i) => (
                   <PropertyCard
-                    key={`fsk-${i}`}
-                    item={{ id: String(i), idOwner: 'loading', name: 'Loading', address: 'Loading', price: 0, operationType: 'sale' }}
+                    key={`featured-skeleton-${i}`}
+                    item={{ id: `featured-loading-${i}`, idOwner: 'loading', name: 'Loading', address: 'Loading', price: 0, operationType: 'sale' }}
                     loading
                   />
                 ))
-              : featured.map((p) => <PropertyCard key={p.id} item={p} />)}
+              : featured.map((p, index) => <PropertyCard key={`featured-${p.id}-${index}`} item={p} />)}
           </div>
         </div>
       </section>
@@ -188,12 +208,12 @@ export default function HomePage() {
             {loading
               ? Array.from({ length: 6 }).map((_, i) => (
                   <PropertyCard
-                    key={`lsk-${i}`}
-                    item={{ id: String(i), idOwner: 'loading', name: 'Loading', address: 'Loading', price: 0, operationType: 'sale' }}
+                    key={`latest-skeleton-${i}`}
+                    item={{ id: `latest-loading-${i}`, idOwner: 'loading', name: 'Loading', address: 'Loading', price: 0, operationType: 'sale' }}
                     loading
                   />
                 ))
-              : latest.map((p) => <PropertyCard key={p.id} item={p} />)}
+              : latest.map((p, index) => <PropertyCard key={`latest-${p.id}-${index}`} item={p} />)}
           </div>
         </div>
       </section>

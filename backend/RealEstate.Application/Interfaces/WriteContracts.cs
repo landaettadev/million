@@ -59,6 +59,7 @@ public interface IPropertyWriteService
     Task<bool> UpdateAsync(string id, UpdatePropertyDto dto, CancellationToken ct = default);
     Task<bool> DeleteAsync(string id, CancellationToken ct = default);
     Task<bool> UndeleteAsync(string id, CancellationToken ct = default);
+    Task<bool> SetFeaturedAsync(string id, bool isFeatured, CancellationToken ct = default);
 }
 
 public interface IOwnerWriteService

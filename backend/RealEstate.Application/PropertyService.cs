@@ -7,6 +7,7 @@ public interface IPropertyRepository
 {
     Task<PagedResult<PropertyLiteDto>> SearchAsync(SearchPropertiesQuery query, CancellationToken cancellationToken = default);
     Task<PropertyDetailDto?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<List<PropertyLiteDto>> GetFeaturedPropertiesAsync(int limit = 6, CancellationToken cancellationToken = default);
 }
 
 public sealed class PropertyReadService : IPropertyReadService
@@ -23,6 +24,9 @@ public sealed class PropertyReadService : IPropertyReadService
 
     public Task<PropertyDetailDto?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
         => _repository.GetByIdAsync(id, cancellationToken);
+
+    public Task<List<PropertyLiteDto>> GetFeaturedPropertiesAsync(int limit = 6, CancellationToken cancellationToken = default)
+        => _repository.GetFeaturedPropertiesAsync(limit, cancellationToken);
 
     private static SearchPropertiesQuery Normalize(SearchPropertiesQuery q)
     {
