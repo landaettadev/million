@@ -43,8 +43,10 @@ export function SmartImage({
       setHasError(true)
       console.log('Image failed to load:', src)
       
-      // Only use fallback if the image is not from Azure Blob Storage
-      if (!src.includes('millionstorageprod.blob.core.windows.net')) {
+      // Only use fallback if the image is not from Azure Blob Storage (production or development)
+      const isAzureImage = src.includes('millionstorageprod.blob.core.windows.net') || 
+                          src.includes('127.0.0.1:10000')
+      if (!isAzureImage) {
         console.log('Using fallback image for:', src)
         setCurrentSrc(generateFallback())
       } else {
@@ -61,7 +63,9 @@ export function SmartImage({
     
     // Log the image source being used
     if (src.includes('millionstorageprod.blob.core.windows.net')) {
-      console.log('Using Azure image:', src)
+      console.log('Using production Azure image:', src)
+    } else if (src.includes('127.0.0.1:10000')) {
+      console.log('Using local Azurite image:', src)
     } else if (src.includes('picsum.photos')) {
       console.log('Using placeholder image:', src)
     } else {

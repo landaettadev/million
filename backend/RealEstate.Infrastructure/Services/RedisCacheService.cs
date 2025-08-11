@@ -6,16 +6,6 @@ using RealEstate.Application;
 
 namespace RealEstate.Infrastructure.Services;
 
-public interface ICacheService
-{
-    Task<T?> GetAsync<T>(string key);
-    Task SetAsync<T>(string key, T value, TimeSpan? expiry = null);
-    Task RemoveAsync(string key);
-    Task RemovePatternAsync(string pattern);
-    Task<bool> ExistsAsync(string key);
-    Task<long> IncrementAsync(string key, long value = 1);
-}
-
 public class RedisCacheService : ICacheService, IDisposable
 {
     private readonly IConnectionMultiplexer _redis;
@@ -29,9 +19,7 @@ public class RedisCacheService : ICacheService, IDisposable
         
         var connectionString = configuration["Redis:ConnectionString"] ?? "localhost:6379";
         var options = ConfigurationOptions.Parse(connectionString);
-        options.AbortConnect = false;
         options.ConnectRetry = 3;
-        options.ReconnectRetryPolicy = new ExponentialRetry(5000);
         
         _redis = ConnectionMultiplexer.Connect(options);
         _database = _redis.GetDatabase();
@@ -45,7 +33,7 @@ public class RedisCacheService : ICacheService, IDisposable
         _logger.LogInformation("Redis cache service initialized with connection: {ConnectionString}", connectionString);
     }
 
-    public async Task<T?> GetAsync<T>(string key)
+    public async Task<T?> GetAsync<T>(string key, CancellationToken ct = default)
     {
         try
         {
@@ -67,7 +55,7 @@ public class RedisCacheService : ICacheService, IDisposable
         }
     }
 
-    public async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null)
+    public async Task SetAsync<T>(string key, T value, TimeSpan? expiry = null, CancellationToken ct = default)
     {
         try
         {
@@ -82,7 +70,7 @@ public class RedisCacheService : ICacheService, IDisposable
         }
     }
 
-    public async Task RemoveAsync(string key)
+    public async Task RemoveAsync(string key, CancellationToken ct = default)
     {
         try
         {
@@ -98,7 +86,7 @@ public class RedisCacheService : ICacheService, IDisposable
         }
     }
 
-    public async Task RemovePatternAsync(string pattern)
+    public async Task RemovePatternAsync(string pattern, CancellationToken ct = default)
     {
         try
         {
@@ -118,7 +106,7 @@ public class RedisCacheService : ICacheService, IDisposable
         }
     }
 
-    public async Task<bool> ExistsAsync(string key)
+    public async Task<bool> ExistsAsync(string key, CancellationToken ct = default)
     {
         try
         {
@@ -131,11 +119,19 @@ public class RedisCacheService : ICacheService, IDisposable
         }
     }
 
-    public async Task<long> IncrementAsync(string key, long value = 1)
+    public async Task<long> IncrementAsync(string key, long value = 1, TimeSpan? expiry = null, CancellationToken ct = default)
     {
         try
         {
-            return await _database.StringIncrementAsync(key, value);
+            var result = await _database.StringIncrementAsync(key, value);
+            
+            // Set expiry if specified
+            if (expiry.HasValue)
+            {
+                await _database.KeyExpireAsync(key, expiry.Value);
+            }
+            
+            return result;
         }
         catch (Exception ex)
         {
@@ -163,7 +159,7 @@ public class InMemoryCacheService : ICacheService
         _logger.LogInformation("In-memory cache service initialized");
     }
 
-    public Task<T?> GetAsync<T>(string key)
+    public Task<T?> GetAsync<T>(string key, CancellationToken ct = default)
     {
         lock (_lock)
         {
@@ -185,7 +181,7 @@ public class InMemoryCacheService : ICacheService
         }
     }
 
-    public Task SetAsync<T>(string key, T value, TimeSpan? expiry = null)
+    public Task SetAsync<T>(string key, T value, TimeSpan? expiry = null, CancellationToken ct = default)
     {
         lock (_lock)
         {
@@ -197,7 +193,7 @@ public class InMemoryCacheService : ICacheService
         }
     }
 
-    public Task RemoveAsync(string key)
+    public Task RemoveAsync(string key, CancellationToken ct = default)
     {
         lock (_lock)
         {
@@ -210,7 +206,7 @@ public class InMemoryCacheService : ICacheService
         }
     }
 
-    public Task RemovePatternAsync(string pattern)
+    public Task RemovePatternAsync(string pattern, CancellationToken ct = default)
     {
         lock (_lock)
         {
@@ -225,7 +221,7 @@ public class InMemoryCacheService : ICacheService
         }
     }
 
-    public Task<bool> ExistsAsync(string key)
+    public Task<bool> ExistsAsync(string key, CancellationToken ct = default)
     {
         lock (_lock)
         {
@@ -237,7 +233,7 @@ public class InMemoryCacheService : ICacheService
         }
     }
 
-    public Task<long> IncrementAsync(string key, long value = 1)
+    public Task<long> IncrementAsync(string key, long value = 1, TimeSpan? expiry = null, CancellationToken ct = default)
     {
         lock (_lock)
         {

@@ -1,71 +1,61 @@
-using RealEstate.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using RealEstate.Application;
+using System.IO;
 
 namespace RealEstate.Infrastructure.Services;
 
 public sealed class LocalFileStorageService : IImageStorageService
 {
-    private readonly string _basePath;
+    private readonly string _uploadPath;
     private readonly string _baseUrl;
+    private readonly ILogger<LocalFileStorageService> _logger;
 
-    public LocalFileStorageService()
+    public LocalFileStorageService(IConfiguration configuration, ILogger<LocalFileStorageService> logger)
     {
-        _basePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
-        _baseUrl = "http://localhost:5244/images";
+        _uploadPath = configuration["LocalStorage:UploadPath"] ?? "wwwroot/images";
+        _baseUrl = configuration["LocalStorage:BaseUrl"] ?? "/images";
+        _logger = logger;
         
-        // Ensure directory exists
-        Directory.CreateDirectory(_basePath);
+        // Ensure upload directory exists
+        Directory.CreateDirectory(_uploadPath);
     }
 
-    public async Task<string> UploadImageAsync(Stream imageStream, string fileName, string contentType, CancellationToken cancellationToken = default)
+    public async Task<string> UploadAsync(Stream fileStream, string fileName, string contentType, CancellationToken ct = default)
     {
-        var uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
-        var filePath = Path.Combine(_basePath, uniqueFileName);
-
-        using var fileStream = new FileStream(filePath, FileMode.Create);
-        await imageStream.CopyToAsync(fileStream, cancellationToken);
-
+        var uniqueFileName = GenerateUniqueFileName(fileName);
+        var filePath = Path.Combine(_uploadPath, uniqueFileName);
+        
+        using var fileStream2 = File.Create(filePath);
+        await fileStream.CopyToAsync(fileStream2, ct);
+        
+        _logger.LogInformation("File uploaded locally: {FileName} -> {FilePath}", fileName, filePath);
         return uniqueFileName;
     }
 
-    public Task<string> GetImageUrlAsync(string blobName, CancellationToken cancellationToken = default)
+    public Task DeleteAsync(string fileName, CancellationToken ct = default)
     {
-        var url = $"{_baseUrl}/{blobName}";
-        return Task.FromResult(url);
-    }
-
-    public Task<bool> DeleteImageAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        try
+        var filePath = Path.Combine(_uploadPath, fileName);
+        if (File.Exists(filePath))
         {
-            var filePath = Path.Combine(_basePath, blobName);
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-                return Task.FromResult(true);
-            }
-            return Task.FromResult(false);
-        }
-        catch
-        {
-            return Task.FromResult(false);
-        }
-    }
-
-    public Task<Stream> DownloadImageAsync(string blobName, CancellationToken cancellationToken = default)
-    {
-        var filePath = Path.Combine(_basePath, blobName);
-        if (!File.Exists(filePath))
-        {
-            throw new FileNotFoundException($"Image file not found: {blobName}");
+            File.Delete(filePath);
+            _logger.LogInformation("File deleted locally: {FilePath}", filePath);
         }
         
-        var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-        return Task.FromResult((Stream)stream);
+        return Task.CompletedTask;
     }
 
-    public Task<bool> ImageExistsAsync(string blobName, CancellationToken cancellationToken = default)
+    public string GetImageUrl(string imagePath)
     {
-        var filePath = Path.Combine(_basePath, blobName);
-        return Task.FromResult(File.Exists(filePath));
+        return $"{_baseUrl.TrimEnd('/')}/{imagePath}";
+    }
+
+    private static string GenerateUniqueFileName(string fileName)
+    {
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+        var extension = Path.GetExtension(fileName);
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+        
+        return $"{nameWithoutExtension}-{timestamp}{extension}";
     }
 }
