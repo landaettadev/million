@@ -6,6 +6,30 @@ import { ApiError, ApiErrorResponse, handleApiError, TimeoutError } from './erro
 // Base URL for real API (.NET backend)
 const baseUrl = (process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || '').replace(/\/$/, '')
 
+// Helper function to build full image URL
+function buildImageUrl(imagePath: string): string {
+  if (!imagePath) return ''
+  
+  // If it's already a full URL, return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    console.log('Image already has full URL:', imagePath)
+    return imagePath
+  }
+  
+  // Use the actual Azure Blob Storage URLs directly
+  // The images are publicly accessible at: https://millionstorageprod.blob.core.windows.net/property-images/{imagePath}
+  const storageAccountName = 'millionstorageprod'
+  const containerName = 'property-images'
+  
+  // Return the full Azure Blob Storage URL
+  const fullUrl = `https://${storageAccountName}.blob.core.windows.net/${containerName}/${imagePath}`
+  
+  // Debug logging
+  console.log('Building image URL:', { imagePath, fullUrl })
+  
+  return fullUrl
+}
+
 // Map backend OperationType enum to frontend string
 function mapOperationType(backendType: number): 'sale' | 'rent' {
   return backendType === 0 ? 'sale' : 'rent'
@@ -19,7 +43,7 @@ function mapBackendPropertyToLite(backendProperty: any): PropertyLiteDto {
     name: backendProperty.Name,
     address: backendProperty.Address,
     price: backendProperty.Price,
-    image: backendProperty.Image,
+    image: buildImageUrl(backendProperty.Image),
     operationType: mapOperationType(backendProperty.OperationType),
     beds: backendProperty.Beds,
     baths: backendProperty.Baths,
@@ -35,12 +59,12 @@ function mapBackendPropertyToDetail(backendProperty: any): PropertyDetailDto {
     name: backendProperty.Name,
     address: backendProperty.Address,
     price: backendProperty.Price,
-    image: backendProperty.Image,
+    image: buildImageUrl(backendProperty.Image),
     operationType: mapOperationType(backendProperty.OperationType),
     beds: backendProperty.Beds,
     baths: backendProperty.Baths,
     sqft: backendProperty.Sqft,
-    images: backendProperty.Images || [],
+    images: (backendProperty.Images || []).map(buildImageUrl),
     description: backendProperty.Description
   }
 }

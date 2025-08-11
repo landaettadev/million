@@ -20,11 +20,18 @@ public static class DependencyInjection
         services.AddScoped<IAdminUserRepository, AdminUserRepository>();
         services.AddScoped<IOwnerWriteService, OwnerWriteService>();
         services.AddScoped<IAdminOwnerReadService, Services.AdminOwnerReadService>();
+        services.AddScoped<IAdminImageReadService, Services.AdminImageReadService>();
         services.AddScoped<IImageWriteService, ImageWriteService>();
+        services.AddScoped<IAdminAnalyticsService, AdminAnalyticsService>();
         
-        // Image Storage Service - use Azure Blob Storage (with Azurite for development)
-        services.AddScoped<IImageStorageService, AzureBlobStorageService>();
-        
+        // Image Storage Service - use Azure Blob Storage with development fallback
+        services.AddScoped<AzureBlobStorageService>();
+        services.AddScoped<IImageStorageService>(provider =>
+        {
+            var azureService = provider.GetRequiredService<AzureBlobStorageService>();
+            return new DevelopmentImageStorageService(azureService);
+        });
+
         services.AddSingleton<MongoSeeder>();
 
         return services;

@@ -22,14 +22,14 @@ resource "azurerm_storage_account" "sa" {
   location                 = azurerm_resource_group.rg.location
   account_tier             = "Standard"
   account_replication_type = "LRS"
-  allow_blob_public_access = false
+  allow_blob_public_access = true
   min_tls_version          = "TLS1_2"
 }
 
 resource "azurerm_storage_container" "images" {
   name                  = "property-images"
   storage_account_name  = azurerm_storage_account.sa.name
-  container_access_type = "private"
+  container_access_type = "blob"
 }
 
 resource "azurerm_storage_container" "thumbs" {

@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { PropertyCard } from '@/components/property/PropertyCard'
-import type { PropertyLiteDto } from '@/lib/types'
+import '@testing-library/jest-dom'
+import { PropertyCard } from '../../../components/property/PropertyCard'
+import type { PropertyLiteDto } from '../../../lib/types'
 
 // Mock Next.js Link component
 jest.mock('next/link', () => {
@@ -63,7 +64,11 @@ describe('PropertyCard', () => {
     const propertyWithoutImage = { ...mockProperty, image: undefined }
     render(<PropertyCard item={propertyWithoutImage} />)
     
-    expect(screen.queryByAltText(/Luxury Apartment/)).not.toBeInTheDocument()
+    // Should show a placeholder image when no image is provided
+    const placeholderImage = screen.getByAltText('Luxury Apartment — 123 Park Avenue, New York')
+    expect(placeholderImage).toBeInTheDocument()
+    // The placeholder should be a picsum URL
+    expect(placeholderImage).toHaveAttribute('src', expect.stringMatching(/picsum\.photos/))
   })
 
   it('renders project name when available', () => {

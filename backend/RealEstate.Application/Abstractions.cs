@@ -63,6 +63,28 @@ public sealed record PagedResult<T>(
     long Total
 );
 
+public sealed record PropertyImageDto(
+    string Id,
+    string FileName,
+    string Url,
+    long Size,
+    string ContentType,
+    bool IsMain,
+    bool IsEnabled,
+    int Order,
+    DateTime UploadedAt
+);
+
+public sealed record OwnerDetailDto(
+    string Id,
+    string Name,
+    string Email,
+    string Phone,
+    string Address,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt
+);
+
 public interface IPropertyReadService
 {
     Task<PagedResult<PropertyLiteDto>> SearchAsync(SearchPropertiesQuery query, CancellationToken cancellationToken = default);

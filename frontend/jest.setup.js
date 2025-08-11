@@ -60,8 +60,8 @@ global.ReadableStream = ReadableStream
 global.Response = Response
 global.Request = Request
 
-// Mock fetch for tests
-global.fetch = jest.fn()
+// Note: Don't mock fetch globally - let MSW handle it
+// global.fetch = jest.fn()
 
 // Set test environment variables
 process.env.NEXT_PUBLIC_API_BASE = 'http://localhost:5244'

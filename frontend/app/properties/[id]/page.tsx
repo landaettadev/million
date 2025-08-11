@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import { useRouter, useParams } from 'next/navigation'
 import { Button } from '../../../components/ui/Button'
 import { Badge } from '../../../components/ui/Badge'
@@ -9,9 +8,12 @@ import { Skeleton } from '../../../components/ui/Skeleton'
 import { ErrorBoundary } from '../../../components/ui/ErrorBoundary'
 import { ErrorMessage } from '../../../components/ui/ErrorMessage'
 import { Gallery } from '../../../components/property/Gallery'
+import { SmartImage } from '../../../components/ui/SmartImage'
+import { SellPropertyModal } from '../../../components/ui/SellPropertyModal'
 import { formatPrice } from '../../../lib/format'
 import { getPropertyById } from '../../../lib/api'
 import type { PropertyDetailDto } from '../../../lib/types'
+import { SchedulePresentationModal } from '../../../components/ui/SchedulePresentationModal'
 
 export default function PropertyDetailPage() {
   const router = useRouter()
@@ -21,6 +23,8 @@ export default function PropertyDetailPage() {
   const [data, setData] = useState<PropertyDetailDto | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<unknown | null>(null)
+  const [showContactModal, setShowContactModal] = useState(false)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
 
   const loadProperty = async () => {
     if (!id) return
@@ -114,8 +118,8 @@ export default function PropertyDetailPage() {
             <Gallery images={data.images} />
           ) : (
             <div className="relative aspect-[16/10] rounded-2xl overflow-hidden">
-              <Image
-                src={data.images?.[0] || data.image || 'https://picsum.photos/1600/1000'}
+              <SmartImage
+                src={data.images?.[0] || data.image || ''}
                 alt={data.name}
                 fill
                 className="object-cover"
@@ -157,11 +161,39 @@ export default function PropertyDetailPage() {
           )}
 
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
-            <Button variant="primary" aria-label="Schedule presentation">Schedule presentation</Button>
-            <Button variant="ghost" aria-label="Contact agent">Contact agent</Button>
+            <Button 
+              variant="primary" 
+              aria-label="Schedule presentation"
+              onClick={() => setShowScheduleModal(true)}
+            >
+              Schedule presentation
+            </Button>
+            <Button 
+              variant="ghost" 
+              aria-label="Contact agent"
+              onClick={() => setShowContactModal(true)}
+            >
+              Contact agent
+            </Button>
           </div>
         </div>
       </div>
+      
+      {/* Contact Agent Modal - Uses SellPropertyModal */}
+      {showContactModal && (
+        <SellPropertyModal 
+          isOpen={showContactModal} 
+          onClose={() => setShowContactModal(false)} 
+        />
+      )}
+      
+      {/* Schedule Presentation Modal */}
+      {showScheduleModal && (
+        <SchedulePresentationModal 
+          isOpen={showScheduleModal} 
+          onClose={() => setShowScheduleModal(false)} 
+        />
+      )}
     </div>
     </ErrorBoundary>
   )

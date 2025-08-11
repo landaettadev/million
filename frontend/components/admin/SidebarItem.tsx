@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ReactNode } from 'react';
 
 interface SidebarItemProps {
-  href: string;
+  href: any;
   icon: ReactNode;
   label: string;
   collapsed: boolean;

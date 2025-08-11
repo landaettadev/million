@@ -90,30 +90,34 @@ public sealed class AdminImageReadService : IAdminImageReadService
 
     public async Task<IReadOnlyList<AdminImageDto>> GetByPropertyIdAsync(string propertyId, CancellationToken ct = default)
     {
+        // Use a simpler approach that directly maps from PropertyImageDocument
         var images = await _ctx.PropertyImages
-            .Aggregate()
-            .Match(i => i.PropertyId == propertyId && !i.IsDeleted)
-            .Lookup<PropertyImageDocument, PropertyDocument, ImageWithProperty>(
-                _ctx.Properties,
-                i => i.PropertyId,
-                p => p.Id,
-                i => i.Property)
-            .Unwind<ImageWithProperty, ImageWithProperty>(i => i.Property)
-            .Project(i => new AdminImageDto(
-                i.Id,
-                i.PropertyId,
-                i.Property.Name,
-                i.File,
-                i.Enabled,
-                i.Order,
-                i.CreatedAt,
-                i.UpdatedAt,
-                i.IsDeleted
-            ))
+            .Find(i => i.PropertyId == propertyId && !i.IsDeleted)
             .SortBy(i => i.Order)
             .ToListAsync(ct);
 
-        return images;
+        // Get property name for the images
+        var property = await _ctx.Properties
+            .Find(p => p.Id == propertyId)
+            .Project(p => new { p.Name })
+            .FirstOrDefaultAsync(ct);
+
+        var propertyName = property?.Name ?? "Unknown Property";
+
+        // Map to DTOs
+        var imageDtos = images.Select(i => new AdminImageDto(
+            i.Id,
+            i.PropertyId,
+            propertyName,
+            i.File,
+            i.Enabled,
+            i.Order,
+            i.CreatedAt,
+            i.UpdatedAt,
+            i.IsDeleted
+        )).ToList();
+
+        return imageDtos;
     }
 
     private static FilterDefinition<PropertyImageDocument> BuildFilter(AdminImageSearchQuery query)

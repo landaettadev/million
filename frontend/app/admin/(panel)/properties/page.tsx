@@ -1,9 +1,9 @@
 'use client';
 
 import { withAdminAuth } from '../../../../src/lib/auth/AdminAuthContext';
-import { Plus, Search, Filter, Eye, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Edit, Trash2, Image as ImageIcon, CheckCircle2, RotateCcw } from 'lucide-react';
 import { ImageManagerModal } from '../../../../components/admin/ImageManagerModal';
-import { createProperty, deleteProperty, updateProperty, getAdminProperties, type AdminPropertyDto, getOwners, type AdminOwnerDto, uploadPropertyImage, deleteImage, getPropertyImages, type PropertyImageDto } from '../../../../src/lib/adminApi';
+import { createProperty, deleteProperty, updateProperty, getAdminProperties, type AdminPropertyDto, getOwners, type AdminOwnerDto, uploadPropertyImage, deleteImage, getPropertyImages, type PropertyImageDto, markPropertySold, markPropertyActive } from '../../../../src/lib/adminApi';
 import { useEffect, useState } from 'react';
 
 function PropertiesPage() {
@@ -75,45 +75,42 @@ function PropertiesPage() {
     setFilteredProperties(filtered);
   }, [properties, debouncedSearchTerm, statusFilter, propertyImages]);
 
-  // Load properties and owners
-  useEffect(() => {
-    let active = true;
-    const load = async () => {
-      setLoading(true);
-      try {
-        const [propsRes, ownersRes] = await Promise.all([
-          getAdminProperties({ page: 1, pageSize: 50 }),
-          getOwners({ page: 1, pageSize: 50 }),
-        ]);
-        if (!active) return;
-        setProperties(propsRes.items);
-        setOwners(ownersRes.items);
-        if (!selectedOwnerId && ownersRes.items.length > 0) {
-          setSelectedOwnerId(ownersRes.items[0].id);
-        }
-        
-        // Load images for each property
-        const imagePromises = propsRes.items.map(async (property) => {
-          try {
-            const images = await getPropertyImages(property.id);
-            return { propertyId: property.id, images: images.map(img => img.imageUrl) };
-          } catch {
-            return { propertyId: property.id, images: [] };
-          }
-        });
-        
-        const imageResults = await Promise.all(imagePromises);
-        const imagesMap: Record<string, string[]> = {};
-        imageResults.forEach(({ propertyId, images }) => {
-          imagesMap[propertyId] = images;
-        });
-        setPropertyImages(imagesMap);
-      } finally {
-        if (active) setLoading(false);
+  // Load properties and owners function
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [propsRes, ownersRes] = await Promise.all([
+        getAdminProperties({ page: 1, pageSize: 50 }),
+        getOwners({ page: 1, pageSize: 50 }),
+      ]);
+      setProperties(propsRes.items);
+      setOwners(ownersRes.items);
+      if (!selectedOwnerId && ownersRes.items.length > 0) {
+        setSelectedOwnerId(ownersRes.items[0].id);
       }
-    };
+      // Load images for each property
+      const imagePromises = propsRes.items.map(async (property) => {
+        try {
+          const images = await getPropertyImages(property.id);
+          return { propertyId: property.id, images: images.map(img => img.imageUrl) };
+        } catch {
+          return { propertyId: property.id, images: [] };
+        }
+      });
+      const imageResults = await Promise.all(imagePromises);
+      const imagesMap: Record<string, string[]> = {};
+      imageResults.forEach(({ propertyId, images }) => {
+        imagesMap[propertyId] = images;
+      });
+      setPropertyImages(imagesMap);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load properties and owners on mount
+  useEffect(() => {
     load();
-    return () => { active = false; };
   }, []);
 
   const handleNew = async () => {
@@ -167,11 +164,28 @@ function PropertiesPage() {
 
   const handleSaveEdit = async () => {
     if (!editId) return;
+    // If status changed, call sold/active endpoints
+    if (editForm.status === 'Sold') {
+      await markPropertySold(editId);
+    } else {
+      await markPropertyActive(editId);
+    }
+    // Update other fields
     await updateProperty(editId, editForm);
     const res = await getAdminProperties({ page: 1, pageSize: 50 });
     setProperties(res.items);
     setShowEditModal(false);
     setEditId(null);
+  };
+
+  const toggleSold = async (p: AdminPropertyDto) => {
+    if (p.isDeleted) {
+      await markPropertyActive(p.id);
+    } else {
+      await markPropertySold(p.id);
+    }
+    const res = await getAdminProperties({ page: 1, pageSize: 50 });
+    setProperties(res.items);
   };
 
   const openAddImage = (propertyId: string) => {
@@ -196,7 +210,6 @@ function PropertiesPage() {
         enabled: imageForm.enabled,
         order: imageForm.order,
       });
-      
       // Reload images for this property
       try {
         const images = await getPropertyImages(activePropertyId);
@@ -207,7 +220,6 @@ function PropertiesPage() {
       } catch (error) {
         console.error('Failed to reload property images:', error);
       }
-      
       setShowAddImageModal(false);
     } finally {
       setIsSavingImage(false);
@@ -380,6 +392,9 @@ function PropertiesPage() {
                       <button onClick={() => openDeleteImage()} className="text-gray-400 hover:text-white" title="Delete image by ID"><Trash2 className="w-4 h-4" /></button>
                       <button className="text-gray-400 hover:text-white" title="View"><Eye className="w-4 h-4" /></button>
                       <button onClick={() => openEdit(property)} className="text-gray-400 hover:text-white" title="Edit"><Edit className="w-4 h-4" /></button>
+                      <button onClick={() => toggleSold(property)} className={`text-gray-400 hover:text-white`} title={property.isDeleted ? 'Mark Active' : 'Mark Sold'}>
+                        {property.isDeleted ? <RotateCcw className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                      </button>
                       <button onClick={() => handleDelete(property.id)} className="text-gray-400 hover:text-red-400" title="Delete"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
@@ -515,7 +530,7 @@ function PropertiesPage() {
         propertyName={activePropertyName}
         onImageDeleted={() => {
           // Refresh all properties after image deletion
-          loadProperties();
+          load();
         }}
       />
     </div>

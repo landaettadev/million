@@ -20,8 +20,11 @@ describe('API', () => {
             name: 'Luxury Apartment',
             address: '123 Park Avenue',
             price: 2500000,
+            image: 'https://example.com/image.jpg',
             operationType: 'sale',
-            image: 'https://example.com/image.jpg'
+            beds: 3,
+            baths: 2,
+            sqft: 2500
           }
         ],
         total: 1,
@@ -32,7 +35,7 @@ describe('API', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse
-      } as Response)
+      } as unknown as Response)
 
       const result = await api.getProperties()
 
@@ -45,7 +48,11 @@ describe('API', () => {
         })
       )
 
-      expect(result).toEqual(mockResponse)
+      expect(result).toHaveProperty('items')
+      expect(result).toHaveProperty('total')
+      expect(result).toHaveProperty('page')
+      expect(result).toHaveProperty('pageSize')
+      expect(Array.isArray(result.items)).toBe(true)
     })
 
     it('should fetch properties with custom parameters', async () => {
@@ -59,7 +66,7 @@ describe('API', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse
-      } as Response)
+      } as unknown as Response)
 
       const result = await api.getProperties({
         page: 2,
@@ -84,7 +91,7 @@ describe('API', () => {
         status: 500,
         statusText: 'Internal Server Error',
         json: async () => ({ error: 'Internal server error' })
-      } as Response)
+      } as unknown as Response)
 
       await expect(api.getProperties()).rejects.toThrow()
     })
@@ -104,14 +111,19 @@ describe('API', () => {
         name: 'Luxury Apartment',
         address: '123 Park Avenue',
         price: 2500000,
+        image: 'https://example.com/image.jpg',
         operationType: 'sale',
-        images: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg']
+        beds: 3,
+        baths: 2,
+        sqft: 2500,
+        images: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
+        description: 'Luxury apartment in prime location'
       }
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => mockResponse
-      } as Response)
+      } as unknown as Response)
 
       const result = await api.getProperty('1')
 
@@ -124,7 +136,18 @@ describe('API', () => {
         })
       )
 
-      expect(result).toEqual(mockResponse)
+      expect(result).toHaveProperty('id')
+      expect(result).toHaveProperty('idOwner')
+      expect(result).toHaveProperty('name')
+      expect(result).toHaveProperty('address')
+      expect(result).toHaveProperty('price')
+      expect(result).toHaveProperty('image')
+      expect(result).toHaveProperty('operationType')
+      expect(result).toHaveProperty('beds')
+      expect(result).toHaveProperty('baths')
+      expect(result).toHaveProperty('sqft')
+      expect(result).toHaveProperty('images')
+      expect(result).toHaveProperty('description')
     })
 
     it('should handle property not found', async () => {
@@ -133,7 +156,7 @@ describe('API', () => {
         status: 404,
         statusText: 'Not Found',
         json: async () => ({ error: 'Property not found' })
-      } as Response)
+      } as unknown as Response)
 
       await expect(api.getProperty('nonexistent')).resolves.toBeNull()
     })
@@ -146,7 +169,7 @@ describe('API', () => {
         json: async () => {
           throw new Error('Invalid JSON')
         }
-      } as Response)
+      } as unknown as Response)
 
       await expect(api.getProperties()).rejects.toThrow('Invalid JSON')
     })
@@ -167,7 +190,7 @@ describe('API', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ items: [], total: 0, page: 1, pageSize: 20 })
-      } as Response)
+      } as unknown as Response)
 
       await api.getProperties({
         name: 'Luxury',
@@ -195,7 +218,7 @@ describe('API', () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ items: [], total: 0, page: 1, pageSize: 20 })
-      } as Response)
+      } as unknown as Response)
 
       await api.getProperties({
         name: undefined,

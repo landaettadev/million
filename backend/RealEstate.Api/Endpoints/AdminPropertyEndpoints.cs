@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using RealEstate.Application;
 using RealEstate.Application.Interfaces;
+using RealEstate.Application.Validators;
 using FluentValidation;
 
 namespace RealEstate.Api.Endpoints;
@@ -9,142 +10,197 @@ namespace RealEstate.Api.Endpoints;
 [Route("api/admin/properties")]
 public class AdminPropertyEndpoints : ControllerBase
 {
-    private readonly IPropertyWriteService _writeService;
-    private readonly IAdminPropertyReadService _readService;
-    private readonly IAdminOwnerReadService _ownerReadService;
-    private readonly IValidator<CreatePropertyDto> _createValidator;
-    private readonly IValidator<UpdatePropertyDto> _updateValidator;
+    private readonly IAdminPropertyReadService _adminPropertyReadService;
+    private readonly IPropertyWriteService _propertyWriteService;
+    private readonly IValidator<CreatePropertyDto> _createPropertyValidator;
+    private readonly IValidator<UpdatePropertyDto> _updatePropertyValidator;
+    private readonly IAdminImageReadService _adminImageReadService;
 
     public AdminPropertyEndpoints(
-        IPropertyWriteService writeService,
-        IAdminPropertyReadService readService,
-        IAdminOwnerReadService ownerReadService,
-        IValidator<CreatePropertyDto> createValidator,
-        IValidator<UpdatePropertyDto> updateValidator)
+        IAdminPropertyReadService adminPropertyReadService,
+        IPropertyWriteService propertyWriteService,
+        IValidator<CreatePropertyDto> createPropertyValidator,
+        IValidator<UpdatePropertyDto> updatePropertyValidator,
+        IAdminImageReadService adminImageReadService)
     {
-        _writeService = writeService;
-        _readService = readService;
-        _ownerReadService = ownerReadService;
-        _createValidator = createValidator;
-        _updateValidator = updateValidator;
+        _adminPropertyReadService = adminPropertyReadService;
+        _propertyWriteService = propertyWriteService;
+        _createPropertyValidator = createPropertyValidator;
+        _updatePropertyValidator = updatePropertyValidator;
+        _adminImageReadService = adminImageReadService;
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<AdminPropertyDto>>> Search(
-        [FromQuery] string? searchTerm,
-        [FromQuery] string? ownerId,
-        [FromQuery] decimal? minPrice,
-        [FromQuery] decimal? maxPrice,
-        [FromQuery] OperationType? operationType,
-        [FromQuery] string? sortBy = "CreatedAt",
-        [FromQuery] string sortDirection = "desc",
+    public async Task<ActionResult<PagedResult<AdminPropertyDto>>> GetProperties(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
+        [FromQuery] int pageSize = 50,
         CancellationToken ct = default)
-    {
-        var query = new AdminPropertySearchQuery(
-            SearchTerm: searchTerm,
-            OwnerId: ownerId,
-            MinPrice: minPrice,
-            MaxPrice: maxPrice,
-            OperationType: operationType,
-            SortBy: sortBy,
-            SortDirection: sortDirection,
-            Page: page,
-            PageSize: pageSize);
-
-        var result = await _readService.SearchAsync(query, ct);
-        return Ok(result);
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<AdminPropertyDetailDto>> GetById(string id, CancellationToken ct)
-    {
-        var detail = await _readService.GetByIdAsync(id, ct);
-        if (detail is null) return NotFound();
-        return Ok(detail);
-    }
-
-    [HttpPost]
-    public async Task<ActionResult<object>> Create([FromBody] CreatePropertyDto dto, CancellationToken ct)
-    {
-        if (dto is null)
-        {
-            return BadRequest(new { error = "Invalid payload" });
-        }
-
-        // Validate the DTO
-        var validationResult = await _createValidator.ValidateAsync(dto, ct);
-        if (!validationResult.IsValid)
-        {
-            return BadRequest(new { 
-                error = "One or more validation errors occurred.", 
-                errors = validationResult.Errors.Select(e => new { field = e.PropertyName, message = e.ErrorMessage }) 
-            });
-        }
-
-        // Validate owner exists
-        var owner = await _ownerReadService.GetByIdAsync(dto.OwnerId, ct);
-        if (owner is null) return BadRequest(new { error = "Owner not found", ownerId = dto.OwnerId });
-
-        var id = await _writeService.CreateAsync(dto, ct);
-        return Created($"/api/admin/properties/{id}", new { id });
-    }
-
-    [HttpPut("{id}/featured")]
-    public async Task<ActionResult> SetFeatured(string id, [FromBody] SetFeaturedDto dto, CancellationToken ct)
     {
         try
         {
-            await _writeService.SetFeaturedAsync(id, dto.IsFeatured, ct);
-            return Ok(new { message = "Property featured status updated successfully" });
+            var query = new AdminPropertySearchQuery(Page: page, PageSize: pageSize);
+            var result = await _adminPropertyReadService.SearchAsync(query, ct);
+            return Ok(result);
         }
         catch (Exception ex)
         {
-            return BadRequest(new { error = ex.Message });
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<AdminPropertyDetailDto>> GetPropertyById(
+        string id,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var property = await _adminPropertyReadService.GetByIdAsync(id, ct);
+            if (property == null)
+                return NotFound(new { error = "Property not found" });
+
+            return Ok(property);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    [HttpGet("{id}/images")]
+    public async Task<ActionResult<IReadOnlyList<AdminPropertyImageDto>>> GetPropertyImages(
+        string id,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            // Reuse property read service which already materializes image URLs
+            var property = await _adminPropertyReadService.GetByIdAsync(id, ct);
+            if (property == null)
+                return NotFound(new { error = "Property not found" });
+
+            return Ok(property.Images);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<AdminPropertyDto>> CreateProperty(
+        [FromBody] CreatePropertyDto dto,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            var validationResult = await _createPropertyValidator.ValidateAsync(dto, ct);
+            if (!validationResult.IsValid)
+                return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+
+            var propertyId = await _propertyWriteService.CreateAsync(dto, ct);
+            var property = await _adminPropertyReadService.GetByIdAsync(propertyId, ct);
+            
+            if (property == null)
+                return StatusCode(500, new { error = "Failed to retrieve created property" });
+
+            return CreatedAtAction(nameof(GetPropertyById), new { id = propertyId }, property);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
         }
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult> Update(string id, [FromBody] UpdatePropertyDto dto, CancellationToken ct)
+    public async Task<ActionResult> UpdateProperty(
+        string id,
+        [FromBody] UpdatePropertyDto dto,
+        CancellationToken ct = default)
     {
-        if (dto is null)
+        try
         {
-            return BadRequest(new { error = "Invalid payload" });
-        }
+            var validationResult = await _updatePropertyValidator.ValidateAsync(dto, ct);
+            if (!validationResult.IsValid)
+                return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
 
-        // Validate the DTO
-        var validationResult = await _updateValidator.ValidateAsync(dto, ct);
-        if (!validationResult.IsValid)
+            await _propertyWriteService.UpdateAsync(id, dto, ct);
+            return NoContent();
+        }
+        catch (Exception ex)
         {
-            return BadRequest(new { 
-                error = "One or more validation errors occurred.", 
-                errors = validationResult.Errors.Select(e => new { field = e.PropertyName, message = e.ErrorMessage }) 
-            });
+            return StatusCode(500, new { error = ex.Message });
         }
+    }
 
-        var updated = await _writeService.UpdateAsync(id, dto, ct);
-        if (!updated) return NotFound();
-        return NoContent();
+    // Mark as sold (soft-delete)
+    [HttpPost("{id}/sold")]
+    public async Task<ActionResult> MarkSold(string id, CancellationToken ct = default)
+    {
+        try
+        {
+            await _propertyWriteService.DeleteAsync(id, ct);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
+
+    // Mark as active (undelete)
+    [HttpPost("{id}/active")]
+    public async Task<ActionResult> MarkActive(string id, CancellationToken ct = default)
+    {
+        try
+        {
+            await _propertyWriteService.UndeleteAsync(id, ct);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> Delete(string id, CancellationToken ct)
+    public async Task<ActionResult> DeleteProperty(
+        string id,
+        CancellationToken ct = default)
     {
-        var deleted = await _writeService.DeleteAsync(id, ct);
-        if (!deleted) return NotFound();
-        return Ok();
+        try
+        {
+            await _propertyWriteService.DeleteAsync(id, ct);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
-    [HttpGet("{id}/images")]
-    public async Task<ActionResult<List<AdminPropertyImageDto>>> GetPropertyImages(string id, CancellationToken ct)
+    [HttpPut("{id}/featured")]
+    public async Task<ActionResult> SetFeatured(
+        string id,
+        [FromBody] SetFeaturedRequest request,
+        CancellationToken ct = default)
     {
-        var detail = await _readService.GetByIdAsync(id, ct);
-        if (detail is null) return NotFound();
-        return Ok(detail.Images);
+        try
+        {
+            var success = await _propertyWriteService.SetFeaturedAsync(id, request.IsFeatured, ct);
+            if (!success)
+                return NotFound(new { error = "Property not found" });
+
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 }
 
-public record SetFeaturedDto(bool IsFeatured);
-
-
+public class SetFeaturedRequest
+{
+    public bool IsFeatured { get; set; }
+}
