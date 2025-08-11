@@ -83,6 +83,7 @@ export function SmartImage({
       fill={fill}
       sizes={sizes}
       onError={handleError}
+      unoptimized={currentSrc.includes('millionstorageprod.blob.core.windows.net')}
       {...imageProps}
     />
   )
