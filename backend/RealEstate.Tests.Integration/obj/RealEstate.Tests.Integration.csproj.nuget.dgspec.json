@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests.Integration\\RealEstate.Tests.Integration.csproj": {}
+    "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Tests.Integration\\RealEstate.Tests.Integration.csproj": {}
   },
   "projects": {
-    "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj": {
+    "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj",
+        "projectUniqueName": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj",
         "projectName": "RealEstate.Api",
-        "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj",
+        "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj",
         "packagesPath": "C:\\Users\\landa\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Api\\obj\\",
+        "outputPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Api\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -33,11 +33,11 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj": {
-                "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj"
+              "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj": {
+                "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj"
               },
-              "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj": {
-                "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj"
+              "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj": {
+                "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj"
               }
             }
           }
@@ -126,14 +126,14 @@
         }
       }
     },
-    "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj": {
+    "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj",
+        "projectUniqueName": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj",
         "projectName": "RealEstate.Application",
-        "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj",
+        "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj",
         "packagesPath": "C:\\Users\\landa\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\obj\\",
+        "outputPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -214,14 +214,14 @@
         }
       }
     },
-    "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj": {
+    "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj",
+        "projectUniqueName": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj",
         "projectName": "RealEstate.Infrastructure",
-        "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj",
+        "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj",
         "packagesPath": "C:\\Users\\landa\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Infrastructure\\obj\\",
+        "outputPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Infrastructure\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -243,8 +243,8 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj": {
-                "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj"
+              "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj": {
+                "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj"
               }
             }
           }
@@ -318,14 +318,14 @@
         }
       }
     },
-    "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests.Integration\\RealEstate.Tests.Integration.csproj": {
+    "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Tests.Integration\\RealEstate.Tests.Integration.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests.Integration\\RealEstate.Tests.Integration.csproj",
+        "projectUniqueName": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Tests.Integration\\RealEstate.Tests.Integration.csproj",
         "projectName": "RealEstate.Tests.Integration",
-        "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests.Integration\\RealEstate.Tests.Integration.csproj",
+        "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Tests.Integration\\RealEstate.Tests.Integration.csproj",
         "packagesPath": "C:\\Users\\landa\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests.Integration\\obj\\",
+        "outputPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Tests.Integration\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -347,14 +347,14 @@
           "net8.0": {
             "targetAlias": "net8.0",
             "projectReferences": {
-              "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj": {
-                "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj"
+              "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj": {
+                "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj"
               },
-              "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj": {
-                "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj"
+              "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj": {
+                "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj"
               },
-              "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj": {
-                "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj"
+              "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj": {
+                "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Infrastructure\\RealEstate.Infrastructure.csproj"
               }
             }
           }
