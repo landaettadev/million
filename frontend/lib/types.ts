@@ -5,7 +5,7 @@ export interface PropertyLiteDto {
   idOwner: string
   name: string
   address: string
-  price: number
+  price: number | null | undefined
   image?: string
   operationType: OperationType
   beds?: number

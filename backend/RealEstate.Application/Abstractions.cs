@@ -67,4 +67,5 @@ public interface IPropertyReadService
 {
     Task<PagedResult<PropertyLiteDto>> SearchAsync(SearchPropertiesQuery query, CancellationToken cancellationToken = default);
     Task<PropertyDetailDto?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
+    Task<List<PropertyLiteDto>> GetFeaturedPropertiesAsync(int limit = 6, CancellationToken cancellationToken = default);
 }

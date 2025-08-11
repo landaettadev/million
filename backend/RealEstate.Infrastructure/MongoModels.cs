@@ -2,6 +2,7 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using RealEstate.Application;
+using RealEstate.Application.Interfaces;
 
 namespace RealEstate.Infrastructure;
 
@@ -84,6 +85,7 @@ public sealed class PropertyDocument
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     public bool IsDeleted { get; set; } = false;
+    public bool IsFeatured { get; set; } = false;
 }
 
 [BsonIgnoreExtraElements]
@@ -192,10 +194,12 @@ public sealed class TokenBlacklistDocument
 public sealed class PropertyRepository : IPropertyRepository
 {
     private readonly MongoContext _ctx;
+    private readonly IImageStorageService _imageStorageService;
 
-    public PropertyRepository(MongoContext ctx)
+    public PropertyRepository(MongoContext ctx, IImageStorageService imageStorageService)
     {
         _ctx = ctx;
+        _imageStorageService = imageStorageService;
     }
 
     public async Task<PagedResult<PropertyLiteDto>> SearchAsync(SearchPropertiesQuery query, CancellationToken ct = default)
@@ -233,11 +237,18 @@ public sealed class PropertyRepository : IPropertyRepository
         
         foreach (var property in properties)
         {
-            var firstImage = await _ctx.PropertyImages
+            var firstImageFile = await _ctx.PropertyImages
                 .Find(i => i.PropertyId == property.Id && i.Enabled && !i.IsDeleted)
                 .SortBy(i => i.Order)
                 .Project(i => i.File)
                 .FirstOrDefaultAsync(ct);
+
+            // Convert filename to full URL if image exists
+            string? imageUrl = null;
+            if (!string.IsNullOrEmpty(firstImageFile))
+            {
+                imageUrl = await _imageStorageService.GetImageUrlAsync(firstImageFile, ct);
+            }
 
             items.Add(new PropertyLiteDto(
                 Id: property.Id,
@@ -245,7 +256,7 @@ public sealed class PropertyRepository : IPropertyRepository
                 Name: property.Name,
                 Address: property.Address,
                 Price: property.Price,
-                Image: firstImage,
+                Image: imageUrl,
                 OperationType: string.Equals(property.OperationType, "sale", StringComparison.OrdinalIgnoreCase) ? OperationType.Sale : OperationType.Rent,
                 Beds: property.Beds,
                 Baths: property.Baths,
@@ -255,6 +266,49 @@ public sealed class PropertyRepository : IPropertyRepository
         }
 
         return new PagedResult<PropertyLiteDto>(items, query.Page, query.PageSize, total);
+    }
+
+    public async Task<List<PropertyLiteDto>> GetFeaturedPropertiesAsync(int limit = 6, CancellationToken ct = default)
+    {
+        var properties = await _ctx.Properties
+            .Find(p => p.IsFeatured && !p.IsDeleted)
+            .SortByDescending(p => p.Price)
+            .Limit(limit)
+            .ToListAsync(ct);
+
+        var items = new List<PropertyLiteDto>();
+        
+        foreach (var property in properties)
+        {
+            var firstImageFile = await _ctx.PropertyImages
+                .Find(i => i.PropertyId == property.Id && i.Enabled && !i.IsDeleted)
+                .SortBy(i => i.Order)
+                .Project(i => i.File)
+                .FirstOrDefaultAsync(ct);
+
+            // Convert filename to full URL if image exists
+            string? imageUrl = null;
+            if (!string.IsNullOrEmpty(firstImageFile))
+            {
+                imageUrl = await _imageStorageService.GetImageUrlAsync(firstImageFile, ct);
+            }
+
+            items.Add(new PropertyLiteDto(
+                Id: property.Id,
+                IdOwner: property.OwnerId,
+                Name: property.Name,
+                Address: property.Address,
+                Price: property.Price,
+                Image: imageUrl,
+                OperationType: string.Equals(property.OperationType, "sale", StringComparison.OrdinalIgnoreCase) ? OperationType.Sale : OperationType.Rent,
+                Beds: property.Beds,
+                Baths: property.Baths,
+                HalfBaths: property.HalfBaths,
+                Sqft: property.Sqft
+            ));
+        }
+
+        return items;
     }
 
     public async Task<PropertyDetailDto?> GetByIdAsync(string id, CancellationToken ct = default)

@@ -1,33 +1,130 @@
 'use client';
 
 import { withAdminAuth } from '../../../../src/lib/auth/AdminAuthContext';
-import { Plus, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
-import { createProperty, deleteProperty, addImage, deleteImage, updateProperty } from '../../../../src/lib/adminApi';
-import { useState } from 'react';
+import { Plus, Search, Filter, Eye, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
+import { ImageManagerModal } from '../../../../components/admin/ImageManagerModal';
+import { createProperty, deleteProperty, updateProperty, getAdminProperties, type AdminPropertyDto, getOwners, type AdminOwnerDto, uploadPropertyImage, deleteImage, getPropertyImages, type PropertyImageDto } from '../../../../src/lib/adminApi';
+import { useEffect, useState } from 'react';
 
 function PropertiesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', address: '', price: 0, operationType: 'Sale' as 'Sale' | 'Rent', beds: 0, baths: 0, halfBaths: 0, sqft: 0, description: '' });
+  const [editForm, setEditForm] = useState({ name: '', address: '', price: 0, operationType: 'Sale' as 'Sale' | 'Rent', beds: 0, baths: 0, halfBaths: 0, sqft: 0, description: '', status: 'Active' as 'Active' | 'Sold' });
   const [showAddImageModal, setShowAddImageModal] = useState(false);
   const [showDeleteImageModal, setShowDeleteImageModal] = useState(false);
+  const [showImageManagerModal, setShowImageManagerModal] = useState(false);
   const [activePropertyId, setActivePropertyId] = useState<string | null>(null);
-  const [imageForm, setImageForm] = useState({ url: '', order: 1, enabled: true });
+  const [activePropertyName, setActivePropertyName] = useState<string>('');
+  const [imageForm, setImageForm] = useState<{ file: File | null; order: number; enabled: boolean }>({ file: null, order: 1, enabled: true });
   const [imageIdToDelete, setImageIdToDelete] = useState('');
   const [isSavingImage, setIsSavingImage] = useState(false);
   const [isRemovingImage, setIsRemovingImage] = useState(false);
-  const [properties, setProperties] = useState([
-    { id: '1', name: 'Luxury Penthouse Downtown', address: '123 Main St, Miami, FL', price: '$2,500,000', type: 'Sale', status: 'Active', owner: 'John Doe', beds: 3, baths: 2, sqft: '2,500' },
-    { id: '2', name: 'Modern Villa Ocean View', address: '456 Ocean Dr, Miami Beach, FL', price: '$4,200,000', type: 'Sale', status: 'Active', owner: 'Jane Smith', beds: 5, baths: 4, sqft: '4,200' },
-    { id: '3', name: 'Contemporary Condo', address: '789 Biscayne Blvd, Miami, FL', price: '$850,000', type: 'Sale', status: 'Sold', owner: 'Mike Johnson', beds: 2, baths: 2, sqft: '1,200' },
-  ]);
+  const [properties, setProperties] = useState<AdminPropertyDto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [owners, setOwners] = useState<AdminOwnerDto[]>([]);
+  const [selectedOwnerId, setSelectedOwnerId] = useState<string | null>(null);
+  const [propertyImages, setPropertyImages] = useState<Record<string, string[]>>({});
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [filteredProperties, setFilteredProperties] = useState<AdminPropertyDto[]>([]);
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Filter and search functionality
+  useEffect(() => {
+    let filtered = [...properties];
+
+    // Apply search filter
+    if (debouncedSearchTerm.trim()) {
+      const searchLower = debouncedSearchTerm.toLowerCase();
+      filtered = filtered.filter(property => 
+        property.name.toLowerCase().includes(searchLower) ||
+        property.address.toLowerCase().includes(searchLower) ||
+        (property.description && property.description.toLowerCase().includes(searchLower))
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(property => {
+        switch (statusFilter) {
+          case 'active':
+            return !property.isDeleted;
+          case 'sold':
+            return property.isDeleted;
+          case 'pending':
+            // For now, we'll consider properties without images as pending
+            return !propertyImages[property.id] || propertyImages[property.id].length === 0;
+          default:
+            return true;
+        }
+      });
+    }
+
+    setFilteredProperties(filtered);
+  }, [properties, debouncedSearchTerm, statusFilter, propertyImages]);
+
+  // Load properties and owners
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      setLoading(true);
+      try {
+        const [propsRes, ownersRes] = await Promise.all([
+          getAdminProperties({ page: 1, pageSize: 50 }),
+          getOwners({ page: 1, pageSize: 50 }),
+        ]);
+        if (!active) return;
+        setProperties(propsRes.items);
+        setOwners(ownersRes.items);
+        if (!selectedOwnerId && ownersRes.items.length > 0) {
+          setSelectedOwnerId(ownersRes.items[0].id);
+        }
+        
+        // Load images for each property
+        const imagePromises = propsRes.items.map(async (property) => {
+          try {
+            const images = await getPropertyImages(property.id);
+            return { propertyId: property.id, images: images.map(img => img.imageUrl) };
+          } catch {
+            return { propertyId: property.id, images: [] };
+          }
+        });
+        
+        const imageResults = await Promise.all(imagePromises);
+        const imagesMap: Record<string, string[]> = {};
+        imageResults.forEach(({ propertyId, images }) => {
+          imagesMap[propertyId] = images;
+        });
+        setPropertyImages(imagesMap);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    load();
+    return () => { active = false; };
+  }, []);
 
   const handleNew = async () => {
+    if (!selectedOwnerId) {
+      alert('Please create/select an owner first');
+      return;
+    }
     try {
       setIsCreating(true);
-      const res = await createProperty({
-        ownerId: '000000000000000000000001',
+      await createProperty({
+        ownerId: selectedOwnerId,
         name: 'New Property',
         address: 'Address TBD',
         price: 100000,
@@ -38,7 +135,8 @@ function PropertiesPage() {
         sqft: 900,
         description: 'Created from admin panel',
       });
-      setProperties([{ id: res.id, name: 'New Property', address: 'Address TBD', price: '$100,000', type: 'Sale', status: 'Active', owner: '-', beds: 2, baths: 1, sqft: '900' }, ...properties]);
+      const res = await getAdminProperties({ page: 1, pageSize: 50 });
+      setProperties(res.items);
     } finally {
       setIsCreating(false);
     }
@@ -46,7 +144,8 @@ function PropertiesPage() {
 
   const handleDelete = async (id: string) => {
     await deleteProperty(id);
-    setProperties(properties.filter(p => p.id !== id));
+    const res = await getAdminProperties({ page: 1, pageSize: 50 });
+    setProperties(res.items);
   };
 
   const openEdit = (p: any) => {
@@ -54,13 +153,14 @@ function PropertiesPage() {
     setEditForm({
       name: p.name,
       address: p.address,
-      price: 100000,
-      operationType: (p.type === 'Sale' ? 'Sale' : 'Rent'),
+      price: p.price || 100000,
+      operationType: p.operationType || 'Sale',
       beds: Number(p.beds || 0),
       baths: Number(p.baths || 0),
-      halfBaths: 0,
-      sqft: Number((p.sqft || '0').replace(/[^0-9]/g, '')),
-      description: '',
+      halfBaths: Number(p.halfBaths || 0),
+      sqft: Number(p.sqft || 0),
+      description: p.description || '',
+      status: p.isDeleted ? 'Sold' : 'Active',
     });
     setShowEditModal(true);
   };
@@ -68,27 +168,46 @@ function PropertiesPage() {
   const handleSaveEdit = async () => {
     if (!editId) return;
     await updateProperty(editId, editForm);
-    setProperties(properties.map(p => p.id === editId ? { ...p, name: editForm.name, address: editForm.address } : p));
+    const res = await getAdminProperties({ page: 1, pageSize: 50 });
+    setProperties(res.items);
     setShowEditModal(false);
     setEditId(null);
   };
 
   const openAddImage = (propertyId: string) => {
     setActivePropertyId(propertyId);
-    setImageForm({ url: '', order: 1, enabled: true });
+    setImageForm({ file: null, order: 1, enabled: true });
     setShowAddImageModal(true);
   };
 
+  const openImageManager = (propertyId: string, propertyName: string) => {
+    setActivePropertyId(propertyId);
+    setActivePropertyName(propertyName);
+    setShowImageManagerModal(true);
+  };
+
   const handleAddImage = async () => {
-    if (!activePropertyId || !imageForm.url) return;
+    if (!activePropertyId || !imageForm.file) return;
     setIsSavingImage(true);
     try {
-      await addImage({
+      await uploadPropertyImage({
         propertyId: activePropertyId,
-        file: imageForm.url,
+        file: imageForm.file,
         enabled: imageForm.enabled,
         order: imageForm.order,
       });
+      
+      // Reload images for this property
+      try {
+        const images = await getPropertyImages(activePropertyId);
+        setPropertyImages(prev => ({
+          ...prev,
+          [activePropertyId]: images.map(img => img.imageUrl)
+        }));
+      } catch (error) {
+        console.error('Failed to reload property images:', error);
+      }
+      
       setShowAddImageModal(false);
     } finally {
       setIsSavingImage(false);
@@ -116,28 +235,72 @@ function PropertiesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-white">Properties</h1>
-          <p className="text-gray-400 mt-2">Manage your property listings</p>
+          <p className="text-gray-400 mt-2">
+            {loading ? 'Loading properties...' : `Showing ${filteredProperties.length} of ${properties.length} properties`}
+          </p>
         </div>
-        <button onClick={handleNew} disabled={isCreating} className="mt-4 sm:mt-0 inline-flex items-center px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 font-medium transition-colors disabled:opacity-50">
+        <div className="flex items-center gap-3 mt-4 sm:mt-0">
+          <select value={selectedOwnerId ?? ''} onChange={e => setSelectedOwnerId(e.target.value || null)} className="px-3 py-2 bg-neutral-900 border border-white/10 rounded-lg text-white">
+            <option value="">Select owner</option>
+            {owners.map(o => (
+              <option key={o.id} value={o.id}>{o.name}</option>
+            ))}
+          </select>
+          <button onClick={handleNew} disabled={isCreating} className="inline-flex items-center px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 font-medium transition-colors disabled:opacity-50">
           <Plus className="w-4 h-4 mr-2" />
           {isCreating ? 'Creating...' : 'New Property'}
-        </button>
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input type="text" placeholder="Search properties..." className="w-full pl-10 pr-4 py-2 bg-neutral-900 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/20" />
+          <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${
+            searchTerm !== debouncedSearchTerm ? 'text-blue-400 animate-pulse' : 'text-gray-400'
+          }`} />
+          <input 
+            type="text" 
+            placeholder="Search properties..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 bg-neutral-900 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/20" 
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              title="Clear search"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
         <div className="relative">
           <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <select className="pl-10 pr-8 py-2 bg-neutral-900 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/20 appearance-none">
-            <option>All Status</option>
-            <option>Active</option>
-            <option>Sold</option>
-            <option>Pending</option>
+          <select 
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="pl-10 pr-8 py-2 bg-neutral-900 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/20 appearance-none"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="sold">Sold</option>
+            <option value="pending">Pending</option>
           </select>
         </div>
+        {(searchTerm || statusFilter !== 'all') && (
+          <button
+            onClick={() => {
+              setSearchTerm('');
+              setStatusFilter('all');
+            }}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors whitespace-nowrap"
+          >
+            Clear Filters
+          </button>
+        )}
       </div>
 
       <div className="bg-neutral-900 border border-white/10 rounded-xl overflow-hidden">
@@ -146,6 +309,7 @@ function PropertiesPage() {
             <thead className="bg-white/5">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Property</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Images</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Price</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Details</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Owner</th>
@@ -154,7 +318,13 @@ function PropertiesPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/10">
-              {properties.map((property) => (
+              {loading ? (
+                <tr><td className="px-6 py-4 text-gray-400" colSpan={7}>Loading properties…</td></tr>
+              ) : filteredProperties.length === 0 ? (
+                <tr><td className="px-6 py-4 text-gray-400 text-center" colSpan={7}>
+                  {searchTerm || statusFilter !== 'all' ? 'No properties match your search criteria' : 'No properties found'}
+                </td></tr>
+              ) : filteredProperties.map((property) => (
                 <tr key={property.id} className="hover:bg-white/5">
                   <td className="px-6 py-4">
                     <div>
@@ -162,21 +332,51 @@ function PropertiesPage() {
                       <div className="text-sm text-gray-400">{property.address}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-white">{property.price}</div>
-                    <div className="text-sm text-gray-400">{property.type}</div>
+                  <td className="px-6 py-4">
+                    <div className="flex space-x-1">
+                      {propertyImages[property.id]?.slice(0, 3).map((imageUrl, index) => (
+                        <img
+                          key={index}
+                          src={imageUrl}
+                          alt={`Property ${property.name} image ${index + 1}`}
+                          className="w-10 h-10 object-cover rounded border border-white/10"
+                          onError={e => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = 'none';
+                          }}
+                        />
+                      )) || (
+                        <span className="text-xs text-gray-500">No images</span>
+                      )}
+                      {propertyImages[property.id] && propertyImages[property.id].length > 3 && (
+                        <div className="w-10 h-10 bg-gray-700 rounded border border-white/10 flex items-center justify-center">
+                          <span className="text-xs text-gray-300">+{propertyImages[property.id].length - 3}</span>
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-300">{property.beds} bed, {property.baths} bath</div>
-                    <div className="text-sm text-gray-400">{property.sqft} sq ft</div>
+                    <div className="text-sm font-medium text-white">${property.price?.toLocaleString() || 'Price on request'}</div>
+                    <div className="text-sm text-gray-400">{property.operationType}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{property.owner}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${property.status === 'Active' ? 'bg-green-100 text-green-800' : property.status === 'Sold' ? 'bg-gray-100 text-gray-800' : 'bg-yellow-100 text-yellow-800'}`}>{property.status}</span>
+                    <div className="text-sm text-gray-300">{property.beds ?? 0} bed, {property.baths ?? 0} bath</div>
+                    <div className="text-sm text-gray-400">{property.sqft ?? 0} sq ft</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{property.ownerName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      property.isDeleted 
+                        ? 'bg-red-100 text-red-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {property.isDeleted ? 'Sold' : 'Active'}
+                    </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                     <div className="flex items-center gap-2">
                       <button onClick={() => openAddImage(property.id)} className="text-gray-400 hover:text-white" title="Add image"><Plus className="w-4 h-4" /></button>
+                      <button onClick={() => openImageManager(property.id, property.name)} className="text-gray-400 hover:text-white" title="Manage images"><ImageIcon className="w-4 h-4" /></button>
                       <button onClick={() => openDeleteImage()} className="text-gray-400 hover:text-white" title="Delete image by ID"><Trash2 className="w-4 h-4" /></button>
                       <button className="text-gray-400 hover:text-white" title="View"><Eye className="w-4 h-4" /></button>
                       <button onClick={() => openEdit(property)} className="text-gray-400 hover:text-white" title="Edit"><Edit className="w-4 h-4" /></button>
@@ -216,6 +416,13 @@ function PropertiesPage() {
                 </select>
               </div>
               <div>
+                <label className="block text-sm text-gray-300 mb-1">Status</label>
+                <select value={editForm.status} onChange={e => setEditForm({ ...editForm, status: e.target.value as any })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white">
+                  <option value="Active">Active</option>
+                  <option value="Sold">Sold</option>
+                </select>
+              </div>
+              <div>
                 <label className="block text-sm text-gray-300 mb-1">Beds</label>
                 <input type="number" value={editForm.beds} onChange={e => setEditForm({ ...editForm, beds: Number(e.target.value) })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
               </div>
@@ -251,8 +458,16 @@ function PropertiesPage() {
             <h2 className="text-xl font-semibold text-white mb-4">Add Image</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-300 mb-1">Image URL</label>
-                <input value={imageForm.url} onChange={e => setImageForm({ ...imageForm, url: e.target.value })} className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white" />
+                <label className="block text-sm text-gray-300 mb-1">Select Image File</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={e => setImageForm({ ...imageForm, file: e.target.files?.[0] || null })} 
+                  className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-white file:text-black hover:file:bg-gray-100" 
+                />
+                {imageForm.file && (
+                  <p className="text-sm text-gray-400 mt-1">Selected: {imageForm.file.name}</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -291,6 +506,18 @@ function PropertiesPage() {
           </div>
         </div>
       )}
+
+      {/* Image Manager Modal */}
+      <ImageManagerModal
+        isOpen={showImageManagerModal}
+        onClose={() => setShowImageManagerModal(false)}
+        propertyId={activePropertyId || ''}
+        propertyName={activePropertyName}
+        onImageDeleted={() => {
+          // Refresh all properties after image deletion
+          loadProperties();
+        }}
+      />
     </div>
   );
 }
