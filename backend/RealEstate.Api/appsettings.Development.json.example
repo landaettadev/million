@@ -1,0 +1,32 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "MongoDB": {
+    "ConnectionString": "mongodb://localhost:27017/million",
+    "DatabaseName": "million"
+  },
+  "AzureStorage": {
+    "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=yourstorageaccount;AccountKey=yourstoragekey;EndpointSuffix=core.windows.net",
+    "ContainerName": "property-images"
+  },
+  "JWT": {
+    "SecretKey": "your-super-secret-key-here-minimum-32-characters-long",
+    "Issuer": "million-real-estate",
+    "Audience": "million-users",
+    "ExpirationMinutes": 60
+  },
+  "AdminCredentials": {
+    "DefaultEmail": "admin@million.com",
+    "DefaultPassword": "Admin123!"
+  },
+  "Cors": {
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "https://localhost:3000"
+    ]
+  }
+}
