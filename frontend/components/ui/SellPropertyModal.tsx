@@ -68,12 +68,12 @@ export function SellPropertyModal({ isOpen, onClose }: SellPropertyModalProps) {
     <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-20">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm"
         onClick={handleClose}
       />
       
       {/* Modal */}
-      <div className="relative bg-black/95 backdrop-blur-sm border border-white/20 rounded-2xl p-8 w-full max-w-lg mx-4 shadow-2xl">
+      <div className="relative bg-black border border-white/20 rounded-2xl p-8 w-full max-w-lg mx-4 shadow-2xl">
         {/* Close button */}
         <button
           onClick={handleClose}
