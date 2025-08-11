@@ -1,11 +1,27 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: [
-      'picsum.photos', 
-      'images.unsplash.com',
-      'millionstorageprod.blob.core.windows.net',
-      'localhost'
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'picsum.photos',
+      },
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'source.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'millionstorageprod.blob.core.windows.net',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
     ],
   },
   experimental: {
@@ -19,7 +35,13 @@ const nextConfig = {
   // Avoid OneDrive locking default .next folder by using a custom distDir
   distDir: '.next-dev',
   async redirects() {
-    return [];
+    return [
+      {
+        source: '/admin',
+        destination: '/admin/dashboard',
+        permanent: true,
+      },
+    ]
   },
 }
 

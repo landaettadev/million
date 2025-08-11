@@ -1,16 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using RealEstate.Application;
 using RealEstate.Application.Interfaces;
-using RealEstate.Application.DTOs;
-using Azure.Storage;
-using Azure.Storage.Blobs;
-using Azure.Storage.Sas;
-using Microsoft.Extensions.Configuration;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.Processing;
-using RealEstate.Infrastructure;
-using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
+using RealEstate.Application.Validators;
+using FluentValidation;
+using Microsoft.AspNetCore.Http;
 
 namespace RealEstate.Api.Endpoints;
 
@@ -18,500 +11,327 @@ namespace RealEstate.Api.Endpoints;
 [Route("api/admin/images")]
 public class AdminImageUploadEndpoints : ControllerBase
 {
+    private readonly IAdminImageReadService _adminImageReadService;
     private readonly IImageStorageService _imageStorageService;
     private readonly IImageWriteService _imageWriteService;
-    private readonly ILogger<AdminImageUploadEndpoints> _logger;
-    private readonly IConfiguration _configuration;
-    private readonly MongoContext _ctx;
+    private readonly IValidator<string> _propertyIdValidator;
 
     public AdminImageUploadEndpoints(
+        IAdminImageReadService adminImageReadService,
         IImageStorageService imageStorageService,
         IImageWriteService imageWriteService,
-        ILogger<AdminImageUploadEndpoints> logger,
-        IConfiguration configuration,
-        MongoContext ctx)
+        IValidator<string> propertyIdValidator)
     {
+        _adminImageReadService = adminImageReadService;
         _imageStorageService = imageStorageService;
         _imageWriteService = imageWriteService;
-        _logger = logger;
-        _configuration = configuration;
-        _ctx = ctx;
+        _propertyIdValidator = propertyIdValidator;
     }
 
-    [HttpPost("presign")]
-    public ActionResult<PresignUploadResponseDto> GetPresignedUploadUrl(
-        [FromBody] PresignUploadRequestDto request)
-    {
-        if (string.IsNullOrWhiteSpace(request.FileName) || string.IsNullOrWhiteSpace(request.ContentType))
-        {
-            return BadRequest(new { error = "fileName and contentType are required" });
-        }
-
-        var connectionString = _configuration["AzureStorage:ConnectionString"];
-        var containerName = _configuration["AzureStorage:ContainerName"] ?? "property-images";
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            return StatusCode(500, new { error = "Azure Storage connection not configured" });
-        }
-
-        var containerClient = new BlobContainerClient(connectionString, containerName);
-        containerClient.CreateIfNotExists();
-
-        var blobName = GenerateUniqueBlobName(request.FileName);
-        var blobClient = containerClient.GetBlobClient(blobName);
-
-        var expiresIn = TimeSpan.FromSeconds(request.ExpiresSeconds <= 0 ? 900 : request.ExpiresSeconds);
-        var expiresAt = DateTimeOffset.UtcNow.Add(expiresIn);
-
-        var sasBuilder = new BlobSasBuilder
-        {
-            BlobContainerName = containerName,
-            BlobName = blobName,
-            Resource = "b",
-            ExpiresOn = expiresAt
-        };
-        sasBuilder.SetPermissions(BlobSasPermissions.Create | BlobSasPermissions.Write);
-
-        var uri = blobClient.GenerateSasUri(sasBuilder);
-
-        return Ok(new PresignUploadResponseDto
-        {
-            BlobName = blobName,
-            UploadUrl = uri.ToString(),
-            ExpiresAt = expiresAt,
-            Method = "PUT",
-        });
-    }
-
-    public sealed class UploadImageRequest
-    {
-        public IFormFile File { get; init; } = default!;
-        public string PropertyId { get; init; } = string.Empty;
-        public bool Enabled { get; init; } = true;
-        public int Order { get; init; } = 0;
-    }
-
-    [HttpPost("upload")]
-    [Consumes("multipart/form-data")]
-    public async Task<ActionResult<ImageUploadResponseDto>> UploadImage(
-        [FromForm] UploadImageRequest request,
+    [HttpGet("property/{propertyId}")]
+    public async Task<ActionResult<IReadOnlyList<AdminImageDto>>> GetPropertyImages(
+        string propertyId,
         CancellationToken ct = default)
     {
         try
         {
-            var file = request.File;
-            var propertyId = request.PropertyId;
-            var enabled = request.Enabled;
-            var order = request.Order;
+            var validationResult = await _propertyIdValidator.ValidateAsync(propertyId, ct);
+            if (!validationResult.IsValid)
+                return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
 
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest(new { error = "No file provided" });
-            }
-
-            if (string.IsNullOrEmpty(propertyId))
-            {
-                return BadRequest(new { error = "Property ID is required" });
-            }
-
-            // Validate file type
-            if (!IsValidImageFile(file))
-            {
-                return BadRequest(new { error = "Invalid file type. Only images are allowed." });
-            }
-
-            // Validate file size (max 10MB)
-            if (file.Length > 10 * 1024 * 1024)
-            {
-                return BadRequest(new { error = "File size too large. Maximum size is 10MB." });
-            }
-
-            // Upload original to Azure Blob Storage
-            string blobName;
-            using (var stream = file.OpenReadStream())
-            {
-                blobName = await _imageStorageService.UploadImageAsync(
-                    stream, file.FileName, file.ContentType, ct);
-            }
-
-            // Generate thumbnail (400px width) in memory and upload
-            string? thumbnailBlobName = null;
-            try
-            {
-                using var inStream = file.OpenReadStream();
-                using var image = SixLabors.ImageSharp.Image.Load(inStream);
-                var width = 400;
-                var height = (int)Math.Round(image.Height * (width / (double)image.Width));
-                image.Mutate(x => x.Resize(width, height));
-
-                using var outStream = new MemoryStream();
-                image.SaveAsJpeg(outStream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder
-                {
-                    Quality = 80
-                });
-                outStream.Position = 0;
-
-                var ext = Path.GetExtension(file.FileName);
-                var nameNoExt = Path.GetFileNameWithoutExtension(file.FileName);
-                var thumbFileName = $"{nameNoExt}-thumb{ext}";
-                thumbnailBlobName = await _imageStorageService.UploadImageAsync(outStream, thumbFileName, "image/jpeg", ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to generate thumbnail for {FileName}", file.FileName);
-            }
-
-            // Get the public URL (kept for response convenience)
-            var imageUrl = await _imageStorageService.GetImageUrlAsync(blobName, ct);
-
-            // Save image metadata to database
-            var addImageDto = new AddImageDto(
-                PropertyId: propertyId,
-                File: blobName,
-                Enabled: enabled,
-                Order: order,
-                FileSize: file.Length,
-                ContentType: file.ContentType,
-                ThumbnailFile: thumbnailBlobName
-            );
-
-            var imageId = await _imageWriteService.AddAsync(addImageDto, ct);
-
-            _logger.LogInformation("Image uploaded successfully. ImageId: {ImageId}, BlobName: {BlobName}", imageId, blobName);
-
-            return Ok(new ImageUploadResponseDto
-            {
-                ImageId = imageId,
-                BlobName = blobName,
-                ImageUrl = imageUrl,
-                FileName = file.FileName,
-                FileSize = file.Length,
-                ContentType = file.ContentType
-            });
+            var images = await _adminImageReadService.GetByPropertyIdAsync(propertyId, ct);
+            return Ok(images);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error uploading image for property {PropertyId}", request.PropertyId);
-            return StatusCode(500, new { error = "Failed to upload image", details = ex.Message });
+            return StatusCode(500, new { error = ex.Message });
         }
     }
 
     [HttpDelete("{imageId}")]
-    public async Task<ActionResult> DeleteImage(string imageId, CancellationToken ct = default)
-    {
-        try
-        {
-            // Get image metadata to find blob name
-            // This would require a read service method to get image by ID
-            // For now, we'll assume the imageWriteService.DeleteAsync handles this
-            
-            var deleted = await _imageWriteService.DeleteAsync(imageId, ct);
-            if (!deleted)
-            {
-                return NotFound(new { error = "Image not found" });
-            }
-
-            // Note: In a production system, you might want to also delete from Azure Blob Storage
-            // This would require getting the blob name from the database first
-            
-            _logger.LogInformation("Image deleted successfully. ImageId: {ImageId}", imageId);
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error deleting image {ImageId}", imageId);
-            return StatusCode(500, new { error = "Failed to delete image", details = ex.Message });
-        }
-    }
-
-    // PURGE: permanently delete blob(s) and metadata
-    [HttpDelete("{imageId}/purge")]
-    public async Task<ActionResult> PurgeImage(string imageId, CancellationToken ct = default)
-    {
-        try
-        {
-            var doc = await _ctx.PropertyImages.Find(x => x.Id == imageId).FirstOrDefaultAsync(ct);
-            if (doc is null)
-            {
-                return NotFound(new { error = "Image not found" });
-            }
-
-            // delete blobs
-            if (!string.IsNullOrEmpty(doc.File))
-            {
-                await _imageStorageService.DeleteImageAsync(doc.File, ct);
-            }
-            if (!string.IsNullOrEmpty(doc.ThumbnailFile))
-            {
-                await _imageStorageService.DeleteImageAsync(doc.ThumbnailFile, ct);
-            }
-
-            // delete metadata
-            await _ctx.PropertyImages.DeleteOneAsync(x => x.Id == imageId, ct);
-            return NoContent();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error purging image {ImageId}", imageId);
-            return StatusCode(500, new { error = "Failed to purge image", details = ex.Message });
-        }
-    }
-
-    // FINALIZE SAS upload: create thumbnail and register metadata
-    [HttpPost("finalize")]
-    public async Task<ActionResult<ImageUploadResponseDto>> FinalizeUpload(
-        [FromBody] FinalizeImageUploadRequestDto dto,
+    public async Task<ActionResult> DeleteImage(
+        string imageId,
         CancellationToken ct = default)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(dto.PropertyId) || string.IsNullOrWhiteSpace(dto.BlobName))
-            {
-                return BadRequest(new { error = "propertyId and blobName are required" });
-            }
+            // Soft delete image metadata. If it was already deleted or not found, treat as success (idempotent)
+            var _ = await _imageWriteService.DeleteAsync(imageId, ct);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
+    }
 
-            // Download original
-            using var originalStream = await _imageStorageService.DownloadImageAsync(dto.BlobName, ct);
+    /// <summary>
+    /// Upload a single image for a property
+    /// </summary>
+    /// <param name="request">The image upload request</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Image upload result with metadata</returns>
+    [HttpPost("upload")]
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<ImageUploadResult>> UploadImage(
+        [FromForm] ImageUploadRequest request,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            if (request.File == null || request.File.Length == 0)
+                return BadRequest(new { error = "No file provided" });
 
-            // Generate thumbnail
-            string? thumbnailBlobName = null;
-            try
-            {
-                using var image = Image.Load(originalStream);
-                var width = 400;
-                var height = (int)Math.Round(image.Height * (width / (double)image.Width));
-                image.Mutate(x => x.Resize(width, height));
+            var validationResult = await _propertyIdValidator.ValidateAsync(request.PropertyId, ct);
+            if (!validationResult.IsValid)
+                return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
 
-                using var outStream = new MemoryStream();
-                image.SaveAsJpeg(outStream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 80 });
-                outStream.Position = 0;
+            // Store the file in the backing store (Azurite/Azure). Returns blobName
+            using var stream = request.File.OpenReadStream();
+            var blobName = await _imageStorageService.UploadImageAsync(stream, request.File.FileName, request.File.ContentType, ct);
 
-                var ext = Path.GetExtension(dto.BlobName);
-                var nameNoExt = Path.GetFileNameWithoutExtension(dto.BlobName);
-                var thumbFileName = $"{nameNoExt}-thumb{ext}";
-                thumbnailBlobName = await _imageStorageService.UploadImageAsync(outStream, thumbFileName, "image/jpeg", ct);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to generate thumbnail for blob {Blob}", dto.BlobName);
-            }
+            // Persist metadata in MongoDB
+            var imageId = await _imageWriteService.AddAsync(new AddImageDto(
+                PropertyId: request.PropertyId,
+                File: blobName,
+                Enabled: request.Enabled ?? true,
+                Order: request.Order ?? 0,
+                FileSize: request.File.Length,
+                ContentType: request.File.ContentType
+            ), ct);
 
-            // Save metadata
-            var addImageDto = new AddImageDto(
-                PropertyId: dto.PropertyId,
-                File: dto.BlobName,
-                Enabled: dto.Enabled ?? true,
-                Order: dto.Order ?? 0,
-                FileSize: dto.FileSize ?? 0,
-                ContentType: dto.ContentType ?? "image/jpeg",
-                ThumbnailFile: thumbnailBlobName
-            );
-            var imageId = await _imageWriteService.AddAsync(addImageDto, ct);
+            // Build public URL
+            var url = await _imageStorageService.GetImageUrlAsync(blobName, ct);
 
-            var imageUrl = await _imageStorageService.GetImageUrlAsync(dto.BlobName, ct);
-            return Ok(new ImageUploadResponseDto
+            return Ok(new ImageUploadResult
             {
                 ImageId = imageId,
-                BlobName = dto.BlobName,
-                ImageUrl = imageUrl,
-                FileName = Path.GetFileName(dto.BlobName),
-                FileSize = dto.FileSize ?? 0,
-                ContentType = dto.ContentType ?? "image/jpeg"
+                FileName = request.File.FileName,
+                Url = url,
+                Size = request.File.Length,
+                ContentType = request.File.ContentType
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error finalizing image upload for property {PropertyId}", dto.PropertyId);
-            return StatusCode(500, new { error = "Failed to finalize image upload", details = ex.Message });
+            return StatusCode(500, new { error = ex.Message });
         }
     }
 
-    public sealed class BulkUploadImagesRequest
-    {
-        public IFormFileCollection Files { get; init; } = default!;
-        public string PropertyId { get; init; } = string.Empty;
-    }
-
+    /// <summary>
+    /// Upload multiple images for a property
+    /// </summary>
+    /// <param name="request">The bulk image upload request</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>List of image upload results</returns>
     [HttpPost("bulk-upload")]
     [Consumes("multipart/form-data")]
-    public async Task<ActionResult<BulkImageUploadResponseDto>> BulkUploadImages(
-        [FromForm] BulkUploadImagesRequest request,
+    public async Task<ActionResult<List<ImageUploadResult>>> BulkUploadImages(
+        [FromForm] BulkImageUploadRequest request,
         CancellationToken ct = default)
     {
         try
         {
-            var files = request.Files;
-            var propertyId = request.PropertyId;
-
-            if (files == null || !files.Any())
-            {
+            if (request.Files == null || !request.Files.Any())
                 return BadRequest(new { error = "No files provided" });
-            }
 
-            if (string.IsNullOrEmpty(propertyId))
+            var validationResult = await _propertyIdValidator.ValidateAsync(request.PropertyId, ct);
+            if (!validationResult.IsValid)
+                return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+
+            var results = new List<ImageUploadResult>();
+            foreach (var file in request.Files)
             {
-                return BadRequest(new { error = "Property ID is required" });
-            }
-
-            var results = new List<ImageUploadResultDto>();
-            var errors = new List<string>();
-
-            foreach (var file in files)
-            {
-                try
+                using var stream = file.OpenReadStream();
+                var blobName = await _imageStorageService.UploadImageAsync(stream, file.FileName, file.ContentType, ct);
+                var imageId = await _imageWriteService.AddAsync(new AddImageDto(
+                    PropertyId: request.PropertyId,
+                    File: blobName,
+                    Enabled: true,
+                    Order: 0,
+                    FileSize: file.Length,
+                    ContentType: file.ContentType
+                ), ct);
+                var url = await _imageStorageService.GetImageUrlAsync(blobName, ct);
+                results.Add(new ImageUploadResult
                 {
-                    if (file.Length == 0)
-                    {
-                        errors.Add($"File {file.FileName} is empty");
-                        continue;
-                    }
-
-                    if (!IsValidImageFile(file))
-                    {
-                        errors.Add($"File {file.FileName} is not a valid image");
-                        continue;
-                    }
-
-                    if (file.Length > 10 * 1024 * 1024)
-                    {
-                        errors.Add($"File {file.FileName} is too large (max 10MB)");
-                        continue;
-                    }
-
-                    // Upload to Azure Blob Storage
-                    string blobName;
-                    using (var stream = file.OpenReadStream())
-                    {
-                        blobName = await _imageStorageService.UploadImageAsync(
-                            stream, file.FileName, file.ContentType, ct);
-                    }
-
-                    // Get the public URL
-                    var imageUrl = await _imageStorageService.GetImageUrlAsync(blobName, ct);
-
-                    // Save image metadata to database
-                    var addImageDto = new AddImageDto(
-                        PropertyId: propertyId,
-                        File: blobName,
-                        Enabled: true,
-                        Order: results.Count
-                    );
-
-                    var imageId = await _imageWriteService.AddAsync(addImageDto, ct);
-
-                    results.Add(new ImageUploadResultDto
-                    {
-                        ImageId = imageId,
-                        BlobName = blobName,
-                        ImageUrl = imageUrl,
-                        FileName = file.FileName,
-                        FileSize = file.Length,
-                        ContentType = file.ContentType,
-                        Success = true
-                    });
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error uploading file {FileName} for property {PropertyId}", file.FileName, propertyId);
-                    errors.Add($"Failed to upload {file.FileName}: {ex.Message}");
-                }
+                    ImageId = imageId,
+                    FileName = file.FileName,
+                    Url = url,
+                    Size = file.Length,
+                    ContentType = file.ContentType
+                });
             }
 
-            _logger.LogInformation("Bulk upload completed. Success: {SuccessCount}, Errors: {ErrorCount}", results.Count, errors.Count);
-
-            return Ok(new BulkImageUploadResponseDto
-            {
-                Results = results,
-                Errors = errors,
-                TotalFiles = files.Count,
-                SuccessfulUploads = results.Count,
-                FailedUploads = errors.Count
-            });
+            return Ok(results);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in bulk upload for property {PropertyId}", request.PropertyId);
-            return StatusCode(500, new { error = "Failed to process bulk upload", details = ex.Message });
+            return StatusCode(500, new { error = ex.Message });
         }
     }
 
-    private static bool IsValidImageFile(IFormFile file)
+    /// <summary>
+    /// Purge (soft delete) multiple images for a property
+    /// </summary>
+    /// <param name="request">The purge request containing property ID and image IDs</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>No content on success</returns>
+    [HttpPost("purge")]
+    [Consumes("application/json")]
+    public async Task<ActionResult> PurgeImages(
+        [FromBody] PurgeImagesRequest request,
+        CancellationToken ct = default)
     {
-        if (file == null) return false;
+        try
+        {
+            var validationResult = await _propertyIdValidator.ValidateAsync(request.PropertyId, ct);
+            if (!validationResult.IsValid)
+                return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
 
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
-        var allowedMimeTypes = new[] { "image/jpeg", "image/png", "image/gif", "image/webp" };
+            // Here you could loop and soft-delete image documents, or remove blobs too
+            foreach (var id in request.ImageIds)
+            {
+                await _imageWriteService.DeleteAsync(id, ct);
+            }
 
-        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        var mimeType = file.ContentType.ToLowerInvariant();
-
-        return allowedExtensions.Contains(extension) && allowedMimeTypes.Contains(mimeType);
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
-    private static string GenerateUniqueBlobName(string fileName)
+    /// <summary>
+    /// Finalize image uploads for a property (no-op in current implementation)
+    /// </summary>
+    /// <param name="request">The finalize request containing property ID and image IDs</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>No content on success</returns>
+    [HttpPost("finalize")]
+    [Consumes("application/json")]
+    public async Task<ActionResult> FinalizeImages(
+        [FromBody] FinalizeImagesRequest request,
+        CancellationToken ct = default)
     {
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
-        var randomString = Convert.ToBase64String(Guid.NewGuid().ToByteArray())
-            .Replace("/", "_").Replace("+", "-").TrimEnd('=');
+        try
+        {
+            var validationResult = await _propertyIdValidator.ValidateAsync(request.PropertyId, ct);
+            if (!validationResult.IsValid)
+                return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
 
-        var extension = Path.GetExtension(fileName);
-        var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
-        var cleanName = System.Text.RegularExpressions.Regex.Replace(nameWithoutExtension, @"[^a-zA-Z0-9\-_]", "-");
-        return $"{cleanName}-{timestamp}-{randomString}{extension}";
+            // No-op in this simplified implementation
+            return NoContent();
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 }
 
-public record ImageUploadResponseDto
+/// <summary>
+/// Request model for uploading a single image
+/// </summary>
+public class ImageUploadRequest
 {
-    public string ImageId { get; init; } = string.Empty;
-    public string BlobName { get; init; } = string.Empty;
-    public string ImageUrl { get; init; } = string.Empty;
-    public string FileName { get; init; } = string.Empty;
-    public long FileSize { get; init; }
-    public string ContentType { get; init; } = string.Empty;
+    /// <summary>
+    /// The image file to upload
+    /// </summary>
+    public IFormFile? File { get; set; }
+    
+    /// <summary>
+    /// The ID of the property to associate the image with
+    /// </summary>
+    public string PropertyId { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Whether the image should be enabled (default: true)
+    /// </summary>
+    public bool? Enabled { get; set; }
+    
+    /// <summary>
+    /// The display order of the image (default: 0)
+    /// </summary>
+    public int? Order { get; set; }
 }
 
-public record PresignUploadRequestDto
+/// <summary>
+/// Request model for bulk uploading multiple images
+/// </summary>
+public class BulkImageUploadRequest
 {
-    public string FileName { get; init; } = string.Empty;
-    public string ContentType { get; init; } = string.Empty;
-    public int ExpiresSeconds { get; init; } = 900;
+    /// <summary>
+    /// The image files to upload
+    /// </summary>
+    public List<IFormFile>? Files { get; set; }
+    
+    /// <summary>
+    /// The ID of the property to associate the images with
+    /// </summary>
+    public string PropertyId { get; set; } = string.Empty;
 }
 
-public record PresignUploadResponseDto
+/// <summary>
+/// Result of an image upload operation
+/// </summary>
+public class ImageUploadResult
 {
-    public string BlobName { get; init; } = string.Empty;
-    public string UploadUrl { get; init; } = string.Empty;
-    public DateTimeOffset ExpiresAt { get; init; }
-    public string Method { get; init; } = "PUT";
+    /// <summary>
+    /// The unique identifier of the uploaded image
+    /// </summary>
+    public string ImageId { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// The original filename of the uploaded image
+    /// </summary>
+    public string FileName { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// The public URL where the image can be accessed
+    /// </summary>
+    public string Url { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// The size of the uploaded image in bytes
+    /// </summary>
+    public long Size { get; set; }
+    
+    /// <summary>
+    /// The MIME type of the uploaded image
+    /// </summary>
+    public string ContentType { get; set; } = string.Empty;
 }
 
-public record FinalizeImageUploadRequestDto
+/// <summary>
+/// Request to purge multiple images
+/// </summary>
+public class PurgeImagesRequest
 {
-    public string PropertyId { get; init; } = string.Empty;
-    public string BlobName { get; init; } = string.Empty;
-    public bool? Enabled { get; init; }
-    public int? Order { get; init; }
-    public long? FileSize { get; init; }
-    public string? ContentType { get; init; }
+    /// <summary>
+    /// The ID of the property whose images should be purged
+    /// </summary>
+    public string PropertyId { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// The IDs of the images to purge
+    /// </summary>
+    public List<string> ImageIds { get; set; } = new();
 }
 
-public record BulkImageUploadResponseDto
+/// <summary>
+/// Request to finalize image uploads
+/// </summary>
+public class FinalizeImagesRequest
 {
-    public List<ImageUploadResultDto> Results { get; init; } = new();
-    public List<string> Errors { get; init; } = new();
-    public int TotalFiles { get; init; }
-    public int SuccessfulUploads { get; init; }
-    public int FailedUploads { get; init; }
-}
-
-public record ImageUploadResultDto
-{
-    public string ImageId { get; init; } = string.Empty;
-    public string BlobName { get; init; } = string.Empty;
-    public string ImageUrl { get; init; } = string.Empty;
-    public string FileName { get; init; } = string.Empty;
-    public long FileSize { get; init; }
-    public string ContentType { get; init; } = string.Empty;
-    public bool Success { get; init; }
+    /// <summary>
+    /// The ID of the property whose images should be finalized
+    /// </summary>
+    public string PropertyId { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// The IDs of the images to finalize
+    /// </summary>
+    public List<string> ImageIds { get; set; } = new();
 }

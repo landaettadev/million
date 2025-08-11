@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
+import { SmartImage } from '../ui/SmartImage'
 
 interface GalleryProps {
   images: string[]
@@ -18,7 +18,7 @@ export function Gallery({ images }: GalleryProps) {
     <div className="space-y-3" aria-live="polite">
       {/* Main image with stable ratio to avoid CLS */}
       <div className="relative aspect-[16/10] overflow-hidden rounded-2xl">
-        <Image
+        <SmartImage
           key={images[safeIndex]}
           src={images[safeIndex]}
           alt={`Property image ${safeIndex + 1} of ${images.length}`}
@@ -42,7 +42,13 @@ export function Gallery({ images }: GalleryProps) {
                 i === safeIndex ? 'border-white' : 'border-white/20 hover:border-white/40'
               }`}
             >
-              <Image src={src} alt={`Thumbnail ${i + 1}`} fill className="object-cover" sizes="(max-width: 768px) 20vw, 10vw" />
+              <SmartImage 
+                src={src} 
+                alt={`Thumbnail ${i + 1}`} 
+                fill 
+                className="object-cover" 
+                sizes="(max-width: 768px) 20vw, 10vw"
+              />
             </button>
           ))}
         </div>

@@ -37,22 +37,26 @@ export function PropertyCard({ item, loading = false }: PropertyCardProps) {
   }
   if (item.sqft) specs.push(`${item.sqft.toLocaleString()} Sq. Ft.`)
 
+  // Generate a placeholder image URL if no image is provided
+  const imageUrl = item.image || `https://picsum.photos/800/600?random=${Math.abs(item.id.charCodeAt(0)) % 10}`
+
   return (
     <Link href={`/properties/${item.id}`} aria-label={`View details of ${item.name}`} className="block">
       <article className="relative group transition-all duration-200 transform-gpu hover:-translate-y-0.5">
         {/* Big image */}
         <div className="relative w-full h-[360px] md:h-[560px] rounded-3xl overflow-hidden shadow-xl group-hover:shadow-2xl">
-          {item.image ? (
-            <Image
-              src={item.image}
-              alt={`${item.name} — ${item.address}`}
-              fill
-              className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.01]"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
-            />
-          ) : (
-            <div className="w-full h-full bg-gray-200" />
-          )}
+          <Image
+            src={imageUrl}
+            alt={`${item.name} — ${item.address}`}
+            fill
+            className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.01]"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
+            onError={(e) => {
+              // Fallback to placeholder if image fails to load
+              const target = e.target as HTMLImageElement
+              target.src = `https://picsum.photos/800/600?random=${Math.abs(item.id.charCodeAt(0)) % 10}`
+            }}
+          />
         </div>
 
         {/* Floating info panel */}
@@ -63,6 +67,9 @@ export function PropertyCard({ item, loading = false }: PropertyCardProps) {
           <h3 className="font-serif text-xl md:text-2xl leading-snug">
             {item.name}
           </h3>
+          <div className="text-gray-600 text-sm md:text-[15px] mt-1 mb-2">
+            {item.address}
+          </div>
           {specs.length > 0 && (
             <div className="mt-3 text-gray-600 text-sm md:text-[15px] flex flex-wrap gap-x-6 gap-y-1">
               {specs.map((s, i) => (

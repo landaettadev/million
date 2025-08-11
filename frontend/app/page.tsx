@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, Star, TrendingUp } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { PropertyCard } from '../components/property/PropertyCard'
+import { SellPropertyModal } from '../components/ui/SellPropertyModal'
 import { api } from '../lib/api'
 import type { PropertyLiteDto } from '../lib/types'
 
@@ -14,6 +15,7 @@ export default function HomePage() {
   const [all, setAll] = useState<PropertyLiteDto[]>([])
   const [featured, setFeatured] = useState<PropertyLiteDto[]>([])
   const [reducedMotion, setReducedMotion] = useState(false)
+  const [showSellModal, setShowSellModal] = useState(false)
 
   useEffect(() => {
     // prefers-reduced-motion handling
@@ -111,9 +113,15 @@ export default function HomePage() {
                 <Link href="/properties" aria-label="Explore properties">
                   <Button variant="primary" size="md" className="px-8">Browse Properties</Button>
                 </Link>
-                <Link href="/properties" aria-label="List your property">
-                  <Button variant="ghost" size="md" className="px-8">List your property</Button>
-                </Link>
+                <Button 
+                  variant="ghost" 
+                  size="md" 
+                  className="px-8"
+                  onClick={() => setShowSellModal(true)}
+                  aria-label="Sell your property"
+                >
+                  Sell Your Unit
+                </Button>
               </div>
             </div>
 
@@ -217,6 +225,12 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Sell Property Modal */}
+      <SellPropertyModal 
+        isOpen={showSellModal} 
+        onClose={() => setShowSellModal(false)} 
+      />
     </div>
   )
 }

@@ -221,6 +221,9 @@ if (swaggerEnabled)
 var corsPolicy = app.Environment.IsProduction() ? "production" : "frontend";
 app.UseCors(corsPolicy);
 
+// Serve static files from wwwroot folder (for images)
+app.UseStaticFiles();
+
 if (!string.IsNullOrEmpty(jwtKey))
 {
     app.UseAuthentication();

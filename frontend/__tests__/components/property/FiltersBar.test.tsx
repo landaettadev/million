@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { FiltersBar, type FiltersValue } from '@/components/property/FiltersBar'
+import '@testing-library/jest-dom'
+import { FiltersBar, type FiltersValue } from '../../../components/property/FiltersBar'
 
 const mockOnChange = jest.fn()
 const mockOnSubmit = jest.fn()

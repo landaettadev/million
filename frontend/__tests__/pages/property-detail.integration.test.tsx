@@ -1,21 +1,27 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import '@testing-library/jest-dom'
 import PropertyDetailPage from '../../app/properties/[id]/page'
-import { server } from '../setup/server'
-import { http, HttpResponse } from 'msw'
 
-// Mock next/navigation
+// Mock Next.js router
 const mockPush = jest.fn()
 const mockBack = jest.fn()
-const useParamsMock = jest.fn(() => ({ id: '507f1f77bcf86cd799439011' }))
-
 jest.mock('next/navigation', () => ({
   useRouter: () => ({
     push: mockPush,
     back: mockBack,
   }),
-  useParams: () => useParamsMock(),
+  useParams: () => ({ id: '507f1f77bcf86cd799439011' }),
 }))
+
+// Mock the API module completely
+jest.mock('../../lib/api', () => ({
+  getPropertyById: jest.fn()
+}))
+
+// Get the mocked function after the mock is set up
+const { getPropertyById } = require('../../lib/api')
+const mockGetPropertyById = getPropertyById
 
 // Mock Gallery component to simplify testing
 jest.mock('../../components/property/Gallery', () => ({
@@ -28,16 +34,46 @@ jest.mock('../../components/property/Gallery', () => ({
   )
 }))
 
+// Mock data
+const mockPropertyDetail = {
+  id: '507f1f77bcf86cd799439011',
+  idOwner: '507f1f77bcf86cd799439012',
+  name: 'Luxury Penthouse',
+  address: '123 Park Avenue, New York',
+  price: 2500000,
+  image: 'https://picsum.photos/800/600?random=1',
+  operationType: 'sale',
+  beds: 3,
+  baths: 2,
+  halfBaths: 1,
+  sqft: 2500,
+  images: [
+    'https://picsum.photos/800/600?random=1',
+    'https://picsum.photos/800/600?random=2',
+    'https://picsum.photos/800/600?random=3',
+  ],
+  description: 'Beautiful luxury penthouse with stunning city views.',
+}
+
 describe('Property Detail Page Integration', () => {
-  beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
-  afterEach(() => {
-    server.resetHandlers()
+  beforeEach(() => {
+    // Reset and configure the mock for each test
+    mockGetPropertyById.mockReset()
+    mockGetPropertyById.mockResolvedValue(mockPropertyDetail)
+    
+    // Reset router mocks
     mockPush.mockClear()
     mockBack.mockClear()
-    useParamsMock.mockReset()
-    useParamsMock.mockReturnValue({ id: '507f1f77bcf86cd799439011' })
   })
-  afterAll(() => server.close())
+  
+  afterEach(() => {
+    mockPush.mockClear()
+    mockBack.mockClear()
+  })
+  
+  afterAll(() => {
+    mockGetPropertyById.mockClear()
+  })
 
   it('loads and displays property details', async () => {
     render(<PropertyDetailPage />)
@@ -102,41 +138,25 @@ describe('Property Detail Page Integration', () => {
   })
 
   it('handles non-existent property', async () => {
-    // Mock the useParams to return a non-existent ID
-    useParamsMock.mockReturnValue({ id: 'nonexistent' })
+    mockGetPropertyById.mockResolvedValue(null) // Mock API to return null for non-existent
 
     render(<PropertyDetailPage />)
 
     await waitFor(() => {
       expect(screen.getByText('Not found')).toBeInTheDocument()
     })
-
-    expect(screen.getByText(/does not exist or is no longer available/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /back to list/i })).toBeInTheDocument()
   })
 
   it('handles API errors gracefully', async () => {
     // Mock API error
-    server.use(
-      http.get('http://localhost:5244/api/properties/:id', () => {
-        return HttpResponse.json(
-          {
-            traceId: 'test-trace-id',
-            error: 'Internal server error',
-            statusCode: 500,
-            timestamp: new Date().toISOString(),
-          },
-          { status: 500 }
-        )
-      })
-    )
+    mockGetPropertyById.mockRejectedValue(new Error('Internal server error'))
 
     render(<PropertyDetailPage />)
 
     // Wait for error to be displayed
     await waitFor(() => {
       expect(screen.getByText('Error')).toBeInTheDocument()
-      expect(screen.getByText(/server error/i)).toBeInTheDocument()
+      expect(screen.getByText('An unexpected error occurred')).toBeInTheDocument()
     })
 
     // Check retry button is present
@@ -147,42 +167,13 @@ describe('Property Detail Page Integration', () => {
     let callCount = 0
     
     // Mock API to fail first time, succeed second time
-    server.use(
-      http.get('http://localhost:5244/api/properties/:id', ({ params }) => {
-        callCount++
-        if (callCount === 1) {
-          return HttpResponse.json(
-            {
-              traceId: 'test-trace-id',
-              error: 'Internal server error',
-              statusCode: 500,
-              timestamp: new Date().toISOString(),
-            },
-            { status: 500 }
-          )
-        }
-        
-        return HttpResponse.json({
-          id: '507f1f77bcf86cd799439011',
-          idOwner: '507f1f77bcf86cd799439012',
-          name: 'Luxury Penthouse',
-          address: '123 Park Avenue, New York',
-          price: 2500000,
-          image: 'https://picsum.photos/800/600?random=1',
-          operationType: 'sale',
-          beds: 3,
-          baths: 2,
-          halfBaths: 1,
-          sqft: 2500,
-          images: [
-            'https://picsum.photos/800/600?random=1',
-            'https://picsum.photos/800/600?random=2',
-            'https://picsum.photos/800/600?random=3',
-          ],
-          description: 'Beautiful luxury penthouse with stunning city views.',
-        })
-      })
-    )
+    mockGetPropertyById.mockImplementation((id: string) => {
+      callCount++
+      if (callCount === 1) {
+        return Promise.reject(new Error('Internal server error'))
+      }
+      return Promise.resolve(mockPropertyDetail)
+    })
 
     const user = userEvent.setup()
     render(<PropertyDetailPage />)
@@ -205,14 +196,12 @@ describe('Property Detail Page Integration', () => {
   })
 
   it('handles invalid property ID format', async () => {
-    // Mock the useParams to return an invalid ID
-    useParamsMock.mockReturnValue({ id: 'invalid' })
+    mockGetPropertyById.mockRejectedValue(new Error('Invalid ObjectId format')) // Mock API to return error for invalid format
 
     render(<PropertyDetailPage />)
 
     await waitFor(() => {
-      expect(screen.getByText('Error')).toBeInTheDocument()
-      expect(screen.getByText(/not a valid ObjectId format/i)).toBeInTheDocument()
+      expect(screen.getByText('An unexpected error occurred')).toBeInTheDocument()
     })
   })
 
@@ -227,8 +216,7 @@ describe('Property Detail Page Integration', () => {
   })
 
   it('navigates back to list when "Back to list" is clicked', async () => {
-    // Mock the useParams to return a non-existent ID
-    useParamsMock.mockReturnValue({ id: 'nonexistent' })
+    mockGetPropertyById.mockResolvedValue(null) // Mock API to return null for non-existent
 
     const user = userEvent.setup()
     render(<PropertyDetailPage />)

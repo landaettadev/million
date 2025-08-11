@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using RealEstate.Application;
 using RealEstate.Application.Interfaces;
+using RealEstate.Application.Validators;
+using FluentValidation;
 
 namespace RealEstate.Api.Endpoints;
 
@@ -8,66 +10,111 @@ namespace RealEstate.Api.Endpoints;
 [Route("api/admin/owners")]
 public class AdminOwnerEndpoints : ControllerBase
 {
-    private readonly IOwnerWriteService _ownerWriteService;
-    private readonly IAdminOwnerReadService _ownerReadService;
+    private readonly IAdminOwnerReadService _adminOwnerReadService;
+    private readonly IValidator<CreateOwnerDto> _createOwnerValidator;
+    private readonly IValidator<UpdateOwnerDto> _updateOwnerValidator;
 
-    public AdminOwnerEndpoints(IOwnerWriteService ownerWriteService, IAdminOwnerReadService ownerReadService)
+    public AdminOwnerEndpoints(
+        IAdminOwnerReadService adminOwnerReadService,
+        IValidator<CreateOwnerDto> createOwnerValidator,
+        IValidator<UpdateOwnerDto> updateOwnerValidator)
     {
-        _ownerWriteService = ownerWriteService;
-        _ownerReadService = ownerReadService;
+        _adminOwnerReadService = adminOwnerReadService;
+        _createOwnerValidator = createOwnerValidator;
+        _updateOwnerValidator = updateOwnerValidator;
     }
 
     [HttpGet]
-    public async Task<ActionResult<PagedResult<AdminOwnerDto>>> SearchOwners(
-        [FromQuery] string? searchTerm,
-        [FromQuery] string? sortBy = "CreatedAt",
-        [FromQuery] string sortDirection = "desc",
+    public async Task<ActionResult<PagedResult<AdminOwnerDto>>> GetOwners(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
+        [FromQuery] int pageSize = 50,
         CancellationToken ct = default)
     {
-        var query = new AdminOwnerSearchQuery(
-            SearchTerm: searchTerm,
-            SortBy: string.IsNullOrWhiteSpace(sortBy) ? "CreatedAt" : sortBy,
-            SortDirection: string.IsNullOrWhiteSpace(sortDirection) ? "desc" : sortDirection,
-            Page: page < 1 ? 1 : page,
-            PageSize: pageSize <= 0 ? 20 : pageSize
-        );
-
-        var result = await _ownerReadService.SearchAsync(query, ct);
-        return Ok(result);
+        try
+        {
+            var query = new AdminOwnerSearchQuery(Page: page, PageSize: pageSize);
+            var result = await _adminOwnerReadService.SearchAsync(query, ct);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<AdminOwnerDetailDto>> GetOwnerById(string id, CancellationToken ct)
+    public async Task<ActionResult<AdminOwnerDto>> GetOwnerById(
+        string id,
+        CancellationToken ct = default)
     {
-        var owner = await _ownerReadService.GetByIdAsync(id, ct);
-        if (owner is null) return NotFound();
-        return Ok(owner);
+        try
+        {
+            var owner = await _adminOwnerReadService.GetByIdAsync(id, ct);
+            if (owner == null)
+                return NotFound(new { error = "Owner not found" });
+
+            return Ok(owner);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     [HttpPost]
-    public async Task<ActionResult<object>> CreateOwner([FromBody] CreateOwnerDto dto, CancellationToken ct)
+    public async Task<ActionResult<OwnerDetailDto>> CreateOwner(
+        [FromBody] CreateOwnerDto createOwnerDto,
+        CancellationToken ct = default)
     {
-        var id = await _ownerWriteService.CreateAsync(dto, ct);
-        return Created($"/api/admin/owners/{id}", new { id });
+        try
+        {
+            var validationResult = await _createOwnerValidator.ValidateAsync(createOwnerDto, ct);
+            if (!validationResult.IsValid)
+                return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+
+            // TODO: Implement owner creation service
+            return StatusCode(501, new { error = "Owner creation not yet implemented" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult> UpdateOwner(string id, [FromBody] UpdateOwnerDto dto, CancellationToken ct)
+    public async Task<ActionResult<OwnerDetailDto>> UpdateOwner(
+        string id,
+        [FromBody] UpdateOwnerDto updateOwnerDto,
+        CancellationToken ct = default)
     {
-        var updated = await _ownerWriteService.UpdateAsync(id, dto, ct);
-        if (!updated) return NotFound();
-        return NoContent();
+        try
+        {
+            var validationResult = await _updateOwnerValidator.ValidateAsync(updateOwnerDto, ct);
+            if (!validationResult.IsValid)
+                return BadRequest(new { errors = validationResult.Errors.Select(e => e.ErrorMessage) });
+
+            // TODO: Implement owner update service
+            return StatusCode(501, new { error = "Owner update not yet implemented" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
     [HttpDelete("{id}")]
-    public async Task<ActionResult> DeleteOwner(string id, CancellationToken ct)
+    public async Task<ActionResult> DeleteOwner(
+        string id,
+        CancellationToken ct = default)
     {
-        var deleted = await _ownerWriteService.DeleteAsync(id, ct);
-        if (!deleted) return NotFound();
-        return Ok();
+        try
+        {
+            // TODO: Implement owner deletion service
+            return StatusCode(501, new { error = "Owner deletion not yet implemented" });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 }
-
-
