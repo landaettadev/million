@@ -1,7 +1,6 @@
 using FluentValidation;
 using Microsoft.OpenApi.Models;
 using RealEstate.Api.Endpoints;
-using RealEstate.Api.Middleware;
 using RealEstate.Application;
 using RealEstate.Application.Validators;
 using RealEstate.Infrastructure;
@@ -244,9 +243,6 @@ app.Use(async (ctx, next) =>
         await next();
     }
 });
-
-// Rate limiting for sensitive endpoints (e.g., login)
-app.UseRateLimiting();
 
 app.MapHealthChecks("/health");
 
