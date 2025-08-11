@@ -1,9 +1,0 @@
-{
-  "/page": "app/page.js",
-  "/properties/page": "app/properties/page.js",
-  "/admin/login/page": "app/admin/login/page.js",
-  "/admin/(panel)/dashboard/page": "app/admin/(panel)/dashboard/page.js",
-  "/admin/(panel)/analytics/page": "app/admin/(panel)/analytics/page.js",
-  "/admin/(panel)/properties/page": "app/admin/(panel)/properties/page.js",
-  "/admin/(panel)/owners/page": "app/admin/(panel)/owners/page.js"
-}
