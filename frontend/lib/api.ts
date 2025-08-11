@@ -10,39 +10,24 @@ const baseUrl = (process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API
 function buildImageUrl(imagePath: string): string {
   if (!imagePath) return ''
   
-  // If it's already a full URL, check if it's production and we're in development
+  // If it's already a full URL, return as is
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    // If we're in development and the URL is production Azure Storage, convert it to local Azurite
-    if (process.env.NODE_ENV === 'development' && 
-        imagePath.includes('millionstorageprod.blob.core.windows.net')) {
-      // Extract just the filename from the production URL
-      const filename = imagePath.split('/').pop()
-      if (filename) {
-        const localUrl = `http://127.0.0.1:10000/devstoreaccount1/property-images/${filename}`
-        console.log('Converting production URL to local Azurite:', { original: imagePath, local: localUrl })
-        return localUrl
-      }
-    }
-    
     console.log('Image already has full URL:', imagePath)
     return imagePath
   }
   
-  // For relative paths, use development or production URLs based on environment
+  // Use the actual Azure Blob Storage URLs directly
+  // The images are publicly accessible at: https://millionstorageprod.blob.core.windows.net/property-images/{imagePath}
+  const storageAccountName = 'millionstorageprod'
   const containerName = 'property-images'
   
-  if (process.env.NODE_ENV === 'development') {
-    // Use local Azurite in development
-    const localUrl = `http://127.0.0.1:10000/devstoreaccount1/${containerName}/${imagePath}`
-    console.log('Building local Azurite URL:', { imagePath, localUrl })
-    return localUrl
-  } else {
-    // Use production Azure Storage
-    const storageAccountName = 'millionstorageprod'
-    const fullUrl = `https://${storageAccountName}.blob.core.windows.net/${containerName}/${imagePath}`
-    console.log('Building production Azure Storage URL:', { imagePath, fullUrl })
-    return fullUrl
-  }
+  // Return the full Azure Blob Storage URL
+  const fullUrl = `https://${storageAccountName}.blob.core.windows.net/${containerName}/${imagePath}`
+  
+  // Debug logging
+  console.log('Building image URL:', { imagePath, fullUrl })
+  
+  return fullUrl
 }
 
 // Map backend OperationType enum to frontend string
