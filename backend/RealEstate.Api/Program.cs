@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Asp.Versioning;
 using Serilog;
 using Serilog.Context;
+using Microsoft.AspNetCore.Diagnostics;
 
 var builder = WebApplication.CreateBuilder(args);
 // Global request body size limit (10 MB). Per-endpoint overrides can be applied via attributes.
@@ -58,6 +59,13 @@ builder.Services.AddCors(options =>
               .WithMethods("GET", "POST", "PUT", "DELETE")
               .AllowCredentials());
 });
+
+// Controllers
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 
 // Swagger - Only enable in Development/Staging
 var swaggerEnabled = Environment.GetEnvironmentVariable("SWAGGER_ENABLED")?.ToLower() == "true"
@@ -121,6 +129,9 @@ if (!string.IsNullOrEmpty(aiConnection))
     builder.Services.AddApplicationInsightsTelemetry();
 }
 
+// Health checks
+builder.Services.AddHealthChecks();
+
 // JWT Auth
 var jwtKey = builder.Configuration["JWT:KEY"];
 if (!string.IsNullOrEmpty(jwtKey))
@@ -154,7 +165,7 @@ app.Use(async (context, next) =>
     context.Response.Headers["X-Frame-Options"] = "DENY";
     context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
-    context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' https: data:; media-src 'self' https:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https:";
+    context.Response.Headers["Content-Security-Policy"] = "default-src 'self'; img-src 'self' https: data:; media-src 'self' https:; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' http: https:";
     
     if (!app.Environment.IsDevelopment())
     {
@@ -165,8 +176,35 @@ app.Use(async (context, next) =>
 });
 
 // Global error handling middleware
-// Temporarily disable custom error middleware if not present
-// app.UseMiddleware<ErrorHandlingMiddleware>();
+app.UseExceptionHandler(appError =>
+{
+    appError.Run(async context =>
+    {
+        var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
+        var exception = exceptionFeature?.Error;
+
+        var statusCode = exception switch
+        {
+            FluentValidation.ValidationException => StatusCodes.Status400BadRequest,
+            KeyNotFoundException => StatusCodes.Status404NotFound,
+            _ => StatusCodes.Status500InternalServerError
+        };
+
+        context.Response.StatusCode = statusCode;
+        context.Response.ContentType = "application/json";
+
+        var payload = new
+        {
+            traceId = context.TraceIdentifier,
+            error = exception?.Message ?? "An unexpected error occurred",
+            details = (string[]?)null,
+            statusCode,
+            timestamp = DateTime.UtcNow.ToString("O")
+        };
+
+        await context.Response.WriteAsJsonAsync(payload);
+    });
+});
 
 if (swaggerEnabled)
 {
@@ -211,28 +249,34 @@ app.MapHealthChecks("/health");
 
 // Map endpoints
 app.MapPropertyEndpoints();
-// Map admin endpoints if available
-// app.MapAuthEndpoints();
-// app.MapAdminEndpoints();
-// app.MapAdminPropertyEndpoints();
-// app.MapAdminOwnerEndpoints();
-// app.MapAdminImageEndpoints();
+// Map controllers (attribute-routed endpoints like admin/*)
+app.MapControllers();
 
-// Public GET caching headers
-app.Use(async (ctx, next) =>
-{
-    await next();
-    if (ctx.Request.Method == "GET" && ctx.Request.Path.StartsWithSegments("/api/properties"))
-    {
-        ctx.Response.Headers["Cache-Control"] = "public, max-age=60";
-    }
-});
+// Public GET caching headers disabled temporarily to investigate chunked encoding issue
+// app.Use(async (ctx, next) =>
+// {
+//     if (ctx.Request.Method == "GET" && ctx.Request.Path.StartsWithSegments("/api/properties"))
+//     {
+//         ctx.Response.OnStarting(() =>
+//         {
+//             ctx.Response.Headers["Cache-Control"] = "public, max-age=60";
+//             return Task.CompletedTask;
+//         });
+//     }
+//     await next();
+// });
 
-// Seed on start
-using (var scope = app.Services.CreateScope())
+// Seed on start (do not crash app if DB is unavailable in dev)
+try
 {
+    using var scope = app.Services.CreateScope();
     var seeder = scope.ServiceProvider.GetRequiredService<MongoSeeder>();
     await seeder.RunAsync();
+}
+catch (Exception ex)
+{
+    // Log and continue so the API can still start for health checks and static endpoints
+    Log.Warning(ex, "Mongo seeding failed during startup. The API will start without seeded data.");
 }
 
 app.Run();

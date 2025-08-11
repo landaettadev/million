@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className="min-h-screen bg-black text-white">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+      <body className="min-h-screen bg-black text-white" suppressHydrationWarning>
         <header className="sticky top-0 z-50 surface border-b border-subtle">
           <div className="container">
             <Navbar />

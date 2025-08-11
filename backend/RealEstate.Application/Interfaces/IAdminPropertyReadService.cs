@@ -62,8 +62,13 @@ public sealed record AdminPropertyDetailDto(
 
 public sealed record AdminPropertyImageDto(
     string Id,
-    string File,
+    string PropertyId,
+    string BlobName,
+    string ImageUrl,
     bool Enabled,
     int Order,
+    string FileName,
+    long FileSize,
+    string ContentType,
     DateTime CreatedAt
 );

@@ -39,7 +39,7 @@ export default function AdminHeader() {
         <div className="flex items-center space-x-2">
           <nav aria-label="Breadcrumb" className="flex items-center space-x-2">
             {breadcrumbs.map((crumb, index) => (
-              <div key={crumb.href} className="flex items-center">
+              <div key={`${crumb.href}-${index}`} className="flex items-center">
                 {index > 0 && (
                   <ChevronRight className="w-4 h-4 text-gray-400 mx-2" />
                 )}

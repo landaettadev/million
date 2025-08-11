@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RealEstate.Tests.E2E")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9afa8f41ac0e2c743719b733ed60399c14f1b33f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fd7b8d899e410dfa8ef4b1c5230e179ceef4ff16")]
 [assembly: System.Reflection.AssemblyProductAttribute("RealEstate.Tests.E2E")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RealEstate.Tests.E2E")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -83,16 +83,27 @@ public class AdminImageUploadEndpoints : ControllerBase
         });
     }
 
+    public sealed class UploadImageRequest
+    {
+        public IFormFile File { get; init; } = default!;
+        public string PropertyId { get; init; } = string.Empty;
+        public bool Enabled { get; init; } = true;
+        public int Order { get; init; } = 0;
+    }
+
     [HttpPost("upload")]
+    [Consumes("multipart/form-data")]
     public async Task<ActionResult<ImageUploadResponseDto>> UploadImage(
-        [FromForm] IFormFile file,
-        [FromForm] string propertyId,
-        [FromForm] bool enabled = true,
-        [FromForm] int order = 0,
+        [FromForm] UploadImageRequest request,
         CancellationToken ct = default)
     {
         try
         {
+            var file = request.File;
+            var propertyId = request.PropertyId;
+            var enabled = request.Enabled;
+            var order = request.Order;
+
             if (file == null || file.Length == 0)
             {
                 return BadRequest(new { error = "No file provided" });
@@ -180,7 +191,7 @@ public class AdminImageUploadEndpoints : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error uploading image for property {PropertyId}", propertyId);
+            _logger.LogError(ex, "Error uploading image for property {PropertyId}", request.PropertyId);
             return StatusCode(500, new { error = "Failed to upload image", details = ex.Message });
         }
     }
@@ -315,14 +326,23 @@ public class AdminImageUploadEndpoints : ControllerBase
         }
     }
 
+    public sealed class BulkUploadImagesRequest
+    {
+        public IFormFileCollection Files { get; init; } = default!;
+        public string PropertyId { get; init; } = string.Empty;
+    }
+
     [HttpPost("bulk-upload")]
+    [Consumes("multipart/form-data")]
     public async Task<ActionResult<BulkImageUploadResponseDto>> BulkUploadImages(
-        [FromForm] IFormFileCollection files,
-        [FromForm] string propertyId,
+        [FromForm] BulkUploadImagesRequest request,
         CancellationToken ct = default)
     {
         try
         {
+            var files = request.Files;
+            var propertyId = request.PropertyId;
+
             if (files == null || !files.Any())
             {
                 return BadRequest(new { error = "No files provided" });
@@ -410,7 +430,7 @@ public class AdminImageUploadEndpoints : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in bulk upload for property {PropertyId}", propertyId);
+            _logger.LogError(ex, "Error in bulk upload for property {PropertyId}", request.PropertyId);
             return StatusCode(500, new { error = "Failed to process bulk upload", details = ex.Message });
         }
     }

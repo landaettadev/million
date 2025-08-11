@@ -86,11 +86,11 @@ export const handlers = [
     }
 
     if (minPrice) {
-      filteredItems = filteredItems.filter(item => item.price >= parseInt(minPrice))
+      filteredItems = filteredItems.filter(item => (item.price ?? 0) >= parseInt(minPrice))
     }
 
     if (maxPrice) {
-      filteredItems = filteredItems.filter(item => item.price <= parseInt(maxPrice))
+      filteredItems = filteredItems.filter(item => (item.price ?? 0) <= parseInt(maxPrice))
     }
 
     if (operationType && operationType !== '') {

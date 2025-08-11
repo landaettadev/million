@@ -1,6 +1,8 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
+using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Routing;
 using RealEstate.Application;
 
@@ -33,7 +35,25 @@ public static class PropertyEndpoints
             }
 
             var result = await service.SearchAsync(q, ctx.RequestAborted);
-            return Results.Ok(new { items = result.Items, page = result.Page, pageSize = result.PageSize, total = result.Total });
+            var payload = new PropertyListResponse(result.Items, result.Page, result.PageSize, result.Total);
+            var json = JsonSerializer.Serialize(payload);
+            var bytes = Encoding.UTF8.GetBytes(json);
+            ctx.Response.ContentType = "application/json; charset=utf-8";
+            ctx.Response.ContentLength = bytes.Length;
+            await ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length, ctx.RequestAborted);
+            return Results.Empty;
+        });
+
+        group.MapGet("/featured", async (HttpContext ctx, IPropertyReadService service) =>
+        {
+            var limit = int.TryParse(ctx.Request.Query["limit"], out var l) ? l : 6;
+            var properties = await service.GetFeaturedPropertiesAsync(limit, ctx.RequestAborted);
+            var json = JsonSerializer.Serialize(properties);
+            var bytes = Encoding.UTF8.GetBytes(json);
+            ctx.Response.ContentType = "application/json; charset=utf-8";
+            ctx.Response.ContentLength = bytes.Length;
+            await ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length, ctx.RequestAborted);
+            return Results.Empty;
         });
 
         group.MapGet("/{id}", async (string id, IPropertyReadService service, IValidator<string> idValidator, HttpContext ctx) =>
@@ -52,9 +72,16 @@ public static class PropertyEndpoints
                 throw new KeyNotFoundException($"Property with ID '{id}' not found");
             }
             
-            return Results.Ok(item);
+            var json = JsonSerializer.Serialize(item);
+            var bytes = Encoding.UTF8.GetBytes(json);
+            ctx.Response.ContentType = "application/json; charset=utf-8";
+            ctx.Response.ContentLength = bytes.Length;
+            await ctx.Response.Body.WriteAsync(bytes, 0, bytes.Length, ctx.RequestAborted);
+            return Results.Empty;
         });
 
         return endpoints;
     }
 }
+
+file record PropertyListResponse(IReadOnlyList<PropertyLiteDto> items, int page, int pageSize, long total);

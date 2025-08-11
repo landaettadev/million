@@ -979,11 +979,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj",
+      "projectUniqueName": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj",
       "projectName": "RealEstate.Application",
-      "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj",
+      "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\RealEstate.Application.csproj",
       "packagesPath": "C:\\Users\\landa\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Application\\obj\\",
+      "outputPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Application\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
