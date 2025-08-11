@@ -1,7 +1,8 @@
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Configuration;
-using RealEstate.Application.Interfaces;
+using Microsoft.Extensions.Logging;
+using RealEstate.Application;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -40,7 +41,7 @@ public sealed class AzureBlobStorageService : IImageStorageService
         }
     }
 
-    public async Task<string> UploadImageAsync(Stream imageStream, string fileName, string contentType, CancellationToken ct = default)
+    public async Task<string> UploadAsync(Stream fileStream, string fileName, string contentType, CancellationToken ct = default)
     {
         if (_blobServiceClient == null)
         {
@@ -55,7 +56,7 @@ public sealed class AzureBlobStorageService : IImageStorageService
         var blobClient = containerClient.GetBlobClient(blobName);
 
         // Upload the image
-        await blobClient.UploadAsync(imageStream, new BlobHttpHeaders
+        await blobClient.UploadAsync(fileStream, new BlobHttpHeaders
         {
             ContentType = contentType,
             CacheControl = "public, max-age=31536000" // 1 year cache
@@ -64,7 +65,7 @@ public sealed class AzureBlobStorageService : IImageStorageService
         return blobName;
     }
 
-    public async Task<bool> DeleteImageAsync(string blobName, CancellationToken ct = default)
+    public async Task DeleteAsync(string fileName, CancellationToken ct = default)
     {
         if (_blobServiceClient == null)
         {
@@ -74,54 +75,40 @@ public sealed class AzureBlobStorageService : IImageStorageService
         try
         {
             var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
-            var blobClient = containerClient.GetBlobClient(blobName);
+            var blobClient = containerClient.GetBlobClient(fileName);
             
             var response = await blobClient.DeleteIfExistsAsync(cancellationToken: ct);
-            return response.Value;
+            // Return void as per interface
         }
         catch
         {
-            return false;
+            // Log error but don't throw as per interface contract
         }
     }
 
-    public async Task<Stream> DownloadImageAsync(string blobName, CancellationToken ct = default)
+    public string GetImageUrl(string imagePath)
     {
-        if (_blobServiceClient == null)
+        if (string.IsNullOrEmpty(_baseUrl))
         {
-            throw new InvalidOperationException("Azure Blob Storage is not available. Please ensure Azurite is running for development.");
+            // In development mode, use Azurite URL
+            if (_isDevelopmentStorage)
+            {
+                return $"http://127.0.0.1:10000/devstoreaccount1/{_containerName}/{imagePath}";
+            }
+            
+            // Fallback to Azure Storage URL format (production)
+            return $"https://millionstorageprod.blob.core.windows.net/{_containerName}/{imagePath}";
         }
-
-        var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
-        var blobClient = containerClient.GetBlobClient(blobName);
         
-        var response = await blobClient.DownloadAsync(cancellationToken: ct);
-        return response.Value.Content;
+        return $"{_baseUrl.TrimEnd('/')}/{imagePath}";
     }
 
-    public async Task<string> GetImageUrlAsync(string blobName, CancellationToken ct = default)
-    {
-        if (_blobServiceClient == null)
-        {
-            throw new InvalidOperationException("Azure Blob Storage is not available. Please ensure Azurite is running for development.");
-        }
-
-        if (!string.IsNullOrEmpty(_baseUrl))
-        {
-            return $"{_baseUrl.TrimEnd('/')}/{_containerName}/{blobName}";
-        }
-
-        var containerClient = _blobServiceClient.GetBlobContainerClient(_containerName);
-        var blobClient = containerClient.GetBlobClient(blobName);
-        
-        return blobClient.Uri.ToString();
-    }
-
+    // Additional helper methods for internal use
     public async Task<bool> ImageExistsAsync(string blobName, CancellationToken ct = default)
     {
         if (_blobServiceClient == null)
         {
-            throw new InvalidOperationException("Azure Blob Storage is not available. Please ensure Azurite is running for development.");
+            return false;
         }
 
         try
@@ -140,11 +127,12 @@ public sealed class AzureBlobStorageService : IImageStorageService
 
     private static string GenerateUniqueBlobName(string fileName)
     {
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+        var randomSuffix = Convert.ToBase64String(RandomNumberGenerator.GetBytes(8))
+            .Replace("/", "").Replace("+", "").Replace("=", "");
         var extension = Path.GetExtension(fileName);
         var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
-        var guid = Guid.NewGuid().ToString("N")[..8];
         
-        return $"{timestamp}-{guid}-{nameWithoutExtension}{extension}";
+        return $"{nameWithoutExtension}-{timestamp}-{randomSuffix}{extension}";
     }
 }

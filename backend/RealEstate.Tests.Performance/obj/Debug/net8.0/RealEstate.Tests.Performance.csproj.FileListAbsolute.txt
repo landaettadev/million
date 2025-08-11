@@ -1,0 +1,7 @@
+C:\Users\landa\Documents\million\backend\RealEstate.Tests.Performance\obj\Debug\net8.0\RealEstate.Tests.Performance.csproj.AssemblyReference.cache
+C:\Users\landa\Documents\million\backend\RealEstate.Tests.Performance\obj\Debug\net8.0\MvcTestingAppManifest.json
+C:\Users\landa\Documents\million\backend\RealEstate.Tests.Performance\obj\Debug\net8.0\RealEstate.Tests.Performance.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\landa\Documents\million\backend\RealEstate.Tests.Performance\obj\Debug\net8.0\RealEstate.Tests.Performance.AssemblyInfoInputs.cache
+C:\Users\landa\Documents\million\backend\RealEstate.Tests.Performance\obj\Debug\net8.0\RealEstate.Tests.Performance.AssemblyInfo.cs
+C:\Users\landa\Documents\million\backend\RealEstate.Tests.Performance\obj\Debug\net8.0\RealEstate.Tests.Performance.csproj.CoreCompileInputs.cache
+C:\Users\landa\Documents\million\backend\RealEstate.Tests.Performance\obj\Debug\net8.0\RealEstate.Tests.Performance.sourcelink.json
