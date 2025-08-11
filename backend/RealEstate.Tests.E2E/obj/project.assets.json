@@ -5954,11 +5954,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests.E2E\\RealEstate.Tests.E2E.csproj",
+      "projectUniqueName": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Tests.E2E\\RealEstate.Tests.E2E.csproj",
       "projectName": "RealEstate.Tests.E2E",
-      "projectPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests.E2E\\RealEstate.Tests.E2E.csproj",
+      "projectPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Tests.E2E\\RealEstate.Tests.E2E.csproj",
       "packagesPath": "C:\\Users\\landa\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\landa\\OneDrive\\Escritorio\\million\\backend\\RealEstate.Tests.E2E\\obj\\",
+      "outputPath": "C:\\Users\\landa\\Documents\\million\\backend\\RealEstate.Tests.E2E\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

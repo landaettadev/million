@@ -1,0 +1,12 @@
+* [33m72c0273f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelop[m[33m, [m[1;31morigin/develop[m[33m)[m chore: clean up build artifacts and cache files
+[31m|[m *   [33m352979e0[m[33m ([m[1;35mrefs/stash[m[33m)[m On develop: Complete stash including untracked files
+[31m|[m[31m/[m[33m|[m[34m\[m  
+[31m|[m [33m|[m * [33mcb8dc70f[m untracked files on develop: a4a9deec feat: implement property detail modals and fix all tests
+[31m|[m * [33m09b0da24[m index on develop: a4a9deec feat: implement property detail modals and fix all tests
+[31m|[m[31m/[m  
+* [33ma4a9deec[m feat: implement property detail modals and fix all tests
+* [33m8369ac61[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m feat: Complete backend integration and frontend updates
+* [33m855a4f0c[m feat: Add image management modal and search/filter functionality
+* [33m0851ff79[m infra(azure): terraform para RG, Storage (images/thumbs), App Insights, Key Vault, Web App Linux con MI y KV refs; RBAC; + correlación y rate limiting wiring
+* [33m8007acd0[m infra(azure): add Terraform for RG, Storage (images/thumbs), App Insights, Key Vault secrets, Linux Web App with KV references and Managed Identity; RBAC for KV access
+* [33mfd7b8d89[m backend: stabilize AdminAnalyticsService (stubbed metrics), fix AdminImageUpload endpoints (DTO ctor, usings), add API versioning pkg; tests: convert integration to NUnit, fix Program refs; build: green across backend projects

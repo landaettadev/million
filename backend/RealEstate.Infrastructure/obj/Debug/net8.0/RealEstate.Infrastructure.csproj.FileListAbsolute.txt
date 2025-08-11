@@ -1,0 +1,6 @@
+C:\Users\landa\Documents\million\backend\RealEstate.Infrastructure\obj\Debug\net8.0\RealEstate.Infrastructure.csproj.AssemblyReference.cache
+C:\Users\landa\Documents\million\backend\RealEstate.Infrastructure\obj\Debug\net8.0\RealEstate.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\landa\Documents\million\backend\RealEstate.Infrastructure\obj\Debug\net8.0\RealEstate.Infrastructure.AssemblyInfoInputs.cache
+C:\Users\landa\Documents\million\backend\RealEstate.Infrastructure\obj\Debug\net8.0\RealEstate.Infrastructure.AssemblyInfo.cs
+C:\Users\landa\Documents\million\backend\RealEstate.Infrastructure\obj\Debug\net8.0\RealEstate.Infrastructure.csproj.CoreCompileInputs.cache
+C:\Users\landa\Documents\million\backend\RealEstate.Infrastructure\obj\Debug\net8.0\RealEstate.Infrastructure.sourcelink.json
