@@ -1,7 +1,6 @@
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using RealEstate.Application;
-using RealEstate.Application.Interfaces;
 using RealEstate.Infrastructure.Services;
 
 namespace RealEstate.Infrastructure;
@@ -10,30 +9,25 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var settings = configuration.GetSection("MongoDb").Get<MongoSettings>() ?? new MongoSettings();
-        services.AddSingleton(settings);
-
-        services.AddSingleton<MongoContext>();
-        services.AddScoped<IPropertyRepository, PropertyRepository>();
-        services.AddScoped<IPropertyWriteService, PropertyWriteService>();
-        services.AddScoped<IAdminPropertyReadService, Services.AdminPropertyReadService>();
-        services.AddScoped<IAdminUserRepository, AdminUserRepository>();
-        services.AddScoped<IOwnerWriteService, OwnerWriteService>();
-        services.AddScoped<IAdminOwnerReadService, Services.AdminOwnerReadService>();
-        services.AddScoped<IAdminImageReadService, Services.AdminImageReadService>();
-        services.AddScoped<IImageWriteService, ImageWriteService>();
-        services.AddScoped<IAdminAnalyticsService, AdminAnalyticsService>();
+        // MongoDB Configuration
+        var mongoSettings = configuration.GetSection("MongoDb").Get<MongoSettings>();
+        if (mongoSettings == null)
+            throw new InvalidOperationException("MongoDB configuration is missing");
         
-        // Image Storage Service - use Azure Blob Storage with development fallback
-        services.AddScoped<AzureBlobStorageService>();
-        services.AddScoped<IImageStorageService>(provider =>
-        {
-            var azureService = provider.GetRequiredService<AzureBlobStorageService>();
-            return new DevelopmentImageStorageService(azureService);
-        });
-
-        services.AddSingleton<MongoSeeder>();
-
+        services.AddSingleton(mongoSettings);
+        services.AddSingleton<MongoContext>(provider => new MongoContext(mongoSettings));
+        
+        // Repositories
+        services.AddScoped<IPropertyRepository, PropertyRepository>();
+        services.AddScoped<IAdminUserRepository, AdminUserRepository>();
+        
+        // Services
+        services.AddScoped<IImageStorageService, AzureBlobStorageService>();
+        services.AddScoped<ICacheService, RedisCacheService>();
+        
+        // Seeders
+        services.AddScoped<MongoSeeder>();
+        
         return services;
     }
 }
