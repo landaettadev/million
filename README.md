@@ -1,248 +1,278 @@
-# Real Estate MVP - Million Luxury
+# 🏠 Million Real Estate - Full Stack Application
 
-MVP para consulta de propiedades inmobiliarias (venta y alquiler) con listado, filtros y detalle.
+A comprehensive real estate platform built with .NET 8, MongoDB, and Next.js, featuring property management, search capabilities, and a modern responsive interface.
 
-## 🏗️ Arquitectura
+## 🚀 Features
 
-- **Backend**: .NET 8 Minimal API + MongoDB
-- **Frontend**: Next.js 14 + React Query + Tailwind + shadcn/ui
-- **Base de Datos**: MongoDB 7.0 (Docker Compose)
+- **Property Management**: Full CRUD operations for real estate properties
+- **Advanced Search**: Filter properties by name, address, price range, and more
+- **Image Management**: Azure Blob Storage integration for property images
+- **Responsive Design**: Modern UI that works on all devices
+- **Admin Panel**: Complete administrative interface for property management
+- **Authentication**: Secure admin access with JWT tokens
+- **Real-time Updates**: Live property data updates
 
-## 🚀 Inicio Rápido
+## 🛠️ Technology Stack
 
-### Prerrequisitos
+### Backend
+- **.NET 8** - Modern C# framework
+- **MongoDB** - NoSQL database
+- **Azure Blob Storage** - Image storage service
+- **JWT Authentication** - Secure API access
+- **Clean Architecture** - Modular and maintainable code structure
 
-- Docker Desktop
-- .NET 8 SDK
-- Node.js 18+
+### Frontend
+- **Next.js 14** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first CSS framework
+- **React Testing Library** - Component testing
+- **Jest** - JavaScript testing framework
 
-### 1. Base de Datos
+### Testing
+- **NUnit** - Backend unit testing
+- **Jest + React Testing Library** - Frontend testing
+- **Integration Tests** - API endpoint testing
+
+## 📋 Prerequisites
+
+- **.NET 8 SDK** - [Download here](https://dotnet.microsoft.com/download/dotnet/8.0)
+- **Node.js 18+** - [Download here](https://nodejs.org/)
+- **MongoDB** - Local installation or MongoDB Atlas account
+- **Azure Account** - For Blob Storage (optional, can use local storage)
+
+## 🚀 Quick Start
+
+### 1. Clone the Repository
 
 ```bash
-# Iniciar MongoDB
-docker-compose up -d
+git clone https://github.com/landaettadev/million.git
+cd million
 ```
 
-### 2. Backend
+### 2. Backend Setup
 
 ```bash
 cd backend/RealEstate.Api
+
+# Restore dependencies
 dotnet restore
+
+# Set up environment variables
+cp appsettings.Development.json.example appsettings.Development.json
+# Edit appsettings.Development.json with your MongoDB connection string
+
+# Run the application
 dotnet run
 ```
 
-El API estará disponible en: http://localhost:5000
-Swagger UI: http://localhost:5000/swagger
+The API will be available at `https://localhost:7244` or `http://localhost:5244`
 
-### 3. Frontend
+### 3. Frontend Setup
 
 ```bash
 cd frontend
+
+# Install dependencies
 npm install
+
+# Set up environment variables
+cp .env.local.example .env.local
+# Edit .env.local with your API endpoints
+
+# Run the development server
 npm run dev
 ```
 
-El frontend estará disponible en: http://localhost:3000
+The frontend will be available at `http://localhost:3000`
 
-## 📋 Funcionalidades
+### 4. Database Setup
 
-### Listado de Propiedades
-- Filtros: nombre, dirección, rango de precio, tipo de operación
-- Paginación
-- Ordenamiento por precio ascendente
+#### Option A: Local MongoDB
+```bash
+# Install MongoDB locally or use Docker
+docker run -d -p 27017:27017 --name mongodb mongo:latest
 
-### Detalle de Propiedad
-- Información completa
-- Galería de imágenes
-- Navegación responsiva
+# Connection string: mongodb://localhost:27017/million
+```
 
-## 🗄️ Modelo de Datos
+#### Option B: MongoDB Atlas
+1. Create a free account at [MongoDB Atlas](https://www.mongodb.com/atlas)
+2. Create a new cluster
+3. Get your connection string
+4. Update `appsettings.Development.json`
 
-### Collections MongoDB
+### 5. Azure Blob Storage (Optional)
+
+If you want to use Azure Blob Storage for images:
+
+1. Create an Azure Storage Account
+2. Create a container named `property-images`
+3. Update the connection string in `appsettings.Development.json`
+4. Or use local file storage (default)
+
+## 🔧 Configuration
+
+### Backend Configuration
 
 ```json
-// Owner Collection
-Owner {
-  _id: ObjectId,
-  name: string,
-  address: string,
-  photo: string,
-  birthday: Date
-}
-
-// Property Collection
-Property {
-  _id: ObjectId,
-  ownerId: ObjectId,  // FK a Owner
-  name: string,
-  address: string,
-  price: number,
-  codeInternal?: string,
-  year?: number,
-  operationType: "sale" | "rent"
-}
-
-// PropertyImage Collection
-PropertyImage {
-  _id: ObjectId,
-  propertyId: ObjectId,  // FK a Property
-  file: string,
-  enabled: boolean
-}
-
-// PropertyTrace Collection
-PropertyTrace {
-  _id: ObjectId,
-  propertyId: ObjectId,  // FK a Property
-  dateSale: Date,
-  name: string,
-  value: number,
-  tax: number
+{
+  "MongoDB": {
+    "ConnectionString": "mongodb://localhost:27017/million",
+    "DatabaseName": "million"
+  },
+  "AzureStorage": {
+    "ConnectionString": "your-azure-connection-string",
+    "ContainerName": "property-images"
+  },
+  "JWT": {
+    "SecretKey": "your-secret-key-here",
+    "Issuer": "million-real-estate",
+    "Audience": "million-users"
+  }
 }
 ```
 
-## 🔧 Endpoints
+### Frontend Configuration
 
-- `GET /api/properties` - Listado con filtros y paginación
-- `GET /api/properties/{id}` - Detalle de propiedad
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5244
+NEXT_PUBLIC_IMAGE_BASE_URL=https://your-storage-account.blob.core.windows.net/property-images
+```
 
-## 🧪 Tests
+## 🧪 Running Tests
 
-### Unit Tests
+### Backend Tests
 ```bash
-# Backend Unit Tests
-cd backend/RealEstate.Tests
+cd backend
 dotnet test
+```
 
-# Frontend Unit Tests
+### Frontend Tests
+```bash
 cd frontend
 npm test
 ```
 
-### Integration Tests
+### All Tests
 ```bash
-# Endpoint Integration Tests (uses Testcontainers)
-cd backend/RealEstate.Tests.Integration
-dotnet test
+# From root directory
+npm run test:all
 ```
 
-### Performance Tests
-```bash
-# Benchmark Tests
-cd backend/RealEstate.Tests.Performance
-dotnet run --configuration Release
-
-# Load Tests
-cd backend/RealEstate.Tests.Performance
-dotnet test --filter "Category=LoadTest"
-```
-
-### Run All Tests
-```bash
-# Windows
-cd backend
-.\run-all-tests.ps1
-
-# Linux/Mac
-cd backend
-./run-all-tests.sh
-```
-
-## 📁 Estructura del Proyecto
+## 📁 Project Structure
 
 ```
 million/
-├── backend/
-│   ├── RealEstate.Api/          # Minimal API, Endpoints, Program.cs
-│   │   ├── Endpoints/           # API endpoints
-│   │   ├── Extensions/          # Service extensions
-│   │   └── Middleware/          # Global middleware
-│   ├── RealEstate.Application/   # DTOs, Services, Interfaces
-│   │   ├── DTOs/                # Data Transfer Objects
-│   │   ├── Services/            # Business logic
-│   │   ├── Interfaces/          # Service contracts
-│   │   └── Exceptions/          # Custom exceptions
-│   ├── RealEstate.Infrastructure/ # MongoDB repos, models
-│   │   ├── Repositories/        # Data access layer
-│   │   ├── Models/              # MongoDB models
-│   │   ├── Data/                # Database context
-│   │   ├── Configuration/       # MongoDB config
-│   │   └── Seeders/             # Data seeding
-│   ├── RealEstate.Tests/        # NUnit unit tests
-│   │   ├── Services/            # Service tests
-│   │   └── Repositories/        # Repository tests
-│   ├── RealEstate.Tests.Integration/ # Integration tests
-│   │   ├── Endpoints/           # API endpoint tests
-│   │   └── Infrastructure/      # Test infrastructure
-│   └── RealEstate.Tests.Performance/ # Performance & load tests
-│       ├── Benchmarks/          # BenchmarkDotNet tests
-│       ├── LoadTests/           # NBomber load tests
-│       └── Infrastructure/      # Performance test setup
-├── frontend/
-│   ├── app/(routes)/            # Next.js App Router
-│   │   └── properties/          # Property pages
-│   │       └── [id]/            # Property detail
-│   ├── components/              # React components
-│   │   ├── ui/                  # shadcn/ui components
-│   │   ├── properties/          # Property components
-│   │   │   ├── PropertyCard/    # Property card component
-│   │   │   └── PropertyDetail/  # Property detail component
-│   │   ├── filters/             # Filter components
-│   │   └── forms/               # Form components
-│   ├── lib/                     # Utilities
-│   │   ├── api/                 # API client
-│   │   ├── hooks/               # Custom hooks
-│   │   ├── types/               # TypeScript types
-│   │   └── utils/               # Utility functions
-│   └── styles/                  # Global styles
-├── docker-compose.yml           # MongoDB setup
-└── README.md
+├── backend/                          # .NET Backend
+│   ├── RealEstate.Api/              # Main API project
+│   ├── RealEstate.Application/       # Business logic layer
+│   ├── RealEstate.Infrastructure/   # Data access layer
+│   └── RealEstate.Tests*/           # Test projects
+├── frontend/                         # Next.js Frontend
+│   ├── app/                         # App Router pages
+│   ├── components/                  # React components
+│   ├── lib/                         # Utilities and API
+│   └── __tests__/                   # Test files
+├── infra/                           # Infrastructure as Code
+│   └── terraform/                   # Azure resources
+└── docs/                            # Documentation
 ```
 
-## 🌱 Semilla Automática
+## 🔌 API Endpoints
 
-Al iniciar el backend, se insertarán automáticamente 12 propiedades de ejemplo si la colección está vacía.
+### Properties
+- `GET /api/properties` - List all properties with pagination
+- `GET /api/properties/{id}` - Get property by ID
+- `GET /api/properties/featured` - Get featured properties
 
-## 🔍 Índices MongoDB
+### Admin (Protected)
+- `POST /api/admin/auth/login` - Admin login
+- `POST /api/admin/properties` - Create property
+- `PUT /api/admin/properties/{id}` - Update property
+- `DELETE /api/admin/properties/{id}` - Delete property
+- `POST /api/admin/images/upload` - Upload property image
 
-### Properties Collection
-- `price: 1` - Ordenamiento por precio
-- `name: text` - Búsqueda por nombre
-- `address: text` - Búsqueda por dirección
-- `ownerId: 1` - Relación con Owner
+## 🎨 Frontend Features
 
-### PropertyImages Collection
-- `propertyId: 1` - Relación con Property
-- `enabled: 1` - Filtro de imágenes habilitadas
+- **Homepage**: Featured properties and search
+- **Properties List**: Paginated property grid with filters
+- **Property Detail**: Comprehensive property information
+- **Admin Panel**: Property management interface
+- **Responsive Design**: Mobile-first approach
 
-### PropertyTraces Collection
-- `propertyId: 1` - Relación con Property
-- `dateSale: -1` - Ordenamiento por fecha de venta
+## 🚀 Deployment
 
-### Owners Collection
-- `name: text` - Búsqueda por nombre del propietario
+### Backend Deployment
+```bash
+cd backend/RealEstate.Api
+dotnet publish -c Release -o ./publish
+```
 
-## 📱 Características Técnicas
+### Frontend Deployment
+```bash
+cd frontend
+npm run build
+npm run start
+```
 
-- **Rendimiento**: Respuestas <300ms local
-- **Cache**: React Query para optimización frontend
-- **Responsive**: Grid adaptativo mobile/desktop
-- **Error Handling**: Middleware global con envelope
-- **CORS**: Configurado para frontend
-- **Swagger**: Documentación automática en desarrollo
+### Docker Deployment
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
+```
+
+## 🔒 Security Features
+
+- JWT-based authentication
+- Role-based access control
+- Secure password hashing with BCrypt
+- CORS configuration
+- Input validation and sanitization
+
+## 📊 Performance Optimizations
+
+- Database query optimization
+- Image lazy loading
+- Pagination for large datasets
+- Caching strategies
+- CDN integration for images
 
 ## 🧪 Testing Strategy
 
-### Niveles de Testing
-- **Unit Tests**: NUnit (backend) + Jest/RTL (frontend)
-- **Integration Tests**: WebApplicationFactory + Testcontainers
-- **Performance Tests**: BenchmarkDotNet para métricas precisas
-- **Load Tests**: NBomber para pruebas bajo carga
-- **End-to-End**: Cypress (futuro)
+- **Unit Tests**: Individual component testing
+- **Integration Tests**: API endpoint testing
+- **E2E Tests**: Full user journey testing
+- **Performance Tests**: Load testing for scalability
 
-### Métricas de Performance
-- **Response Time**: <500ms promedio bajo carga normal
-- **Throughput**: >100 req/s con 50 usuarios concurrentes
-- **Error Rate**: <1% bajo carga normal, <5% bajo estrés
-- **Memory Usage**: Monitoreo de memory leaks
-- **Database**: Optimización de queries y índices
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+If you encounter any issues:
+
+1. Check the [Issues](https://github.com/landaettadev/million/issues) page
+2. Create a new issue with detailed information
+3. Contact the development team
+
+## 🎯 Roadmap
+
+- [ ] Real-time notifications
+- [ ] Advanced analytics dashboard
+- [ ] Mobile app development
+- [ ] AI-powered property recommendations
+- [ ] Virtual tour integration
+- [ ] Payment processing integration
+
+---
+
+**Built with ❤️ by the Million Real Estate Team**
