@@ -5,50 +5,74 @@ import { SmartImage } from '../ui/SmartImage'
 
 interface GalleryProps {
   images: string[]
+  videos?: string[]
 }
 
-export function Gallery({ images }: GalleryProps) {
+export function Gallery({ images, videos = [] }: GalleryProps) {
   const [index, setIndex] = useState(0)
 
-  if (!images || images.length === 0) return null
+  const videoItems = videos.filter(v => v && v.endsWith('.mp4'))
+  const items: { type: 'image' | 'video'; src: string }[] = [
+    ...images.map(src => ({ type: 'image' as const, src })),
+    ...videoItems.map(src => ({ type: 'video' as const, src })),
+  ]
 
-  const safeIndex = Math.max(0, Math.min(index, images.length - 1))
+  if (items.length === 0) return null
+
+  const safeIndex = Math.max(0, Math.min(index, items.length - 1))
 
   return (
     <div className="space-y-3" aria-live="polite">
-      {/* Main image with stable ratio to avoid CLS */}
+      {/* Main media with stable ratio to avoid CLS */}
       <div className="relative aspect-[16/10] overflow-hidden rounded-2xl">
-        <SmartImage
-          key={images[safeIndex]}
-          src={images[safeIndex]}
-          alt={`Property image ${safeIndex + 1} of ${images.length}`}
-          fill
-          className="object-cover smooth"
-          sizes="(max-width: 768px) 100vw, 50vw"
-          priority
-        />
+        {items[safeIndex].type === 'image' ? (
+          <SmartImage
+            key={items[safeIndex].src}
+            src={items[safeIndex].src}
+            alt={`Property media ${safeIndex + 1} of ${items.length}`}
+            fill
+            className="object-cover smooth"
+            sizes="(max-width: 768px) 100vw, 50vw"
+            priority
+          />
+        ) : (
+          <video
+            key={items[safeIndex].src}
+            className="absolute inset-0 w-full h-full object-cover rounded-2xl bg-black"
+            src={items[safeIndex].src}
+            controls
+            playsInline
+            preload="metadata"
+          />
+        )}
       </div>
 
       {/* Thumbnails */}
-      {images.length > 1 && (
+      {items.length > 1 && (
         <div className="grid grid-cols-5 gap-2">
-          {images.map((src, i) => (
+          {items.map((m, i) => (
             <button
-              key={src + i}
+              key={m.src + i}
               type="button"
               onClick={() => setIndex(i)}
-              aria-label={`Show image ${i + 1}`}
+              aria-label={`Show media ${i + 1}`}
               className={`relative aspect-[16/10] overflow-hidden rounded-lg border smooth ${
                 i === safeIndex ? 'border-white' : 'border-white/20 hover:border-white/40'
               }`}
             >
-              <SmartImage 
-                src={src} 
-                alt={`Thumbnail ${i + 1}`} 
-                fill 
-                className="object-cover" 
-                sizes="(max-width: 768px) 20vw, 10vw"
-              />
+              {m.type === 'image' ? (
+                <SmartImage 
+                  src={m.src} 
+                  alt={`Thumbnail ${i + 1}`} 
+                  fill 
+                  className="object-cover" 
+                  sizes="(max-width: 768px) 20vw, 10vw"
+                />
+              ) : (
+                <div className="absolute inset-0 bg-black/60 text-white flex items-center justify-center text-xs">
+                  Video
+                </div>
+              )}
             </button>
           ))}
         </div>

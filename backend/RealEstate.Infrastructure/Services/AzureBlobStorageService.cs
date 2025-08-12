@@ -88,19 +88,32 @@ public sealed class AzureBlobStorageService : IImageStorageService
 
     public string GetImageUrl(string imagePath)
     {
+        // URL-encode the blob name to handle spaces/parentheses
+        var encodedBlobName = Uri.EscapeDataString(imagePath);
+
         if (string.IsNullOrEmpty(_baseUrl))
         {
             // In development mode, use Azurite URL
             if (_isDevelopmentStorage)
             {
-                return $"http://127.0.0.1:10000/devstoreaccount1/{_containerName}/{imagePath}";
+                return $"http://127.0.0.1:10000/devstoreaccount1/{_containerName}/{encodedBlobName}";
             }
-            
+
             // Fallback to Azure Storage URL format (production)
-            return $"https://millionstorageprod.blob.core.windows.net/{_containerName}/{imagePath}";
+            return $"https://millionstorageprod.blob.core.windows.net/{_containerName}/{encodedBlobName}";
         }
-        
-        return $"{_baseUrl.TrimEnd('/')}/{imagePath}";
+
+        var baseUrlNormalized = _baseUrl.TrimEnd('/');
+
+        // Ensure container segment is present exactly once
+        var needsContainer = !baseUrlNormalized.EndsWith($"/{_containerName}", StringComparison.OrdinalIgnoreCase)
+                             && !baseUrlNormalized.Contains($"/{_containerName}/", StringComparison.OrdinalIgnoreCase);
+
+        var finalBase = needsContainer
+            ? $"{baseUrlNormalized}/{_containerName}"
+            : baseUrlNormalized;
+
+        return $"{finalBase}/{encodedBlobName}";
     }
 
     // Additional helper methods for internal use

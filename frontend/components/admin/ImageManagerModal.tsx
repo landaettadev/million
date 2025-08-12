@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { Modal } from '../ui/Modal'
 import { api } from '../../lib/api'
+import { getPropertyImages } from '../../src/lib/adminApi'
 
 interface PropertyImage {
   id: string
@@ -21,7 +22,6 @@ interface PropertyImage {
 interface PropertyDetail {
   id: string
   name: string
-  images: PropertyImage[]
 }
 
 interface ImageManagerModalProps {
@@ -43,6 +43,7 @@ export function ImageManagerModal({
   const [loading, setLoading] = useState(false)
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [images, setImages] = useState<PropertyImage[]>([])
 
   // Load property detail with images
   useEffect(() => {
@@ -57,7 +58,14 @@ export function ImageManagerModal({
     try {
       const propertyDetail = await api.getPropertyDetail(propertyId)
       if (propertyDetail) {
-        setProperty(propertyDetail)
+        setProperty({ id: propertyDetail.id, name: propertyDetail.name })
+        try {
+          const imgs = await getPropertyImages(propertyId)
+          setImages(imgs)
+        } catch (e) {
+          console.error('Error fetching images list:', e)
+          setImages([])
+        }
       } else {
         setError('Property not found')
       }
@@ -79,10 +87,7 @@ export function ImageManagerModal({
       await api.deletePropertyImage(imageId)
       
       // Update local state to remove the deleted image
-      setProperty(prev => prev ? {
-        ...prev,
-        images: prev.images.filter(img => img.id !== imageId)
-      } : null)
+      setImages(prev => prev.filter(img => img.id !== imageId))
 
       // Call callback to refresh parent component
       onImageDeleted?.()
@@ -97,6 +102,7 @@ export function ImageManagerModal({
   const handleClose = () => {
     setProperty(null)
     setError(null)
+    setImages([])
     onClose()
   }
 
@@ -131,7 +137,7 @@ export function ImageManagerModal({
           </div>
         )}
 
-        {property && property.images.length === 0 && (
+        {property && images.length === 0 && (
           <div className="text-center py-8">
             <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
               <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
@@ -141,9 +147,9 @@ export function ImageManagerModal({
           </div>
         )}
 
-        {property && property.images.length > 0 && (
+        {property && images.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {property.images.map((image) => (
+            {images.map((image) => (
               <div
                 key={image.id}
                 className="relative group bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-md transition-shadow"
