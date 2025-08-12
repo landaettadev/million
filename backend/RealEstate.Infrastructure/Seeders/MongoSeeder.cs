@@ -69,76 +69,120 @@ public sealed class MongoSeeder
         var count = await _ctx.Properties.CountDocumentsAsync(FilterDefinition<PropertyDocument>.Empty, cancellationToken: ct);
         if (count > 0 && insertIfEmpty) return;
 
-        var random = new Random(42);
-        var seedCount = _config.GetValue<int>("Seed:Count", 12);
-        
-        // Create Owners first
-        var owners = Enumerable.Range(1, seedCount / 2 + 1).Select(i => new OwnerDocument
+        // Deterministic demo data (no picsum, real-like content). Videos local, images from Azure Blob by file name.
+        var ownerDocs = new List<OwnerDocument>
         {
-            Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-            Name = GetRandomOwnerName(random),
-            Address = GetRandomOwnerAddress(random),
-            Photo = $"https://picsum.photos/id/{100 + i}/300/300",
-            Birthday = DateTime.UtcNow.AddYears(-random.Next(25, 65)).AddDays(-random.Next(0, 365))
-        }).ToList();
+            new() { Id = ObjectId.GenerateNewId().ToString(), Name = "María González", Address = "Calle Mayor 123, Madrid" },
+            new() { Id = ObjectId.GenerateNewId().ToString(), Name = "Carlos Rodríguez", Address = "Diagonal 456, Barcelona" },
+            new() { Id = ObjectId.GenerateNewId().ToString(), Name = "Ana Martínez", Address = "Malvarrosa Beach 789, Valencia" },
+            new() { Id = ObjectId.GenerateNewId().ToString(), Name = "Luis Fernández", Address = "Calle Sierpes 321, Sevilla" }
+        };
+        await _ctx.Owners.InsertManyAsync(ownerDocs, cancellationToken: ct);
 
-        await _ctx.Owners.InsertManyAsync(owners, cancellationToken: ct);
-
-        // Create Properties
-        var docs = Enumerable.Range(1, seedCount).Select(i => new PropertyDocument
+        // Map: code -> (property, owner)
+        var propertiesByCode = new Dictionary<string, PropertyDocument>
         {
-            Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-            OwnerId = owners[random.Next(owners.Count)].Id, // Reference existing owner
-            Name = $"Property {i}",
-            Address = i % 2 == 0 ? "Beverly Hills, CA" : "Manhattan, NY",
-            Price = random.Next(100_000, 5_000_000),
-            OperationType = i % 2 == 0 ? "sale" : "rent",
-            Description = GetRandomDescription(random),
-            Beds = random.Next(2, 6),
-            Baths = random.Next(1, 4),
-            HalfBaths = random.Next(0, 2),
-            Sqft = random.Next(900, 6000)
-        }).ToList();
+            ["MAD001"] = new PropertyDocument
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                OwnerId = ownerDocs[0].Id,
+                Name = "Luxury Penthouse Madrid",
+                Address = "Paseo de la Castellana 123, Madrid",
+                Price = 850000,
+                OperationType = "sale",
+                Description = "Exclusive penthouse with panoramic views of Madrid",
+                Beds = 4,
+                Baths = 3,
+                HalfBaths = 1,
+                Sqft = 3500,
+                IsFeatured = true,
+                VideoUrl = "/videos/lujosa1.mp4"
+            },
+            ["BCN001"] = new PropertyDocument
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                OwnerId = ownerDocs[1].Id,
+                Name = "Modern Apartment Barcelona",
+                Address = "Diagonal 456, Barcelona",
+                Price = 450000,
+                OperationType = "sale",
+                Description = "Contemporary apartment in the heart of Barcelona",
+                Beds = 3,
+                Baths = 2,
+                HalfBaths = 0,
+                Sqft = 2200,
+                IsFeatured = true,
+                VideoUrl = "/videos/lujosa2.mp4"
+            },
+            ["VAL001"] = new PropertyDocument
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                OwnerId = ownerDocs[2].Id,
+                Name = "Beach House Valencia",
+                Address = "Malvarrosa Beach 789, Valencia",
+                Price = 650000,
+                OperationType = "sale",
+                Description = "Beautiful beachfront property with private access",
+                Beds = 5,
+                Baths = 4,
+                HalfBaths = 1,
+                Sqft = 4200
+            },
+            ["SEV001"] = new PropertyDocument
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                OwnerId = ownerDocs[3].Id,
+                Name = "Downtown Loft Sevilla",
+                Address = "Calle Sierpes 321, Sevilla",
+                Price = 280000,
+                OperationType = "sale",
+                Description = "Charming loft in the historic center of Sevilla",
+                Beds = 2,
+                Baths = 1,
+                HalfBaths = 0,
+                Sqft = 1500
+            }
+        };
 
-        await _ctx.Properties.InsertManyAsync(docs, cancellationToken: ct);
+        await _ctx.Properties.InsertManyAsync(propertiesByCode.Values, cancellationToken: ct);
 
-        // images
         var images = new List<PropertyImageDocument>();
-        foreach (var d in docs)
+        void AddImages(string code, params string[] files)
         {
-            var enabledFirst = true;
-            var countImages = random.Next(3, 6);
-            for (var j = 0; j < countImages; j++)
+            var pid = propertiesByCode[code].Id;
+            for (var i = 0; i < files.Length; i++)
             {
                 images.Add(new PropertyImageDocument
                 {
-                    Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-                    PropertyId = d.Id,
-                    File = $"https://picsum.photos/id/{200 + random.Next(1, 500)}/1600/1000",
-                    Enabled = enabledFirst
+                    Id = ObjectId.GenerateNewId().ToString(),
+                    PropertyId = pid,
+                    File = files[i], // blob file name (no URL). Service composes URL.
+                    Enabled = i == 0,
+                    Order = i + 1
                 });
-                enabledFirst = false;
             }
         }
+
+        AddImages("MAD001", "madrid-penthouse-1.jpg", "madrid-penthouse-2.jpg", "madrid-penthouse-3.jpg");
+        AddImages("BCN001", "barcelona-apartment-1.jpg", "barcelona-apartment-2.jpg");
+        AddImages("VAL001", "valencia-beach-1.jpg", "valencia-beach-2.jpg", "valencia-beach-3.jpg");
+        AddImages("SEV001", "sevilla-loft-1.jpg", "sevilla-loft-2.jpg");
+
         await _ctx.PropertyImages.InsertManyAsync(images, cancellationToken: ct);
 
-        // Create PropertyTraces 
+        // Optional: minimal traces
         var traces = new List<PropertyTraceDocument>();
-        foreach (var property in docs)
+        foreach (var p in propertiesByCode.Values)
         {
-            var traceCount = random.Next(1, 4); // 1-3 traces per property
-            for (var k = 0; k < traceCount; k++)
+            traces.Add(new PropertyTraceDocument
             {
-                traces.Add(new PropertyTraceDocument
-                {
-                    Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
-                    PropertyId = property.Id,
-                    DateSale = DateTime.UtcNow.AddDays(-random.Next(30, 1095)), // Last 3 years
-                    Name = GetRandomTraceName(random),
-                    Value = property.Price * (decimal)(0.8 + random.NextDouble() * 0.4), // ±20% of current price
-                    Tax = property.Price * (decimal)(0.01 + random.NextDouble() * 0.02) // 1-3% tax
-                });
-            }
+                Id = ObjectId.GenerateNewId().ToString(),
+                PropertyId = p.Id,
+                DateSale = DateTime.UtcNow.AddDays(-120),
+                Name = "Initial Listing",
+                Value = p.Price,
+                Tax = p.Price * 0.02m
+            });
         }
         await _ctx.PropertyTraces.InsertManyAsync(traces, cancellationToken: ct);
 
