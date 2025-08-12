@@ -85,6 +85,7 @@ public sealed class PropertyDocument
     public DateTime? UpdatedAt { get; set; }
     public bool IsDeleted { get; set; } = false;
     public bool IsFeatured { get; set; } = false;
+    public string? VideoUrl { get; set; }
 }
 
 [BsonIgnoreExtraElements]
@@ -335,5 +336,12 @@ public sealed class PropertyRepository : IPropertyRepository
             HalfBaths: doc.HalfBaths,
             Sqft: doc.Sqft
         );
+    }
+
+    public Task<string?> GetVideoUrlAsync(string id, CancellationToken ct = default)
+    {
+        return _ctx.Properties.Find(x => x.Id == id && !x.IsDeleted)
+            .Project(x => x.VideoUrl)
+            .FirstOrDefaultAsync(ct);
     }
 }

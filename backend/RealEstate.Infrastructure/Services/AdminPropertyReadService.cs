@@ -168,4 +168,21 @@ public sealed class AdminPropertyReadService : IAdminPropertyService
             .Set(p => p.UpdatedAt, DateTime.UtcNow);
         await _ctx.Properties.UpdateOneAsync(p => p.Id == id, update, cancellationToken: ct);
     }
+
+    // New: update/get video url
+    public async Task SetPropertyVideoAsync(string id, string url, CancellationToken ct = default)
+    {
+        var update = Builders<PropertyDocument>.Update
+            .Set(p => p.VideoUrl, url)
+            .Set(p => p.UpdatedAt, DateTime.UtcNow);
+        await _ctx.Properties.UpdateOneAsync(p => p.Id == id, update, cancellationToken: ct);
+    }
+
+    public async Task<string?> GetPropertyVideoAsync(string id, CancellationToken ct = default)
+    {
+        var doc = await _ctx.Properties.Find(p => p.Id == id && !p.IsDeleted)
+            .Project(p => p.VideoUrl)
+            .FirstOrDefaultAsync(ct);
+        return doc;
+    }
 }

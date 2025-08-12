@@ -8,6 +8,7 @@ public interface IPropertyRepository
     Task<PagedResult<PropertyLiteDto>> SearchAsync(SearchPropertiesQuery query, CancellationToken cancellationToken = default);
     Task<PropertyDetailDto?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
     Task<List<PropertyLiteDto>> GetFeaturedPropertiesAsync(int limit = 6, CancellationToken cancellationToken = default);
+    Task<string?> GetVideoUrlAsync(string id, CancellationToken cancellationToken = default);
 }
 
 public sealed class PropertyReadService : IPropertyReadService
@@ -27,6 +28,9 @@ public sealed class PropertyReadService : IPropertyReadService
 
     public Task<List<PropertyLiteDto>> GetFeaturedPropertiesAsync(int limit = 6, CancellationToken cancellationToken = default)
         => _repository.GetFeaturedPropertiesAsync(limit, cancellationToken);
+
+    public Task<string?> GetVideoUrlAsync(string id, CancellationToken cancellationToken = default)
+        => _repository.GetVideoUrlAsync(id, cancellationToken);
 
     private static SearchPropertiesQuery Normalize(SearchPropertiesQuery q)
     {
