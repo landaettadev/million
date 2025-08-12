@@ -1,7 +1,7 @@
 'use client';
 
 import { withAdminAuth } from '../../../../src/lib/auth/AdminAuthContext';
-import { Plus, Search, Filter, Eye, Edit, Trash2, Image as ImageIcon, CheckCircle2, RotateCcw } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Edit, Trash2, Image as ImageIcon, CheckCircle2, RotateCcw, Video } from 'lucide-react';
 import { ImageManagerModal } from '../../../../components/admin/ImageManagerModal';
 import { createProperty, deleteProperty, updateProperty, getAdminProperties, type AdminPropertyDto, getOwners, type AdminOwnerDto, uploadPropertyImage, deleteImage, getPropertyImages, type PropertyImageDto, markPropertySold, markPropertyActive } from '../../../../src/lib/adminApi';
 import { useEffect, useState } from 'react';
@@ -16,6 +16,11 @@ function PropertiesPage() {
   const [showImageManagerModal, setShowImageManagerModal] = useState(false);
   const [activePropertyId, setActivePropertyId] = useState<string | null>(null);
   const [activePropertyName, setActivePropertyName] = useState<string>('');
+  // Video assignment modal state
+  const [showVideoModal, setShowVideoModal] = useState(false);
+  const [videoPropertyId, setVideoPropertyId] = useState<string | null>(null);
+  const [videoPropertyName, setVideoPropertyName] = useState<string>('');
+  const [videoUrl, setVideoUrl] = useState<string>('');
   const [imageForm, setImageForm] = useState<{ file: File | null; order: number; enabled: boolean }>({ file: null, order: 1, enabled: true });
   const [imageIdToDelete, setImageIdToDelete] = useState('');
   const [isSavingImage, setIsSavingImage] = useState(false);
@@ -198,6 +203,42 @@ function PropertiesPage() {
     setActivePropertyId(propertyId);
     setActivePropertyName(propertyName);
     setShowImageManagerModal(true);
+  };
+
+  const openAssignVideo = (propertyId: string, propertyName: string) => {
+    setVideoPropertyId(propertyId);
+    setVideoPropertyName(propertyName);
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('propertyVideoMap') : null;
+      if (raw) {
+        const map = JSON.parse(raw) as Record<string, string>;
+        setVideoUrl(map[propertyId] || '');
+      } else {
+        setVideoUrl('');
+      }
+    } catch {
+      setVideoUrl('');
+    }
+    setShowVideoModal(true);
+  };
+
+  const saveAssignedVideo = () => {
+    if (!videoPropertyId) return;
+    try {
+      const raw = typeof window !== 'undefined' ? localStorage.getItem('propertyVideoMap') : null;
+      const map: Record<string, string> = raw ? JSON.parse(raw) : {};
+      const trimmed = (videoUrl || '').trim();
+      if (trimmed) {
+        map[videoPropertyId] = trimmed;
+      } else {
+        delete map[videoPropertyId];
+      }
+      localStorage.setItem('propertyVideoMap', JSON.stringify(map));
+      setShowVideoModal(false);
+    } catch (e) {
+      console.error('Failed to save video mapping', e);
+      alert('Failed to save video mapping');
+    }
   };
 
   const handleAddImage = async () => {
@@ -389,6 +430,7 @@ function PropertiesPage() {
                     <div className="flex items-center gap-2">
                       <button onClick={() => openAddImage(property.id)} className="text-gray-400 hover:text-white" title="Add image"><Plus className="w-4 h-4" /></button>
                       <button onClick={() => openImageManager(property.id, property.name)} className="text-gray-400 hover:text-white" title="Manage images"><ImageIcon className="w-4 h-4" /></button>
+                      <button onClick={() => openAssignVideo(property.id, property.name)} className="text-gray-400 hover:text-white" title="Assign video"><Video className="w-4 h-4" /></button>
                       <button onClick={() => openDeleteImage()} className="text-gray-400 hover:text-white" title="Delete image by ID"><Trash2 className="w-4 h-4" /></button>
                       <button className="text-gray-400 hover:text-white" title="View"><Eye className="w-4 h-4" /></button>
                       <button onClick={() => openEdit(property)} className="text-gray-400 hover:text-white" title="Edit"><Edit className="w-4 h-4" /></button>
@@ -533,6 +575,32 @@ function PropertiesPage() {
           load();
         }}
       />
+
+      {/* Assign Video Modal */}
+      {showVideoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setShowVideoModal(false)} />
+          <div className="relative bg-neutral-900 border border-white/10 rounded-xl p-6 w-full max-w-lg">
+            <h2 className="text-xl font-semibold text-white mb-4">Assign video</h2>
+            <p className="text-sm text-gray-400 mb-3">Property: <span className="text-white">{videoPropertyName}</span></p>
+            <label className="block text-sm text-gray-300 mb-1">Video URL (mp4)</label>
+            <input
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="http://localhost:5244/videos/lujosa1.mp4"
+              className="w-full px-3 py-2 bg-black border border-white/20 rounded-lg text-white mb-4"
+            />
+            <div className="flex justify-between text-xs text-gray-400 mb-4">
+              <span>Leave empty to remove assignment</span>
+              <span>Local files: /videos/...</span>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button onClick={() => setShowVideoModal(false)} className="px-4 py-2 border border-white/20 rounded-lg text-gray-300 hover:bg-white/10">Cancel</button>
+              <button onClick={saveAssignedVideo} className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

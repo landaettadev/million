@@ -22,8 +22,25 @@ public static class DependencyInjection
         services.AddScoped<IAdminUserRepository, AdminUserRepository>();
         
         // Services
-        services.AddScoped<IImageStorageService, AzureBlobStorageService>();
+        // Decide image storage based on explicit flag. Default to local in Development unless overridden.
+        var isDevelopment = string.Equals(configuration["ASPNETCORE_ENVIRONMENT"], "Development", StringComparison.OrdinalIgnoreCase);
+        var useLocalImageStorage = configuration.GetValue<bool?>("UseLocalImageStorage")
+            ?? isDevelopment; // default true in Development, false otherwise
+
+        if (useLocalImageStorage)
+        {
+            services.AddScoped<IImageStorageService, DevelopmentImageStorageService>();
+        }
+        else
+        {
+            services.AddScoped<IImageStorageService, AzureBlobStorageService>();
+        }
         services.AddScoped<ICacheService, RedisCacheService>();
+
+        // Admin services
+        services.AddScoped<IAdminOwnerService, AdminOwnerService>();
+        services.AddScoped<IAdminPropertyService, AdminPropertyReadService>();
+        services.AddScoped<IAdminImageReadService, AdminImageReadService>();
         
         // Seeders
         services.AddScoped<MongoSeeder>();
