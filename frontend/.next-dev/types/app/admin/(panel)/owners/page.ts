@@ -1,8 +1,8 @@
-// File: C:\Users\landa\Documents\million\frontend\app\properties\page.tsx
-import * as entry from '../../../../app/properties/page.js'
+// File: C:\Users\landa\Documents\Milliona\million\frontend\app\admin\(panel)\owners\page.tsx
+import * as entry from '../../../../../../app/admin/(panel)/owners/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 
-type TEntry = typeof import('../../../../app/properties/page.js')
+type TEntry = typeof import('../../../../../../app/admin/(panel)/owners/page.js')
 
 // Check that the entry is a valid entry
 checkFields<Diff<{
