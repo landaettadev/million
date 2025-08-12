@@ -5735,11 +5735,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\landa\\Documents\\Milliona\\million\\backend\\realestate.api\\RealEstate.Api.csproj",
+      "projectUniqueName": "C:\\Users\\landa\\Documents\\Milliona\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj",
       "projectName": "RealEstate.Api",
-      "projectPath": "C:\\Users\\landa\\Documents\\Milliona\\million\\backend\\realestate.api\\RealEstate.Api.csproj",
+      "projectPath": "C:\\Users\\landa\\Documents\\Milliona\\million\\backend\\RealEstate.Api\\RealEstate.Api.csproj",
       "packagesPath": "C:\\Users\\landa\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\landa\\Documents\\Milliona\\million\\backend\\realestate.api\\obj\\",
+      "outputPath": "C:\\Users\\landa\\Documents\\Milliona\\million\\backend\\RealEstate.Api\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

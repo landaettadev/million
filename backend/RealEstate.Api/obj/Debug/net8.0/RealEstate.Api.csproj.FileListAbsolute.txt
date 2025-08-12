@@ -218,3 +218,4 @@ C:\Users\landa\Documents\Milliona\million\backend\realestate.api\obj\Debug\net8.
 C:\Users\landa\Documents\Milliona\million\backend\realestate.api\obj\Debug\net8.0\RealEstate.Api.pdb
 C:\Users\landa\Documents\Milliona\million\backend\realestate.api\obj\Debug\net8.0\RealEstate.Api.genruntimeconfig.cache
 C:\Users\landa\Documents\Milliona\million\backend\realestate.api\obj\Debug\net8.0\ref\RealEstate.Api.dll
+C:\Users\landa\Documents\Milliona\million\backend\RealEstate.Api\bin\Debug\net8.0\RealEstate.Api.staticwebassets.runtime.json

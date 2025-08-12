@@ -190,14 +190,16 @@
         "madrid-penthouse-1.jpg",
         "madrid-penthouse-2.jpg",
         "madrid-penthouse-3.jpg"
-      ]
+      ],
+      "video": "/videos/lujosa1.mp4"
     },
     {
       "propertyCode": "BCN001",
       "images": [
         "barcelona-apartment-1.jpg",
         "barcelona-apartment-2.jpg"
-      ]
+      ],
+      "video": "/videos/lujosa2.mp4"
     },
     {
       "propertyCode": "VAL001",
@@ -213,6 +215,18 @@
         "sevilla-loft-1.jpg",
         "sevilla-loft-2.jpg"
       ]
+    }
+  ],
+  "propertyVideos": [
+    {
+      "propertyCode": "MAD001",
+      "videoUrl": "/videos/lujosa1.mp4",
+      "enabled": true
+    },
+    {
+      "propertyCode": "BCN001", 
+      "videoUrl": "/videos/lujosa2.mp4",
+      "enabled": true
     }
   ]
 }
