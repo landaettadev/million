@@ -192,11 +192,23 @@ app.UseExceptionHandler(appError =>
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
 
+        // Standardize error title per status
+        var errorTitle = statusCode switch
+        {
+            StatusCodes.Status400BadRequest => "Validation Error",
+            StatusCodes.Status404NotFound => "Resource Not Found",
+            _ => "Internal Server Error"
+        };
+
+        var details = exception is FluentValidation.ValidationException
+            ? exception.Message
+            : exception?.Message;
+
         var payload = new
         {
             traceId = context.TraceIdentifier,
-            error = exception?.Message ?? "An unexpected error occurred",
-            details = (string[]?)null,
+            error = errorTitle,
+            details,
             statusCode,
             timestamp = DateTime.UtcNow.ToString("O")
         };

@@ -35,7 +35,16 @@ public static class DependencyInjection
         {
             services.AddScoped<IImageStorageService, AzureBlobStorageService>();
         }
-        services.AddScoped<ICacheService, RedisCacheService>();
+        // Use in-memory cache for tests/E2E when REDIS_DISABLED=true to avoid external dependency timeouts
+        var redisDisabled = string.Equals(configuration["REDIS_DISABLED"], "true", StringComparison.OrdinalIgnoreCase);
+        if (redisDisabled)
+        {
+            services.AddScoped<ICacheService, InMemoryCacheService>();
+        }
+        else
+        {
+            services.AddScoped<ICacheService, RedisCacheService>();
+        }
 
         // Admin services
         services.AddScoped<IAdminOwnerService, AdminOwnerService>();

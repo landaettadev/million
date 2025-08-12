@@ -30,9 +30,9 @@ declare namespace __next_route_internal_types__ {
 
   type StaticRoutes = 
     | `/`
+    | `/admin/analytics`
     | `/admin/dashboard`
     | `/admin/owners`
-    | `/admin/analytics`
     | `/admin/settings`
     | `/admin/properties`
     | `/admin/login`

@@ -23,8 +23,16 @@ public sealed class MongoSeeder
 
     public async Task RunAsync(CancellationToken ct = default)
     {
-        // Indexes
-        await EnsureIndexesAsync(ct);
+        // Indexes (skip in testing or when explicitly disabled)
+        var skipIndexes =
+            _config.GetValue<bool>("Seed:SkipIndexes") ||
+            string.Equals(Environment.GetEnvironmentVariable("SKIP_INDEXES"), "true", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT"), "Testing", StringComparison.OrdinalIgnoreCase);
+
+        if (!skipIndexes)
+        {
+            await EnsureIndexesAsync(ct);
+        }
 
         var seedEnabled = _config.GetValue<bool>("Seed:Enabled");
         var insertIfEmpty = _config.GetValue<bool>("Seed:InsertIfEmpty");

@@ -503,3 +503,4 @@ C:\Users\landa\Documents\million\backend\RealEstate.Tests.Integration\obj\Debug\
 C:\Users\landa\Documents\million\backend\RealEstate.Tests.Integration\obj\Debug\net8.0\RealEstate.Tests.Integration.pdb
 C:\Users\landa\Documents\million\backend\RealEstate.Tests.Integration\obj\Debug\net8.0\RealEstate.Tests.Integration.genruntimeconfig.cache
 C:\Users\landa\Documents\million\backend\RealEstate.Tests.Integration\obj\Debug\net8.0\ref\RealEstate.Tests.Integration.dll
+C:\Users\landa\Documents\million\backend\RealEstate.Tests.Integration\bin\Debug\net8.0\RealEstate.Api.staticwebassets.runtime.json

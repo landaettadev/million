@@ -33,9 +33,16 @@ export function SmartImage({
   const generateFallback = () => {
     if (fallbackSrc) return fallbackSrc
     
-    // Only use placeholder if we absolutely have to
-    // For now, use a simple placeholder
-    return 'https://picsum.photos/800/600?random=1'
+    // Use environment configuration for fallback images
+    const usePlaceholderImages = process.env.NEXT_PUBLIC_USE_PLACEHOLDER_IMAGES === 'true'
+    const imageBaseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://picsum.photos'
+    
+    if (usePlaceholderImages) {
+      return `${imageBaseUrl}/800/600?random=${Math.abs(src.charCodeAt(0)) % 10}`
+    }
+    
+    // Default fallback
+    return `${imageBaseUrl}/800/600?random=1`
   }
 
   const handleError = () => {
@@ -43,8 +50,9 @@ export function SmartImage({
       setHasError(true)
       console.log('Image failed to load:', src)
       
-      // Only use fallback if the image is not from Azure Blob Storage
-      if (!src.includes('millionstorageprod.blob.core.windows.net')) {
+      // Always use fallback in development or when configured
+      const usePlaceholderImages = process.env.NEXT_PUBLIC_USE_PLACEHOLDER_IMAGES === 'true'
+      if (usePlaceholderImages || !src.includes('millionstorageprod.blob.core.windows.net')) {
         console.log('Using fallback image for:', src)
         setCurrentSrc(generateFallback())
       } else {
@@ -60,7 +68,10 @@ export function SmartImage({
     setHasError(false)
     
     // Log the image source being used
-    if (src.includes('millionstorageprod.blob.core.windows.net')) {
+    const usePlaceholderImages = process.env.NEXT_PUBLIC_USE_PLACEHOLDER_IMAGES === 'true'
+    if (usePlaceholderImages) {
+      console.log('Using placeholder image (development mode):', src)
+    } else if (src.includes('millionstorageprod.blob.core.windows.net')) {
       console.log('Using Azure image:', src)
     } else if (src.includes('picsum.photos')) {
       console.log('Using placeholder image:', src)
@@ -83,7 +94,7 @@ export function SmartImage({
       fill={fill}
       sizes={sizes}
       onError={handleError}
-      unoptimized={currentSrc.includes('millionstorageprod.blob.core.windows.net')}
+      unoptimized={currentSrc.includes('millionstorageprod.blob.core.windows.net') || currentSrc.includes('picsum.photos')}
       {...imageProps}
     />
   )

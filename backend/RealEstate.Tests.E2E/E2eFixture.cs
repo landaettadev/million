@@ -46,6 +46,10 @@ public class E2eFixture : IAsyncLifetime
         startInfo.Environment["MongoDb__Database"] = "realestate_e2e";
         startInfo.Environment["CORS_ALLOWED_ORIGINS"] = "http://localhost:3000";
         startInfo.Environment["SWAGGER_ENABLED"] = "false";
+        startInfo.Environment["REDIS_DISABLED"] = "true";
+        startInfo.Environment["Seed__Enabled"] = "true";
+        startInfo.Environment["Seed__InsertIfEmpty"] = "true";
+        startInfo.Environment["Seed__Count"] = "12";
 
         _apiProcess = Process.Start(startInfo)!;
 
@@ -53,14 +57,14 @@ public class E2eFixture : IAsyncLifetime
         using var bootstrapClient = new HttpClient { BaseAddress = new Uri(BaseAddress) };
         var sw = Stopwatch.StartNew();
         Exception? lastEx = null;
-        while (sw.Elapsed < TimeSpan.FromSeconds(60))
+        while (sw.Elapsed < TimeSpan.FromSeconds(120))
         {
             try
             {
                 var resp = await bootstrapClient.GetAsync("/health");
                 if (resp.IsSuccessStatusCode)
                 {
-                    Client = new HttpClient { BaseAddress = new Uri(BaseAddress) };
+                    Client = new HttpClient { BaseAddress = new Uri(BaseAddress), Timeout = TimeSpan.FromSeconds(300) };
                     return;
                 }
             }
