@@ -95,6 +95,18 @@ public sealed record OwnerDto(
     DateTime? UpdatedAt
 );
 
+public sealed record AdminOwnerDto(
+    string Id,
+    string Name,
+    string Address,
+    string? Photo,
+    DateTime? Birthday,
+    int PropertiesCount,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt,
+    bool IsDeleted
+);
+
 public sealed record CreateOwnerDto(
     string Name,
     string Address,
@@ -213,7 +225,7 @@ public interface IAdminImageUploadService
 
 public interface IAdminOwnerService
 {
-    Task<PagedResult<OwnerDto>> GetOwnersAsync(int page = 1, int pageSize = 10, CancellationToken ct = default);
+    Task<PagedResult<AdminOwnerDto>> GetOwnersAsync(int page = 1, int pageSize = 10, CancellationToken ct = default);
     Task<OwnerDto?> GetOwnerByIdAsync(string id, CancellationToken ct = default);
     Task<OwnerDto> CreateOwnerAsync(CreateOwnerDto createDto, CancellationToken ct = default);
     Task<OwnerDto> UpdateOwnerAsync(string id, UpdateOwnerDto updateDto, CancellationToken ct = default);

@@ -13,7 +13,7 @@ public sealed class AdminOwnerService : IAdminOwnerService
         _ctx = ctx;
     }
 
-    public async Task<PagedResult<OwnerDto>> GetOwnersAsync(int page = 1, int pageSize = 10, CancellationToken ct = default)
+    public async Task<PagedResult<AdminOwnerDto>> GetOwnersAsync(int page = 1, int pageSize = 10, CancellationToken ct = default)
     {
         var filter = Builders<OwnerDocument>.Filter.Eq(x => x.IsDeleted, false);
         var skip = (page - 1) * pageSize;
@@ -26,17 +26,29 @@ public sealed class AdminOwnerService : IAdminOwnerService
 
         var totalCount = await _ctx.Owners.CountDocumentsAsync(filter, cancellationToken: ct);
 
-        var owners = ownerDocs.Select(o => new OwnerDto(
-            o.Id,
-            o.Name,
-            o.Address,
-            o.Photo,
-            o.Birthday,
-            o.CreatedAt,
-            o.UpdatedAt
+        // Build a lookup for properties count per owner
+        var ownerIds = ownerDocs.Select(o => o.Id).ToList();
+        var counts = await _ctx.Properties
+            .Aggregate()
+            .Match(p => ownerIds.Contains(p.OwnerId) && !p.IsDeleted)
+            .Group(p => p.OwnerId, g => new { OwnerId = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        var countByOwnerId = counts.ToDictionary(x => x.OwnerId, x => x.Count);
+
+        var owners = ownerDocs.Select(o => new AdminOwnerDto(
+            Id: o.Id,
+            Name: o.Name,
+            Address: o.Address,
+            Photo: o.Photo,
+            Birthday: o.Birthday,
+            PropertiesCount: countByOwnerId.TryGetValue(o.Id, out var c) ? c : 0,
+            CreatedAt: o.CreatedAt,
+            UpdatedAt: o.UpdatedAt,
+            IsDeleted: o.IsDeleted
         )).ToList();
 
-        return new PagedResult<OwnerDto>(owners, page, pageSize, totalCount);
+        return new PagedResult<AdminOwnerDto>(owners, page, pageSize, totalCount);
     }
 
     public async Task<OwnerDto?> GetOwnerByIdAsync(string id, CancellationToken ct = default)

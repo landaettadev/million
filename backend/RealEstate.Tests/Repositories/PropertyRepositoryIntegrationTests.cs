@@ -29,7 +29,11 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
 
         var context = new MongoContext(_database);
         var mockImageStorageService = Substitute.For<IImageStorageService>();
-        mockImageStorageService.GetImageUrl(Arg.Any<string>()).Returns("https://example.com/image.jpg");
+        mockImageStorageService.GetImageUrl(Arg.Any<string>()).Returns(callInfo =>
+        {
+            var file = callInfo.ArgAt<string>(0);
+            return $"https://example.com/{Uri.EscapeDataString(file)}";
+        });
         _repository = new PropertyRepository(context, mockImageStorageService);
     }
 
@@ -191,7 +195,11 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
 
         // Assert
         result.Items.Should().HaveCount(3);
-        result.Items.Should().OnlyContain(p => p.Image != null && (p.Image == "image1.jpg" || p.Image == "image4.jpg" || p.Image == "image6.jpg"));
+        result.Items.Should().OnlyContain(p => p.Image != null && (
+            p.Image == "https://example.com/image1.jpg" ||
+            p.Image == "https://example.com/image4.jpg" ||
+            p.Image == "https://example.com/image6.jpg"
+        ));
     }
 
     [Test]

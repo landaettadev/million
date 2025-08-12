@@ -17,27 +17,28 @@ public sealed class AzureBlobStorageService : IImageStorageService
 
     public AzureBlobStorageService(IConfiguration configuration)
     {
-        var connectionString = configuration["AzureStorage:ConnectionString"] 
-            ?? throw new InvalidOperationException("Azure Storage connection string not configured");
+        if (configuration is null) throw new ArgumentNullException(nameof(configuration));
+
+        var connectionString = configuration["AzureStorage:ConnectionString"];
         _containerName = configuration["AzureStorage:ContainerName"] ?? "property-images";
         _baseUrl = configuration["AzureStorage:BaseUrl"] ?? string.Empty;
-        _isDevelopmentStorage = connectionString.Contains("UseDevelopmentStorage=true");
-        
-        try
+        _isDevelopmentStorage = (connectionString ?? string.Empty).Contains("UseDevelopmentStorage=true", StringComparison.OrdinalIgnoreCase);
+
+        // Create client only if we have a non-empty connection string and it's valid; otherwise keep null.
+        if (!string.IsNullOrWhiteSpace(connectionString))
         {
-            _blobServiceClient = new BlobServiceClient(connectionString);
-        }
-        catch (Exception ex)
-        {
-            // In development, we'll handle this gracefully
-            if (_isDevelopmentStorage)
+            try
+            {
+                _blobServiceClient = new BlobServiceClient(connectionString);
+            }
+            catch
             {
                 _blobServiceClient = null;
             }
-            else
-            {
-                throw new InvalidOperationException($"Failed to initialize Azure Blob Storage client: {ex.Message}", ex);
-            }
+        }
+        else
+        {
+            _blobServiceClient = null;
         }
     }
 
@@ -88,8 +89,47 @@ public sealed class AzureBlobStorageService : IImageStorageService
 
     public string GetImageUrl(string imagePath)
     {
-        // URL-encode the blob name to handle spaces/parentheses
-        var encodedBlobName = Uri.EscapeDataString(imagePath);
+        if (string.IsNullOrWhiteSpace(imagePath))
+        {
+            return string.Empty;
+        }
+
+        // Split into path, query and fragment to avoid encoding ? and # parts
+        string pathOnly = imagePath;
+        string queryPart = string.Empty;
+        string fragmentPart = string.Empty;
+
+        var hashIndex = pathOnly.IndexOf('#');
+        if (hashIndex >= 0)
+        {
+            var lastSlash = pathOnly.LastIndexOf('/');
+            var lastDot = pathOnly.LastIndexOf('.');
+            var isFragment = hashIndex > lastSlash && hashIndex > lastDot; // treat as fragment only if after extension
+            if (isFragment)
+            {
+                fragmentPart = pathOnly.Substring(hashIndex); // includes '#'
+                pathOnly = pathOnly.Substring(0, hashIndex);
+            }
+        }
+
+        var queryIndex = pathOnly.IndexOf('?');
+        if (queryIndex >= 0)
+        {
+            var lastSlashForQuery = pathOnly.LastIndexOf('/');
+            if (queryIndex > lastSlashForQuery)
+            {
+                queryPart = pathOnly.Substring(queryIndex); // includes '?'
+                pathOnly = pathOnly.Substring(0, queryIndex);
+            }
+        }
+
+        // URL-encode each path segment but preserve '/'; also avoid double encoding by unescaping first
+        var encodedBlobName = string.Join(
+            "/",
+            pathOnly
+                .Split('/', StringSplitOptions.None)
+                .Select(segment => Uri.EscapeDataString(Uri.UnescapeDataString(segment)))
+        );
 
         if (string.IsNullOrEmpty(_baseUrl))
         {
@@ -113,7 +153,7 @@ public sealed class AzureBlobStorageService : IImageStorageService
             ? $"{baseUrlNormalized}/{_containerName}"
             : baseUrlNormalized;
 
-        return $"{finalBase}/{encodedBlobName}";
+        return $"{finalBase}/{encodedBlobName}{queryPart}{fragmentPart}";
     }
 
     // Additional helper methods for internal use

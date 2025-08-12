@@ -107,3 +107,5 @@ C:\Users\landa\Documents\million\backend\RealEstate.Api\obj\Debug\net8.0\refint\
 C:\Users\landa\Documents\million\backend\RealEstate.Api\obj\Debug\net8.0\RealEstate.Api.pdb
 C:\Users\landa\Documents\million\backend\RealEstate.Api\obj\Debug\net8.0\RealEstate.Api.genruntimeconfig.cache
 C:\Users\landa\Documents\million\backend\RealEstate.Api\obj\Debug\net8.0\ref\RealEstate.Api.dll
+C:\Users\landa\Documents\million\backend\RealEstate.Api\bin\Debug\net8.0\RealEstate.Api.staticwebassets.runtime.json
+C:\Users\landa\Documents\million\backend\RealEstate.Api\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
