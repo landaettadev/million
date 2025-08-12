@@ -15,6 +15,8 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
 
     steps:
       - name: Checkout
@@ -46,10 +48,10 @@ jobs:
         run: dotnet test backend/RealEstate.Tests.Performance/RealEstate.Tests.Performance.csproj -c Release --logger "console;verbosity=normal" --filter "Category!=LoadTest" --no-build
 
       - name: Integration tests (run only if Mongo secret provided)
-        if: ${{ secrets.MONGO_CONNECTION_STRING != '' }}
+        if: ${{ env.MONGO_CONNECTION_STRING != '' }}
         env:
           USE_LOCAL_MONGO: 'false'
-          MONGO_CONNECTION_STRING: ${{ secrets.MONGO_CONNECTION_STRING }}
+          MONGO_CONNECTION_STRING: ${{ env.MONGO_CONNECTION_STRING }}
           MONGO_DATABASE: realestate_test
           SKIP_INDEXES: 'true'
           REDIS_DISABLED: 'true'
