@@ -1,32 +1,55 @@
 {
   "Logging": {
     "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning"
+      "Default": "Debug",
+      "System": "Information",
+      "Microsoft": "Information"
     }
-  },
-  "MongoDB": {
-    "ConnectionString": "mongodb://localhost:27017/million",
-    "DatabaseName": "million"
-  },
-  "AzureStorage": {
-    "ConnectionString": "DefaultEndpointsProtocol=https;AccountName=yourstorageaccount;AccountKey=yourstoragekey;EndpointSuffix=core.windows.net",
-    "ContainerName": "property-images"
-  },
-  "JWT": {
-    "SecretKey": "your-super-secret-key-here-minimum-32-characters-long",
-    "Issuer": "million-real-estate",
-    "Audience": "million-users",
-    "ExpirationMinutes": 60
-  },
-  "AdminCredentials": {
-    "DefaultEmail": "admin@million.com",
-    "DefaultPassword": "Admin123!"
   },
   "Cors": {
     "AllowedOrigins": [
       "http://localhost:3000",
-      "https://localhost:3000"
+      "http://localhost:3001",
+      "http://127.0.0.1:3000",
+      "http://127.0.0.1:3001"
     ]
+  },
+  "MongoDb": {
+    "ConnectionString": "mongodb://admin:password123@localhost:27017/realestate?authSource=admin",
+    "Database": "realestate"
+  },
+  "Seed": {
+    "Enabled": true,
+    "InsertIfEmpty": true,
+    "Count": 12
+  },
+  "Admin": {
+    "Seed": {
+      "Email": "admin@millionluxury.com",
+      "Password": "admin123"
+    }
+  },
+  "Swagger": {
+    "Enabled": true
+  },
+  "Security": {
+    "EnableDetailedErrors": true,
+    "EnableSensitiveDataLogging": true
+  },
+  "JWT": {
+    "KEY": "dev_super_secret_key_at_least_32_chars_long_1234567890",
+    "ISSUER": "millionluxury",
+    "AUDIENCE": "millionluxury-admin",
+    "EXPIRES_MIN": "120"
+  },
+  "AzureStorage": {
+    "ConnectionString": "UseDevelopmentStorage=true",
+    "ContainerName": "property-images",
+    "BaseUrl": "https://millionstorageprod.blob.core.windows.net/property-images"
+  },
+  "UseLocalImageStorage": false,
+  "LocalStorage": {
+    "UploadPath": "wwwroot/images",
+    "BaseUrl": "http://localhost:5244/images"
   }
 }
