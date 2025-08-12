@@ -141,6 +141,36 @@ public class AdminEndpoints : ControllerBase
         }
     }
 
+    // Video endpoints
+    [HttpPut("properties/{id}/video")]
+    public async Task<IActionResult> SetPropertyVideo(string id, [FromBody] UpdatePropertyVideoDto dto, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Url)) return BadRequest(new { message = "Url required" });
+        try
+        {
+            await _propertyService.SetPropertyVideoAsync(id, dto.Url, ct);
+            return Ok(new { id, url = dto.Url });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error setting property video", error = ex.Message });
+        }
+    }
+
+    [HttpGet("properties/{id}/video")]
+    public async Task<IActionResult> GetPropertyVideo(string id, CancellationToken ct = default)
+    {
+        try
+        {
+            var url = await _propertyService.GetPropertyVideoAsync(id, ct);
+            return Ok(new { id, url });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Error getting property video", error = ex.Message });
+        }
+    }
+
     [HttpGet("owners")]
     public async Task<IActionResult> GetOwners([FromQuery] int page = 1, [FromQuery] int pageSize = 50, CancellationToken ct = default)
     {

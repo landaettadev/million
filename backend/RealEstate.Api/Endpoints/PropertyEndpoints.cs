@@ -64,6 +64,13 @@ public static class PropertyEndpoints
             return Results.Json(item);
         });
 
+        // Public video url for a property
+        group.MapGet("/{id}/video", async (string id, IPropertyReadService service, HttpContext ctx) =>
+        {
+            var url = await service.GetVideoUrlAsync(id, ctx.RequestAborted);
+            return Results.Json(new { id, url });
+        });
+
         return endpoints;
     }
 }

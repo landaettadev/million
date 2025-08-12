@@ -12,7 +12,6 @@ function buildImageUrl(imagePath: string): string {
   
   // If it's already a full URL, return as is
   if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-    console.log('Image already has full URL:', imagePath)
     return imagePath
   }
   
@@ -24,9 +23,6 @@ function buildImageUrl(imagePath: string): string {
   // Return the full Azure Blob Storage URL
   const fullUrl = `https://${storageAccountName}.blob.core.windows.net/${containerName}/${imagePath}`
   
-  // Debug logging
-  console.log('Building image URL:', { imagePath, fullUrl })
-  
   return fullUrl
 }
 
@@ -37,35 +33,68 @@ function mapOperationType(backendType: number): 'sale' | 'rent' {
 
 // Map backend property data to frontend format
 function mapBackendPropertyToLite(backendProperty: any): PropertyLiteDto {
+  const id = backendProperty.id ?? backendProperty.Id
+  const idOwner = backendProperty.idOwner ?? backendProperty.IdOwner
+  const name = backendProperty.name ?? backendProperty.Name
+  const address = backendProperty.address ?? backendProperty.Address
+  const price = backendProperty.price ?? backendProperty.Price
+  const image = backendProperty.image ?? backendProperty.Image
+  const operationTypeRaw = backendProperty.operationType ?? backendProperty.OperationType
+  const beds = backendProperty.beds ?? backendProperty.Beds
+  const baths = backendProperty.baths ?? backendProperty.Baths
+  const sqft = backendProperty.sqft ?? backendProperty.Sqft
+
+  // OperationType can come as number (0/1) or string ('sale'/'rent')
+  const operationType: 'sale' | 'rent' = typeof operationTypeRaw === 'number'
+    ? mapOperationType(operationTypeRaw)
+    : (String(operationTypeRaw).toLowerCase() === 'rent' ? 'rent' : 'sale')
+
   return {
-    id: backendProperty.Id,
-    idOwner: backendProperty.IdOwner,
-    name: backendProperty.Name,
-    address: backendProperty.Address,
-    price: backendProperty.Price,
-    image: buildImageUrl(backendProperty.Image),
-    operationType: mapOperationType(backendProperty.OperationType),
-    beds: backendProperty.Beds,
-    baths: backendProperty.Baths,
-    sqft: backendProperty.Sqft
+    id,
+    idOwner,
+    name,
+    address,
+    price,
+    image: buildImageUrl(image),
+    operationType,
+    beds,
+    baths,
+    sqft
   }
 }
 
 // Map backend property detail data to frontend format
 function mapBackendPropertyToDetail(backendProperty: any): PropertyDetailDto {
+  const id = backendProperty.id ?? backendProperty.Id
+  const idOwner = backendProperty.idOwner ?? backendProperty.IdOwner
+  const name = backendProperty.name ?? backendProperty.Name
+  const address = backendProperty.address ?? backendProperty.Address
+  const price = backendProperty.price ?? backendProperty.Price
+  const image = backendProperty.image ?? backendProperty.Image
+  const operationTypeRaw = backendProperty.operationType ?? backendProperty.OperationType
+  const beds = backendProperty.beds ?? backendProperty.Beds
+  const baths = backendProperty.baths ?? backendProperty.Baths
+  const sqft = backendProperty.sqft ?? backendProperty.Sqft
+  const images = (backendProperty.images ?? backendProperty.Images ?? []).map(buildImageUrl)
+  const description = backendProperty.description ?? backendProperty.Description
+
+  const operationType: 'sale' | 'rent' = typeof operationTypeRaw === 'number'
+    ? mapOperationType(operationTypeRaw)
+    : (String(operationTypeRaw).toLowerCase() === 'rent' ? 'rent' : 'sale')
+
   return {
-    id: backendProperty.Id,
-    idOwner: backendProperty.IdOwner,
-    name: backendProperty.Name,
-    address: backendProperty.Address,
-    price: backendProperty.Price,
-    image: buildImageUrl(backendProperty.Image),
-    operationType: mapOperationType(backendProperty.OperationType),
-    beds: backendProperty.Beds,
-    baths: backendProperty.Baths,
-    sqft: backendProperty.Sqft,
-    images: (backendProperty.Images || []).map(buildImageUrl),
-    description: backendProperty.Description
+    id,
+    idOwner,
+    name,
+    address,
+    price,
+    image: buildImageUrl(image),
+    operationType,
+    beds,
+    baths,
+    sqft,
+    images,
+    description
   }
 }
 
@@ -219,6 +248,19 @@ export async function getFeaturedProperties(limit: number = 6): Promise<Property
   }
 }
 
+export async function getPropertyVideoUrl(id: string): Promise<string | null> {
+  if (!baseUrl) throw new Error('NEXT_PUBLIC_API_BASE is not set')
+  try {
+    const res = await fetch(`${baseUrl}/api/properties/${encodeURIComponent(id)}/video`, { cache: 'no-store' })
+    if (!res.ok) return null
+    const data = await res.json().catch(() => null) as { id: string; url?: string | null } | null
+    const url = data?.url || null
+    return url && url.endsWith('.mp4') ? url : null
+  } catch {
+    return null
+  }
+}
+
 // Admin API functions for image management
 export async function deletePropertyImage(imageId: string): Promise<void> {
   if (!baseUrl) throw new Error('NEXT_PUBLIC_API_BASE is not set')
@@ -304,4 +346,5 @@ export const api = {
   getFeaturedProperties,
   deletePropertyImage,
   getPropertyDetail,
+  getPropertyVideoUrl,
 }

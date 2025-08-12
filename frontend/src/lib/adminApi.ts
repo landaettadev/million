@@ -360,4 +360,21 @@ export async function markPropertyActive(propertyId: string) {
   return res.json() as Promise<AdminPropertyDto>;
 }
 
+// Videos
+export async function setPropertyVideo(propertyId: string, url: string) {
+  const res = await fetchWithAuth(`${apiBase}/admin/properties/${propertyId}/video`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  });
+  if (!res.ok) throw new Error('Failed to set property video');
+  return res.json() as Promise<{ id: string; url: string }>;
+}
+
+export async function getPropertyVideo(propertyId: string) {
+  const res = await fetchWithAuth(`${apiBase}/admin/properties/${propertyId}/video`);
+  if (!res.ok) throw new Error('Failed to get property video');
+  return res.json() as Promise<{ id: string; url: string | null }>;
+}
+
 
