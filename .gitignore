@@ -98,6 +98,10 @@ public
 tmp/
 temp/
 
+# Allow tracking videos in frontend/public
+!frontend/public/
+!frontend/public/*.mp4
+
 # Logs
 logs
 *.log
