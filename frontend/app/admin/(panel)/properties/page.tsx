@@ -3,7 +3,7 @@
 import { withAdminAuth } from '../../../../src/lib/auth/AdminAuthContext';
 import { Plus, Search, Filter, Eye, Edit, Trash2, Image as ImageIcon, CheckCircle2, RotateCcw, Video } from 'lucide-react';
 import { ImageManagerModal } from '../../../../components/admin/ImageManagerModal';
-import { createProperty, deleteProperty, updateProperty, getAdminProperties, type AdminPropertyDto, getOwners, type AdminOwnerDto, uploadPropertyImage, deleteImage, getPropertyImages, type PropertyImageDto, markPropertySold, markPropertyActive } from '../../../../src/lib/adminApi';
+import { createProperty, deleteProperty, updateProperty, getAdminProperties, type AdminPropertyDto, getOwners, type AdminOwnerDto, uploadPropertyImage, deleteImage, getPropertyImages, type PropertyImageDto, markPropertySold, markPropertyActive, setPropertyVideo, getPropertyVideo } from '../../../../src/lib/adminApi';
 import { useEffect, useState } from 'react';
 
 function PropertiesPage() {
@@ -205,35 +205,46 @@ function PropertiesPage() {
     setShowImageManagerModal(true);
   };
 
-  const openAssignVideo = (propertyId: string, propertyName: string) => {
+  const openAssignVideo = async (propertyId: string, propertyName: string) => {
     setVideoPropertyId(propertyId);
     setVideoPropertyName(propertyName);
     try {
-      const raw = typeof window !== 'undefined' ? localStorage.getItem('propertyVideoMap') : null;
-      if (raw) {
-        const map = JSON.parse(raw) as Record<string, string>;
-        setVideoUrl(map[propertyId] || '');
-      } else {
-        setVideoUrl('');
-      }
+      // Prefer backend value if present
+      const apiRes = await getPropertyVideo(propertyId).catch(() => null);
+      const backendUrl = apiRes?.url || '';
+      let localUrl = '';
+      try {
+        const raw = typeof window !== 'undefined' ? localStorage.getItem('propertyVideoMap') : null;
+        if (raw) {
+          const map = JSON.parse(raw) as Record<string, string>;
+          localUrl = map[propertyId] || '';
+        }
+      } catch { /* ignore */ }
+      setVideoUrl(backendUrl || localUrl || '');
     } catch {
       setVideoUrl('');
     }
     setShowVideoModal(true);
   };
 
-  const saveAssignedVideo = () => {
+  const saveAssignedVideo = async () => {
     if (!videoPropertyId) return;
     try {
+      // Persist in backend
+      const trimmed = (videoUrl || '').trim();
+      await setPropertyVideo(videoPropertyId, trimmed || '');
       const raw = typeof window !== 'undefined' ? localStorage.getItem('propertyVideoMap') : null;
       const map: Record<string, string> = raw ? JSON.parse(raw) : {};
-      const trimmed = (videoUrl || '').trim();
       if (trimmed) {
         map[videoPropertyId] = trimmed;
       } else {
         delete map[videoPropertyId];
       }
       localStorage.setItem('propertyVideoMap', JSON.stringify(map));
+      // Notify other tabs/components to refresh hoverVideo immediately
+      try {
+        window.dispatchEvent(new CustomEvent('propertyVideoMap:changed', { detail: { propertyId: videoPropertyId, url: trimmed } }));
+      } catch { /* ignore */ }
       setShowVideoModal(false);
     } catch (e) {
       console.error('Failed to save video mapping', e);

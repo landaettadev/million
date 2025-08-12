@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useState, useRef } from 'react'
+import { api } from '../../lib/api'
 import { Skeleton } from '../ui/Skeleton'
 import { formatPrice } from '../../lib/format'
 import type { PropertyLiteDto } from '../../lib/types'
@@ -30,6 +31,39 @@ export function PropertyCard({ item, loading = false }: PropertyCardProps) {
         if (v && v.endsWith('.mp4')) setHoverVideo(v)
       }
     } catch { /* ignore */ }
+    // Skip backend fetch when rendering skeletons/loading or non-ObjectId ids
+    const isObjectId = /^[a-f0-9]{24}$/i.test(String(item.id || ''))
+    if (loading || !isObjectId) return
+    // Also try backend video if not present
+    ;(async () => {
+      try {
+        const backendUrl = await api.getPropertyVideoUrl(item.id)
+        if (backendUrl && backendUrl.endsWith('.mp4')) setHoverVideo(backendUrl)
+      } catch { /* ignore */ }
+    })()
+  }, [item.id, loading])
+
+  // React to runtime updates (after saving in admin)
+  useEffect(() => {
+    const onChanged = (ev: Event) => {
+      try {
+        const detail = (ev as CustomEvent).detail as { propertyId?: string; url?: string } | undefined
+        if (detail && detail.propertyId && detail.propertyId !== item.id) return
+        const raw = localStorage.getItem('propertyVideoMap')
+        if (!raw) { setHoverVideo(null); return }
+        const map = JSON.parse(raw) as Record<string, string>
+        const v = map[item.id]
+        setHoverVideo(v && v.endsWith('.mp4') ? v : null)
+      } catch { /* ignore */ }
+    }
+    if (typeof window !== 'undefined') {
+      window.addEventListener('propertyVideoMap:changed', onChanged as EventListener)
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('propertyVideoMap:changed', onChanged as EventListener)
+      }
+    }
   }, [item.id])
   if (loading) {
     return (
@@ -58,8 +92,9 @@ export function PropertyCard({ item, loading = false }: PropertyCardProps) {
   const imageBaseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://picsum.photos'
   
   // Use placeholder images in development, or fallback if image fails
+  const safeId = String(item?.id ?? '')
   const imageUrl = usePlaceholderImages || !item.image 
-    ? `${imageBaseUrl}/800/600?random=${Math.abs(item.id.charCodeAt(0)) % 10}`
+    ? `${imageBaseUrl}/800/600?random=${safeId ? Math.abs(safeId.charCodeAt(0)) % 10 : 1}`
     : item.image
 
   const shouldBypassOptimization = imageUrl.includes('blob.core.windows.net') || imageUrl.includes('127.0.0.1:10000') || imageUrl.includes('picsum.photos')
@@ -79,7 +114,8 @@ export function PropertyCard({ item, loading = false }: PropertyCardProps) {
             onError={(e) => {
               // Fallback to placeholder if image fails to load
               const target = e.target as HTMLImageElement
-              target.src = `${imageBaseUrl}/800/600?random=${Math.abs(item.id.charCodeAt(0)) % 10}`
+              const fallbackId = String(item?.id ?? 'x')
+              target.src = `${imageBaseUrl}/800/600?random=${Math.abs(fallbackId.charCodeAt(0)) % 10}`
             }}
           />
           {/* Hover video overlay (plays on hover) */}

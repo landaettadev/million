@@ -46,6 +46,10 @@ public sealed record PropertyDetailDto(
     int? Sqft = null
 );
 
+public sealed record UpdatePropertyVideoDto(
+    string Url
+);
+
 public sealed record SearchPropertiesQuery(
     string? Name = null,
     string? Address = null,
@@ -192,6 +196,7 @@ public interface IPropertyReadService
     Task<PagedResult<PropertyLiteDto>> SearchAsync(SearchPropertiesQuery query, CancellationToken cancellationToken = default);
     Task<PropertyDetailDto?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
     Task<List<PropertyLiteDto>> GetFeaturedPropertiesAsync(int limit = 6, CancellationToken cancellationToken = default);
+    Task<string?> GetVideoUrlAsync(string id, CancellationToken cancellationToken = default);
 }
 
 public interface IAdminUserRepository
@@ -239,6 +244,8 @@ public interface IAdminPropertyService
     Task<AdminPropertyDto> CreatePropertyAsync(CreatePropertyDto createDto, CancellationToken ct = default);
     Task<AdminPropertyDto> UpdatePropertyAsync(string id, UpdatePropertyDto updateDto, CancellationToken ct = default);
     Task DeletePropertyAsync(string id, CancellationToken ct = default);
+    Task SetPropertyVideoAsync(string id, string url, CancellationToken ct = default);
+    Task<string?> GetPropertyVideoAsync(string id, CancellationToken ct = default);
 }
 
 public interface IAdminAnalyticsService
