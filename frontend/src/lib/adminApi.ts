@@ -339,4 +339,25 @@ export async function getAdminProperties(params?: {
   return res.json() as Promise<PagedResult<AdminPropertyDto>>;
 }
 
+// Property status management
+export async function markPropertySold(propertyId: string) {
+  const res = await fetchWithAuth(`${apiBase}/admin/properties/${propertyId}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'sold' }),
+  });
+  if (!res.ok) throw new Error('Failed to mark property as sold');
+  return res.json() as Promise<AdminPropertyDto>;
+}
+
+export async function markPropertyActive(propertyId: string) {
+  const res = await fetchWithAuth(`${apiBase}/admin/properties/${propertyId}/status`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'active' }),
+  });
+  if (!res.ok) throw new Error('Failed to mark property as active');
+  return res.json() as Promise<AdminPropertyDto>;
+}
+
 

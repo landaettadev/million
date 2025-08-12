@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using RealEstate.Application.DTOs;
 
 namespace RealEstate.Application;
 
@@ -86,6 +85,108 @@ public sealed record OwnerDetailDto(
     DateTime? UpdatedAt
 );
 
+public sealed record OwnerDto(
+    string Id,
+    string Name,
+    string Address,
+    string? Photo,
+    DateTime? Birthday,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt
+);
+
+public sealed record AdminOwnerDto(
+    string Id,
+    string Name,
+    string Address,
+    string? Photo,
+    DateTime? Birthday,
+    int PropertiesCount,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt,
+    bool IsDeleted
+);
+
+public sealed record CreateOwnerDto(
+    string Name,
+    string Address,
+    string? Photo = null,
+    DateTime? Birthday = null
+);
+
+public sealed record UpdateOwnerDto(
+    string Name,
+    string Address,
+    string? Photo = null,
+    DateTime? Birthday = null
+);
+
+public sealed record AdminPropertyDto(
+    string Id,
+    string OwnerId,
+    string OwnerName,
+    string Name,
+    string Address,
+    decimal Price,
+    OperationType OperationType,
+    DateTime CreatedAt,
+    bool IsDeleted,
+    string? Description = null,
+    int? Beds = null,
+    int? Baths = null,
+    int? HalfBaths = null,
+    int? Sqft = null,
+    DateTime? UpdatedAt = null
+);
+
+public sealed record CreatePropertyDto(
+    string OwnerId,
+    string Name,
+    string Address,
+    decimal Price,
+    OperationType OperationType,
+    int? Beds = null,
+    int? Baths = null,
+    int? HalfBaths = null,
+    int? Sqft = null,
+    string? Description = null
+);
+
+public sealed record UpdatePropertyDto(
+    string Name,
+    string Address,
+    decimal Price,
+    OperationType OperationType,
+    int? Beds = null,
+    int? Baths = null,
+    int? HalfBaths = null,
+    int? Sqft = null,
+    string? Description = null
+);
+
+public sealed record UpdatePropertyImageDto(
+    string FileName,
+    bool IsMain,
+    bool IsEnabled,
+    int Order
+);
+
+public sealed record AnalyticsDto(
+    int TotalProperties,
+    int TotalOwners,
+    decimal TotalRevenue,
+    decimal MonthlyRevenue,
+    decimal YearlyRevenue
+);
+
+public sealed record AdminUser(
+    string Id,
+    string Email,
+    string Name,
+    string Role,
+    string PasswordHash
+);
+
 public interface IPropertyReadService
 {
     Task<PagedResult<PropertyLiteDto>> SearchAsync(SearchPropertiesQuery query, CancellationToken cancellationToken = default);
@@ -124,7 +225,7 @@ public interface IAdminImageUploadService
 
 public interface IAdminOwnerService
 {
-    Task<PagedResult<OwnerDto>> GetOwnersAsync(int page = 1, int pageSize = 10, CancellationToken ct = default);
+    Task<PagedResult<AdminOwnerDto>> GetOwnersAsync(int page = 1, int pageSize = 10, CancellationToken ct = default);
     Task<OwnerDto?> GetOwnerByIdAsync(string id, CancellationToken ct = default);
     Task<OwnerDto> CreateOwnerAsync(CreateOwnerDto createDto, CancellationToken ct = default);
     Task<OwnerDto> UpdateOwnerAsync(string id, UpdateOwnerDto updateDto, CancellationToken ct = default);
@@ -143,4 +244,14 @@ public interface IAdminPropertyService
 public interface IAdminAnalyticsService
 {
     Task<AnalyticsDto> GetAnalyticsAsync(CancellationToken ct = default);
+}
+
+public interface ICacheService
+{
+    Task<T?> GetAsync<T>(string key, CancellationToken ct = default);
+    Task SetAsync<T>(string key, T value, TimeSpan? expiry = null, CancellationToken ct = default);
+    Task RemoveAsync(string key, CancellationToken ct = default);
+    Task RemovePatternAsync(string pattern, CancellationToken ct = default);
+    Task<bool> ExistsAsync(string key, CancellationToken ct = default);
+    Task<long> IncrementAsync(string key, long value = 1, TimeSpan? expiry = null, CancellationToken ct = default);
 }

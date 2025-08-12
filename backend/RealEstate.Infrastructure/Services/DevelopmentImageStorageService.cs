@@ -1,119 +1,61 @@
-using RealEstate.Application.Interfaces;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using RealEstate.Application;
+using System.IO;
 
 namespace RealEstate.Infrastructure.Services;
 
-/// <summary>
-/// Development-friendly image storage service that provides fallback images
-/// when Azure Storage is not available in development
-/// </summary>
 public sealed class DevelopmentImageStorageService : IImageStorageService
 {
-    private readonly IImageStorageService _azureService;
-    private readonly bool _useFallback;
+    private readonly string _uploadPath;
+    private readonly string _baseUrl;
+    private readonly ILogger<DevelopmentImageStorageService> _logger;
 
-    public DevelopmentImageStorageService(IImageStorageService azureService)
+    public DevelopmentImageStorageService(IConfiguration configuration, ILogger<DevelopmentImageStorageService> logger)
     {
-        _azureService = azureService;
-        // Check if we're in development mode and Azure Storage is not available
-        _useFallback = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == "Development";
+        _uploadPath = configuration["LocalStorage:UploadPath"] ?? "wwwroot/images";
+        _baseUrl = configuration["LocalStorage:BaseUrl"] ?? "/images";
+        _logger = logger;
+        
+        // Ensure upload directory exists
+        Directory.CreateDirectory(_uploadPath);
     }
 
-    public async Task<string> UploadImageAsync(Stream imageStream, string fileName, string contentType, CancellationToken ct = default)
+    public async Task<string> UploadAsync(Stream fileStream, string fileName, string contentType, CancellationToken ct = default)
     {
-        try
-        {
-            return await _azureService.UploadImageAsync(imageStream, fileName, contentType, ct);
-        }
-        catch
-        {
-            if (_useFallback)
-            {
-                // Return a fallback image name for development
-                return $"dev-{Guid.NewGuid()}-{fileName}";
-            }
-            throw;
-        }
+        var uniqueFileName = GenerateUniqueFileName(fileName);
+        var filePath = Path.Combine(_uploadPath, uniqueFileName);
+        
+        using var fileStream2 = File.Create(filePath);
+        await fileStream.CopyToAsync(fileStream2, ct);
+        
+        _logger.LogInformation("File uploaded in development mode: {FileName} -> {FilePath}", fileName, filePath);
+        return uniqueFileName;
     }
 
-    public async Task<bool> DeleteImageAsync(string blobName, CancellationToken ct = default)
+    public Task DeleteAsync(string fileName, CancellationToken ct = default)
     {
-        try
+        var filePath = Path.Combine(_uploadPath, fileName);
+        if (File.Exists(filePath))
         {
-            return await _azureService.DeleteImageAsync(blobName, ct);
+            File.Delete(filePath);
+            _logger.LogInformation("File deleted in development mode: {FilePath}", filePath);
         }
-        catch
-        {
-            if (_useFallback)
-            {
-                // In development, just pretend we deleted it
-                return true;
-            }
-            throw;
-        }
+        
+        return Task.CompletedTask;
     }
 
-    public async Task<Stream> DownloadImageAsync(string blobName, CancellationToken ct = default)
+    public string GetImageUrl(string imagePath)
     {
-        try
-        {
-            return await _azureService.DownloadImageAsync(blobName, ct);
-        }
-        catch
-        {
-            if (_useFallback)
-            {
-                // Return a placeholder image stream
-                var placeholderBytes = GetPlaceholderImageBytes();
-                return new MemoryStream(placeholderBytes);
-            }
-            throw;
-        }
+        return $"{_baseUrl.TrimEnd('/')}/{imagePath}";
     }
 
-    public async Task<string> GetImageUrlAsync(string blobName, CancellationToken ct = default)
+    private static string GenerateUniqueFileName(string fileName)
     {
-        try
-        {
-            return await _azureService.GetImageUrlAsync(blobName, ct);
-        }
-        catch
-        {
-            if (_useFallback)
-            {
-                // Return a fallback image URL for development
-                return GetFallbackImageUrl(blobName);
-            }
-            throw;
-        }
-    }
-
-    public async Task<bool> ImageExistsAsync(string blobName, CancellationToken ct = default)
-    {
-        try
-        {
-            return await _azureService.ImageExistsAsync(blobName, ct);
-        }
-        catch
-        {
-            if (_useFallback)
-            {
-                // In development, pretend all images exist
-                return true;
-            }
-            throw;
-        }
-    }
-
-    private string GetFallbackImageUrl(string blobName)
-    {
-        // Use placeholder images from a reliable source
-        var imageIndex = Math.Abs(blobName.GetHashCode()) % 10;
-        return $"https://picsum.photos/800/600?random={imageIndex}";
-    }
-
-    private byte[] GetPlaceholderImageBytes()
-    {
-        // Simple 1x1 transparent PNG
-        return Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==");
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd-HHmmss");
+        var extension = Path.GetExtension(fileName);
+        var nameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+        
+        return $"{nameWithoutExtension}-{timestamp}{extension}";
     }
 }

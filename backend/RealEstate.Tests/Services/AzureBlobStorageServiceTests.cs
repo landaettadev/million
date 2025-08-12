@@ -21,6 +21,7 @@ namespace RealEstate.Tests.Services
             // Mock configuration values
             _configuration["AzureStorage:ConnectionString"].Returns("DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=testkey;EndpointSuffix=core.windows.net");
             _configuration["AzureStorage:ContainerName"].Returns("test-container");
+            _configuration["AzureStorage:BaseUrl"].Returns("https://testaccount.blob.core.windows.net");
             
             _service = new AzureBlobStorageService(_configuration);
         }
@@ -44,27 +45,26 @@ namespace RealEstate.Tests.Services
         [Test]
         public void Constructor_WithMissingConnectionString_ShouldHandleGracefully()
         {
-            // Arrange
             var config = Substitute.For<IConfiguration>();
             config["AzureStorage:ConnectionString"].Returns((string?)null);
             config["AzureStorage:ContainerName"].Returns("test-container");
 
-            // Act & Assert
             var action = () => new AzureBlobStorageService(config);
             action.Should().NotThrow();
         }
 
         [Test]
-        public void Constructor_WithMissingContainerName_ShouldHandleGracefully()
+        public void Constructor_WithMissingContainerName_ShouldDefaultToPropertyImages()
         {
             // Arrange
             var config = Substitute.For<IConfiguration>();
             config["AzureStorage:ConnectionString"].Returns("DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=testkey;EndpointSuffix=core.windows.net");
             config["AzureStorage:ContainerName"].Returns((string?)null);
+            config["AzureStorage:BaseUrl"].Returns("https://testaccount.blob.core.windows.net");
 
             // Act & Assert
-            var action = () => new AzureBlobStorageService(config);
-            action.Should().NotThrow();
+            var service = new AzureBlobStorageService(config);
+            service.GetImageUrl("test.jpg").Should().Be("https://testaccount.blob.core.windows.net/property-images/test.jpg");
         }
 
         [Test]
@@ -108,11 +108,11 @@ namespace RealEstate.Tests.Services
         }
 
         [Test]
-        public void GetImageUrl_WithSpecialCharacters_ShouldHandleCorrectly()
+        public void GetImageUrl_WithSpecialCharacters_ShouldEncode()
         {
             // Arrange
             var imagePath = "test image with spaces & symbols.jpg";
-            var expectedUrl = "https://testaccount.blob.core.windows.net/test-container/test image with spaces & symbols.jpg";
+            var expectedUrl = "https://testaccount.blob.core.windows.net/test-container/test%20image%20with%20spaces%20%26%20symbols.jpg";
 
             // Act
             var result = _service.GetImageUrl(imagePath);
@@ -122,7 +122,7 @@ namespace RealEstate.Tests.Services
         }
 
         [Test]
-        public void GetImageUrl_WithUrlEncodedCharacters_ShouldHandleCorrectly()
+        public void GetImageUrl_WithUrlEncodedCharacters_ShouldNotDoubleEncode()
         {
             // Arrange
             var imagePath = "test%20image%20encoded.jpg";
@@ -142,6 +142,7 @@ namespace RealEstate.Tests.Services
             var config = Substitute.For<IConfiguration>();
             config["AzureStorage:ConnectionString"].Returns("DefaultEndpointsProtocol=https;AccountName=myaccount;AccountKey=mykey;EndpointSuffix=core.windows.net");
             config["AzureStorage:ContainerName"].Returns("my-container");
+            config["AzureStorage:BaseUrl"].Returns("https://myaccount.blob.core.windows.net");
             
             var service = new AzureBlobStorageService(config);
             var imagePath = "test.jpg";
@@ -182,15 +183,15 @@ namespace RealEstate.Tests.Services
 
             // Assert
             result.Should().Be(expectedUrl);
-            result.Length.Should().Be(1000 + 89); // 89 is the base URL length
+            result.Length.Should().Be(expectedUrl.Length);
         }
 
         [Test]
-        public void GetImageUrl_WithUnicodeCharacters_ShouldHandleCorrectly()
+        public void GetImageUrl_WithUnicodeCharacters_ShouldEncode()
         {
             // Arrange
             var imagePath = "test-ñáéíóú-中文-日本語.jpg";
-            var expectedUrl = "https://testaccount.blob.core.windows.net/test-container/test-ñáéíóú-中文-日本語.jpg";
+            var expectedUrl = "https://testaccount.blob.core.windows.net/test-container/test-%C3%B1%C3%A1%C3%A9%C3%AD%C3%B3%C3%BA-%E4%B8%AD%E6%96%87-%E6%97%A5%E6%9C%AC%E8%AA%9E.jpg";
 
             // Act
             var result = _service.GetImageUrl(imagePath);
@@ -339,7 +340,7 @@ namespace RealEstate.Tests.Services
         }
 
         [Test]
-        public void GetImageUrl_WithLeadingSlash_ShouldHandleCorrectly()
+        public void GetImageUrl_WithLeadingSlash_ShouldPreserveAndEncodeSegments()
         {
             // Arrange
             var imagePath = "/image.jpg";
@@ -381,7 +382,7 @@ namespace RealEstate.Tests.Services
         }
 
         [Test]
-        public void GetImageUrl_WithSpecialFileNames_ShouldHandleCorrectly()
+        public void GetImageUrl_WithSpecialFileNames_ShouldEncode()
         {
             // Arrange
             var testCases = new[]
@@ -396,7 +397,8 @@ namespace RealEstate.Tests.Services
 
             foreach (var imagePath in testCases)
             {
-                var expectedUrl = $"https://testaccount.blob.core.windows.net/test-container/{imagePath}";
+                var encoded = Uri.EscapeDataString(imagePath);
+                var expectedUrl = $"https://testaccount.blob.core.windows.net/test-container/{encoded}";
 
                 // Act
                 var result = _service.GetImageUrl(imagePath);
@@ -413,6 +415,7 @@ namespace RealEstate.Tests.Services
             var config = Substitute.For<IConfiguration>();
             config["AzureStorage:ConnectionString"].Returns("DefaultEndpointsProtocol=https;AccountName=devaccount;AccountKey=devkey;EndpointSuffix=core.windows.net");
             config["AzureStorage:ContainerName"].Returns("dev-images");
+            config["AzureStorage:BaseUrl"].Returns("https://devaccount.blob.core.windows.net");
             
             var service = new AzureBlobStorageService(config);
             var imagePath = "test.jpg";
@@ -432,6 +435,7 @@ namespace RealEstate.Tests.Services
             var config = Substitute.For<IConfiguration>();
             config["AzureStorage:ConnectionString"].Returns("DefaultEndpointsProtocol=https;AccountName=prodaccount;AccountKey=prodkey;EndpointSuffix=core.windows.net");
             config["AzureStorage:ContainerName"].Returns("prod-images");
+            config["AzureStorage:BaseUrl"].Returns("https://prodaccount.blob.core.windows.net");
             
             var service = new AzureBlobStorageService(config);
             var imagePath = "test.jpg";
@@ -451,6 +455,7 @@ namespace RealEstate.Tests.Services
             var config = Substitute.For<IConfiguration>();
             config["AzureStorage:ConnectionString"].Returns("DefaultEndpointsProtocol=https;AccountName=stagingaccount;AccountKey=stagingkey;EndpointSuffix=core.windows.net");
             config["AzureStorage:ContainerName"].Returns("staging-images");
+            config["AzureStorage:BaseUrl"].Returns("https://stagingaccount.blob.core.windows.net");
             
             var service = new AzureBlobStorageService(config);
             var imagePath = "test.jpg";
@@ -470,6 +475,7 @@ namespace RealEstate.Tests.Services
             var config = Substitute.For<IConfiguration>();
             config["AzureStorage:ConnectionString"].Returns("DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=testkey;EndpointSuffix=core.cloudapi.de");
             config["AzureStorage:ContainerName"].Returns("test-container");
+            config["AzureStorage:BaseUrl"].Returns("https://testaccount.blob.core.cloudapi.de");
             
             var service = new AzureBlobStorageService(config);
             var imagePath = "test.jpg";
@@ -489,6 +495,7 @@ namespace RealEstate.Tests.Services
             var config = Substitute.For<IConfiguration>();
             config["AzureStorage:ConnectionString"].Returns("DefaultEndpointsProtocol=http;AccountName=testaccount;AccountKey=testkey;EndpointSuffix=core.windows.net");
             config["AzureStorage:ContainerName"].Returns("test-container");
+            config["AzureStorage:BaseUrl"].Returns("http://testaccount.blob.core.windows.net");
             
             var service = new AzureBlobStorageService(config);
             var imagePath = "test.jpg";
@@ -508,6 +515,7 @@ namespace RealEstate.Tests.Services
             var config = Substitute.For<IConfiguration>();
             config["AzureStorage:ConnectionString"].Returns("DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=testkey;EndpointSuffix=core.windows.net");
             config["AzureStorage:ContainerName"].Returns("test-container");
+            config["AzureStorage:BaseUrl"].Returns("https://testaccount.blob.core.windows.net");
             
             var service = new AzureBlobStorageService(config);
             var imagePath = "test.jpg";
@@ -521,16 +529,17 @@ namespace RealEstate.Tests.Services
         }
 
         [Test]
-        public void GetImageUrl_WithEmptyContainerName_ShouldHandleGracefully()
+        public void GetImageUrl_WithEmptyContainerName_ShouldStillBuildUrl()
         {
             // Arrange
             var config = Substitute.For<IConfiguration>();
             config["AzureStorage:ConnectionString"].Returns("DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=testkey;EndpointSuffix=core.windows.net");
             config["AzureStorage:ContainerName"].Returns("");
+            config["AzureStorage:BaseUrl"].Returns("https://testaccount.blob.core.windows.net");
             
             var service = new AzureBlobStorageService(config);
             var imagePath = "test.jpg";
-            var expectedUrl = "https://testaccount.blob.core.windows.net//test.jpg";
+            var expectedUrl = "https://testaccount.blob.core.windows.net/test.jpg";
 
             // Act
             var result = service.GetImageUrl(imagePath);
@@ -540,12 +549,13 @@ namespace RealEstate.Tests.Services
         }
 
         [Test]
-        public void GetImageUrl_WithWhitespaceContainerName_ShouldHandleGracefully()
+        public void GetImageUrl_WithWhitespaceContainerName_ShouldStillBuildUrl()
         {
             // Arrange
             var config = Substitute.For<IConfiguration>();
             config["AzureStorage:ConnectionString"].Returns("DefaultEndpointsProtocol=https;AccountName=testaccount;AccountKey=testkey;EndpointSuffix=core.windows.net");
             config["AzureStorage:ContainerName"].Returns("   ");
+            config["AzureStorage:BaseUrl"].Returns("https://testaccount.blob.core.windows.net");
             
             var service = new AzureBlobStorageService(config);
             var imagePath = "test.jpg";

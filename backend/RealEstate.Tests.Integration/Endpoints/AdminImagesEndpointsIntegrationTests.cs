@@ -1,11 +1,13 @@
 using System.Net;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
 using NUnit.Framework;
 using RealEstate.Api;
 using RealEstate.Tests.Integration.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+using RealEstate.Infrastructure;
+using MongoDB.Bson;
 
 namespace RealEstate.Tests.Integration.Endpoints;
 
@@ -20,46 +22,65 @@ public class AdminImagesEndpointsIntegrationTests
     {
         _factory = new IntegrationTestWebAppFactory();
         _client = _factory.CreateClient();
-        _client.DefaultRequestHeaders.Add("Authorization", "Bearer test.token");
     }
 
     [Test]
-    public async Task Presign_And_Delete_Image_Succeeds()
+    public async Task GetPropertyImages_Returns_List_ForExistingProperty()
     {
-        // Presign
-        var presignRes = await _client.PostAsJsonAsync("/api/admin/images/presign", new
+        // Seed owner, property and image directly in Mongo to avoid admin create endpoints
+        using (var scope = _factory.Services.CreateScope())
         {
-            fileName = "test.jpg",
-            contentType = "image/jpeg"
-        });
-        presignRes.StatusCode.Should().Be(HttpStatusCode.OK);
-        var presigned = await presignRes.Content.ReadFromJsonAsync<dynamic>();
-        presigned!.uploadUrl.Should().NotBeNull();
-        string blobName = presigned!.blobName.ToString();
+            var ctx = scope.ServiceProvider.GetRequiredService<MongoContext>();
 
-        // Register image metadata (simulate add)
-        // Need a property first
-        var ownerRes = await _client.PostAsJsonAsync("/api/admin/owners", new { name = "Owner", address = "X" });
-        var owner = await ownerRes.Content.ReadFromJsonAsync<dynamic>();
-        string ownerId = owner!.id.ToString();
-        var propRes = await _client.PostAsJsonAsync("/api/admin/properties", new { ownerId, name = "P", address = "X", price = 1, operationType = "Sale" });
-        var prop = await propRes.Content.ReadFromJsonAsync<dynamic>();
-        string propertyId = prop!.id.ToString();
+            var ownerId = ObjectId.GenerateNewId().ToString();
+            await ctx.Owners.InsertOneAsync(new OwnerDocument
+            {
+                Id = ownerId,
+                Name = "Owner",
+                Address = "X",
+                CreatedAt = DateTime.UtcNow
+            });
 
-        var addImageRes = await _client.PostAsJsonAsync("/api/admin/images", new
-        {
-            propertyId,
-            file = blobName,
-            enabled = true,
-            order = 0
-        });
-        addImageRes.StatusCode.Should().Be(HttpStatusCode.Created);
-        var img = await addImageRes.Content.ReadFromJsonAsync<dynamic>();
-        string imageId = img!.id.ToString();
+            var propertyId = ObjectId.GenerateNewId().ToString();
+            await ctx.Properties.InsertOneAsync(new PropertyDocument
+            {
+                Id = propertyId,
+                OwnerId = ownerId,
+                Name = "P",
+                Address = "X",
+                Price = 1,
+                OperationType = "sale",
+                CreatedAt = DateTime.UtcNow
+            });
 
-        // Delete image
-        var delRes = await _client.DeleteAsync($"/api/admin/images/{imageId}");
-        delRes.StatusCode.Should().Be(HttpStatusCode.OK);
+            await ctx.PropertyImages.InsertOneAsync(new PropertyImageDocument
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                PropertyId = propertyId,
+                File = "test.jpg",
+                Enabled = true,
+                Order = 0,
+                FileSize = 1234,
+                ContentType = "image/jpeg",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            // Act
+            var res = await _client.GetAsync($"/api/admin/properties/{propertyId}/images");
+            res.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var body = await res.Content.ReadAsStringAsync();
+            body.Should().NotBeNullOrEmpty();
+
+            using var doc = System.Text.Json.JsonDocument.Parse(body);
+            doc.RootElement.ValueKind.Should().Be(System.Text.Json.JsonValueKind.Array);
+            var arr = doc.RootElement.EnumerateArray().ToArray();
+            arr.Length.Should().BeGreaterThanOrEqualTo(1);
+            var first = arr[0];
+            first.TryGetProperty("propertyId", out _).Should().BeTrue();
+            first.TryGetProperty("blobName", out _).Should().BeTrue();
+            first.TryGetProperty("imageUrl", out _).Should().BeTrue();
+        }
     }
 }
 

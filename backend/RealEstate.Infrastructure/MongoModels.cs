@@ -2,7 +2,6 @@ using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 using MongoDB.Driver;
 using RealEstate.Application;
-using RealEstate.Application.Interfaces;
 
 namespace RealEstate.Infrastructure;
 
@@ -247,7 +246,7 @@ public sealed class PropertyRepository : IPropertyRepository
             string? imageUrl = null;
             if (!string.IsNullOrEmpty(firstImageFile))
             {
-                imageUrl = await _imageStorageService.GetImageUrlAsync(firstImageFile, ct);
+                imageUrl = _imageStorageService.GetImageUrl(firstImageFile);
             }
 
             items.Add(new PropertyLiteDto(
@@ -290,7 +289,7 @@ public sealed class PropertyRepository : IPropertyRepository
             string? imageUrl = null;
             if (!string.IsNullOrEmpty(firstImageFile))
             {
-                imageUrl = await _imageStorageService.GetImageUrlAsync(firstImageFile, ct);
+                imageUrl = _imageStorageService.GetImageUrl(firstImageFile);
             }
 
             items.Add(new PropertyLiteDto(

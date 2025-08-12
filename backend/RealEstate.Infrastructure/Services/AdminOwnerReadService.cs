@@ -4,141 +4,120 @@ using RealEstate.Infrastructure;
 
 namespace RealEstate.Infrastructure.Services;
 
-public sealed class AdminOwnerReadService : IAdminOwnerReadService
+public sealed class AdminOwnerService : IAdminOwnerService
 {
     private readonly MongoContext _ctx;
 
-    public AdminOwnerReadService(MongoContext ctx)
+    public AdminOwnerService(MongoContext ctx)
     {
         _ctx = ctx;
     }
 
-    public async Task<PagedResult<AdminOwnerDto>> SearchAsync(AdminOwnerSearchQuery query, CancellationToken ct = default)
+    public async Task<PagedResult<AdminOwnerDto>> GetOwnersAsync(int page = 1, int pageSize = 10, CancellationToken ct = default)
     {
-        var filter = BuildFilter(query);
-        var skip = (query.Page - 1) * query.PageSize;
+        var filter = Builders<OwnerDocument>.Filter.Eq(x => x.IsDeleted, false);
+        var skip = (page - 1) * pageSize;
 
-        // Sort by OwnerDocument fields
-        IFindFluent<OwnerDocument, OwnerDocument> cursor = _ctx.Owners.Find(filter);
-        if (string.Equals(query.SortDirection, "desc", StringComparison.OrdinalIgnoreCase))
-        {
-            cursor = query.SortBy switch
-            {
-                "Name" => cursor.SortByDescending(o => o.Name),
-                "Address" => cursor.SortByDescending(o => o.Address),
-                _ => cursor.SortByDescending(o => o.CreatedAt)
-            };
-        }
-        else
-        {
-            cursor = query.SortBy switch
-            {
-                "Name" => cursor.SortBy(o => o.Name),
-                "Address" => cursor.SortBy(o => o.Address),
-                _ => cursor.SortBy(o => o.CreatedAt)
-            };
-        }
-
-        var ownerDocs = await cursor.Skip(skip).Limit(query.PageSize).ToListAsync(ct);
-
-        // Batch count properties per owner
-        var ownerIds = ownerDocs.Select(o => o.Id).ToList();
-        var props = await _ctx.Properties
-            .Find(p => ownerIds.Contains(p.OwnerId) && !p.IsDeleted)
-            .Project(p => new { p.OwnerId })
+        var ownerDocs = await _ctx.Owners
+            .Find(filter)
+            .Skip(skip)
+            .Limit(pageSize)
             .ToListAsync(ct);
-        var counts = props.GroupBy(p => p.OwnerId).ToDictionary(g => g.Key, g => g.Count());
-
-        var owners = ownerDocs.Select(o => new AdminOwnerDto(
-            o.Id,
-            o.Name,
-            o.Address,
-            o.Photo,
-            o.Birthday,
-            counts.TryGetValue(o.Id, out var c) ? c : 0,
-            o.CreatedAt,
-            o.UpdatedAt,
-            o.IsDeleted
-        )).ToList();
 
         var totalCount = await _ctx.Owners.CountDocumentsAsync(filter, cancellationToken: ct);
 
-        return new PagedResult<AdminOwnerDto>(owners, query.Page, query.PageSize, totalCount);
+        // Build a lookup for properties count per owner
+        var ownerIds = ownerDocs.Select(o => o.Id).ToList();
+        var counts = await _ctx.Properties
+            .Aggregate()
+            .Match(p => ownerIds.Contains(p.OwnerId) && !p.IsDeleted)
+            .Group(p => p.OwnerId, g => new { OwnerId = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        var countByOwnerId = counts.ToDictionary(x => x.OwnerId, x => x.Count);
+
+        var owners = ownerDocs.Select(o => new AdminOwnerDto(
+            Id: o.Id,
+            Name: o.Name,
+            Address: o.Address,
+            Photo: o.Photo,
+            Birthday: o.Birthday,
+            PropertiesCount: countByOwnerId.TryGetValue(o.Id, out var c) ? c : 0,
+            CreatedAt: o.CreatedAt,
+            UpdatedAt: o.UpdatedAt,
+            IsDeleted: o.IsDeleted
+        )).ToList();
+
+        return new PagedResult<AdminOwnerDto>(owners, page, pageSize, totalCount);
     }
 
-    public async Task<AdminOwnerDetailDto?> GetByIdAsync(string id, CancellationToken ct = default)
+    public async Task<OwnerDto?> GetOwnerByIdAsync(string id, CancellationToken ct = default)
     {
         var ownerDoc = await _ctx.Owners.Find(o => o.Id == id && !o.IsDeleted).FirstOrDefaultAsync(ct);
         if (ownerDoc is null) return null;
 
-        var ownerProps = await _ctx.Properties
-            .Find(p => p.OwnerId == id && !p.IsDeleted)
-            .ToListAsync(ct);
-
-        var detail = new AdminOwnerDetailDto(
+        return new OwnerDto(
             ownerDoc.Id,
             ownerDoc.Name,
             ownerDoc.Address,
             ownerDoc.Photo,
             ownerDoc.Birthday,
-            ownerProps.Select(p => new AdminOwnerPropertyDto(
-                p.Id,
-                p.Name,
-                p.Address,
-                p.Price,
-                Enum.TryParse<OperationType>(p.OperationType, true, out var op) ? op : OperationType.Sale,
-                p.CreatedAt
-            )).ToList(),
             ownerDoc.CreatedAt,
-            ownerDoc.UpdatedAt,
-            ownerDoc.IsDeleted
+            ownerDoc.UpdatedAt
         );
-
-        return detail;
     }
 
-    public async Task<long> GetTotalCountAsync(CancellationToken ct = default)
+    public async Task<OwnerDto> CreateOwnerAsync(CreateOwnerDto createDto, CancellationToken ct = default)
     {
-        return await _ctx.Owners.CountDocumentsAsync(o => !o.IsDeleted, cancellationToken: ct);
-    }
-
-    private static FilterDefinition<OwnerDocument> BuildFilter(AdminOwnerSearchQuery query)
-    {
-        var filters = new List<FilterDefinition<OwnerDocument>>
+        var ownerDoc = new OwnerDocument
         {
-            Builders<OwnerDocument>.Filter.Eq(o => o.IsDeleted, false)
+            Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+            Name = createDto.Name,
+            Address = createDto.Address,
+            Photo = createDto.Photo,
+            Birthday = createDto.Birthday,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            IsDeleted = false
         };
 
-        if (!string.IsNullOrWhiteSpace(query.SearchTerm))
-        {
-            var searchFilter = Builders<OwnerDocument>.Filter.Or(
-                Builders<OwnerDocument>.Filter.Regex(o => o.Name, new MongoDB.Bson.BsonRegularExpression(query.SearchTerm, "i")),
-                Builders<OwnerDocument>.Filter.Regex(o => o.Address, new MongoDB.Bson.BsonRegularExpression(query.SearchTerm, "i"))
-            );
-            filters.Add(searchFilter);
-        }
+        await _ctx.Owners.InsertOneAsync(ownerDoc, cancellationToken: ct);
 
-        return Builders<OwnerDocument>.Filter.And(filters);
+        return new OwnerDto(
+            ownerDoc.Id,
+            ownerDoc.Name,
+            ownerDoc.Address,
+            ownerDoc.Photo,
+            ownerDoc.Birthday,
+            ownerDoc.CreatedAt,
+            ownerDoc.UpdatedAt
+        );
     }
 
-    private static SortDefinition<AdminOwnerDto> BuildSort(string sortBy, string sortDirection)
+    public async Task<OwnerDto> UpdateOwnerAsync(string id, UpdateOwnerDto updateDto, CancellationToken ct = default)
     {
-        var sort = sortDirection.ToLower() == "desc" 
-            ? Builders<AdminOwnerDto>.Sort.Descending(sortBy) 
-            : Builders<AdminOwnerDto>.Sort.Ascending(sortBy);
-        return sort;
+        var update = Builders<OwnerDocument>.Update
+            .Set(o => o.Name, updateDto.Name)
+            .Set(o => o.Address, updateDto.Address)
+            .Set(o => o.Photo, updateDto.Photo)
+            .Set(o => o.Birthday, updateDto.Birthday)
+            .Set(o => o.UpdatedAt, DateTime.UtcNow);
+
+        await _ctx.Owners.UpdateOneAsync(o => o.Id == id, update, cancellationToken: ct);
+
+        var updatedOwner = await GetOwnerByIdAsync(id, ct);
+        if (updatedOwner == null)
+            throw new InvalidOperationException($"Owner {id} not found after update");
+
+        return updatedOwner;
     }
 
-    private sealed class OwnerWithProperties
+    public async Task DeleteOwnerAsync(string id, CancellationToken ct = default)
     {
-        public string Id { get; set; } = default!;
-        public string Name { get; set; } = default!;
-        public string Address { get; set; } = default!;
-        public string? Photo { get; set; }
-        public DateTime? Birthday { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime? UpdatedAt { get; set; }
-        public bool IsDeleted { get; set; }
-        public List<PropertyDocument> Properties { get; set; } = new();
+        var update = Builders<OwnerDocument>.Update
+            .Set(o => o.IsDeleted, true)
+            .Set(o => o.UpdatedAt, DateTime.UtcNow);
+
+        await _ctx.Owners.UpdateOneAsync(o => o.Id == id, update, cancellationToken: ct);
     }
 }

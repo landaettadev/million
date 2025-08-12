@@ -1291,6 +1291,20 @@
       },
       "NUnit.Analyzers/3.9.0": {},
       "NUnit3TestAdapter/4.5.0": {},
+      "Pipelines.Sockets.Unofficial/2.2.8": {
+        "dependencies": {
+          "System.IO.Pipelines": "8.0.0"
+        },
+        "runtime": {
+          "lib/net5.0/Pipelines.Sockets.Unofficial.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "2.2.8.1080"
+          }
+        },
+        "compile": {
+          "lib/net5.0/Pipelines.Sockets.Unofficial.dll": {}
+        }
+      },
       "SharpCompress/0.30.1": {
         "runtime": {
           "lib/net5.0/SharpCompress.dll": {
@@ -1336,6 +1350,21 @@
         },
         "compile": {
           "lib/net8.0/Renci.SshNet.dll": {}
+        }
+      },
+      "StackExchange.Redis/2.7.17": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "8.0.3",
+          "Pipelines.Sockets.Unofficial": "2.2.8"
+        },
+        "runtime": {
+          "lib/net6.0/StackExchange.Redis.dll": {
+            "assemblyVersion": "2.0.0.0",
+            "fileVersion": "2.7.17.27058"
+          }
+        },
+        "compile": {
+          "lib/net6.0/StackExchange.Redis.dll": {}
         }
       },
       "System.Buffers/4.5.1": {},
@@ -1557,7 +1586,8 @@
           "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.8",
           "Microsoft.Extensions.Hosting.Abstractions": "8.0.0",
           "MongoDB.Driver": "3.4.2",
-          "RealEstate.Application": "1.0.0"
+          "RealEstate.Application": "1.0.0",
+          "StackExchange.Redis": "2.7.17"
         },
         "runtime": {
           "RealEstate.Infrastructure.dll": {
@@ -3821,6 +3851,13 @@
       "path": "nunit3testadapter/4.5.0",
       "hashPath": "nunit3testadapter.4.5.0.nupkg.sha512"
     },
+    "Pipelines.Sockets.Unofficial/2.2.8": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zG2FApP5zxSx6OcdJQLbZDk2AVlN2BNQD6MorwIfV6gVj0RRxWPEp2LXAxqDGZqeNV1Zp0BNPcNaey/GXmTdvQ==",
+      "path": "pipelines.sockets.unofficial/2.2.8",
+      "hashPath": "pipelines.sockets.unofficial.2.2.8.nupkg.sha512"
+    },
     "SharpCompress/0.30.1": {
       "type": "package",
       "serviceable": true,
@@ -3848,6 +3885,13 @@
       "sha512": "sha512-9r+4UF2P51lTztpd+H7SJywk7WgmlWB//Cm2o96c6uGVZU5r58ys2/cD9pCgTk0zCdSkfflWL1WtqQ9I4IVO9Q==",
       "path": "ssh.net/2024.2.0",
       "hashPath": "ssh.net.2024.2.0.nupkg.sha512"
+    },
+    "StackExchange.Redis/2.7.17": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-PduekHww3CrCBr1ebIPX4k4zdah9wjJ4AQZXfp+JfGJQfwf8s1SHSY7kthDi9MP0ULcYrNw4xnbRXFMbCryIig==",
+      "path": "stackexchange.redis/2.7.17",
+      "hashPath": "stackexchange.redis.2.7.17.nupkg.sha512"
     },
     "System.Buffers/4.5.1": {
       "type": "package",

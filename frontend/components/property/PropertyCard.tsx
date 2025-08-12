@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
+import { useEffect, useState, useRef } from 'react'
 import { Skeleton } from '../ui/Skeleton'
 import { formatPrice } from '../../lib/format'
 import type { PropertyLiteDto } from '../../lib/types'
@@ -15,6 +16,21 @@ interface PropertyCardProps {
 }
 
 export function PropertyCard({ item, loading = false }: PropertyCardProps) {
+  const [hoverVideo, setHoverVideo] = useState<string | null>(null)
+  const [mounted, setMounted] = useState(false)
+  const videoRef = useRef<HTMLVideoElement | null>(null)
+
+  useEffect(() => {
+    setMounted(true)
+    try {
+      const raw = localStorage.getItem('propertyVideoMap')
+      if (raw) {
+        const map = JSON.parse(raw) as Record<string, string>
+        const v = map[item.id]
+        if (v && v.endsWith('.mp4')) setHoverVideo(v)
+      }
+    } catch { /* ignore */ }
+  }, [item.id])
   if (loading) {
     return (
       <article className="relative group transition-all duration-200">
@@ -38,7 +54,15 @@ export function PropertyCard({ item, loading = false }: PropertyCardProps) {
   if (item.sqft) specs.push(`${item.sqft.toLocaleString()} Sq. Ft.`)
 
   // Generate a placeholder image URL if no image is provided
-  const imageUrl = item.image || `https://picsum.photos/800/600?random=${Math.abs(item.id.charCodeAt(0)) % 10}`
+  const usePlaceholderImages = process.env.NEXT_PUBLIC_USE_PLACEHOLDER_IMAGES === 'true'
+  const imageBaseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://picsum.photos'
+  
+  // Use placeholder images in development, or fallback if image fails
+  const imageUrl = usePlaceholderImages || !item.image 
+    ? `${imageBaseUrl}/800/600?random=${Math.abs(item.id.charCodeAt(0)) % 10}`
+    : item.image
+
+  const shouldBypassOptimization = imageUrl.includes('blob.core.windows.net') || imageUrl.includes('127.0.0.1:10000') || imageUrl.includes('picsum.photos')
 
   return (
     <Link href={`/properties/${item.id}`} aria-label={`View details of ${item.name}`} className="block">
@@ -51,12 +75,31 @@ export function PropertyCard({ item, loading = false }: PropertyCardProps) {
             fill
             className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.01]"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
+            unoptimized={shouldBypassOptimization}
             onError={(e) => {
               // Fallback to placeholder if image fails to load
               const target = e.target as HTMLImageElement
-              target.src = `https://picsum.photos/800/600?random=${Math.abs(item.id.charCodeAt(0)) % 10}`
+              target.src = `${imageBaseUrl}/800/600?random=${Math.abs(item.id.charCodeAt(0)) % 10}`
             }}
           />
+          {/* Hover video overlay (plays on hover) */}
+          {mounted && hoverVideo && (
+            <video
+              ref={videoRef}
+              className="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+              src={hoverVideo}
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              onMouseEnter={() => {
+                try { videoRef.current?.play().catch(() => {}) } catch { /* no-op */ }
+              }}
+              onMouseLeave={() => {
+                try { videoRef.current?.pause() } catch { /* no-op */ }
+              }}
+            />
+          )}
         </div>
 
         {/* Floating info panel */}
