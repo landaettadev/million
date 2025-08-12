@@ -13,7 +13,8 @@ services:
       MONGO_INITDB_DATABASE: realestate
     volumes:
       - mongodb_data:/data/db
-      - ./backend/RealEstate.Infrastructure/Configuration/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+      # Mount entire init directory to avoid file-vs-dir mount issues on Windows
+      - ./backend/RealEstate.Infrastructure/Configuration:/docker-entrypoint-initdb.d:ro
 
 volumes:
   mongodb_data:
