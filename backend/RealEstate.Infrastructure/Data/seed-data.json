@@ -3,25 +3,25 @@
     {
       "name": "María González",
       "address": "Calle Mayor 123, Madrid",
-      "photo": "maria-gonzalez.jpg",
+      "photo": "https://picsum.photos/id/1001/300/300",
       "birthday": "1985-03-15T00:00:00Z"
     },
     {
       "name": "Carlos Rodríguez",
       "address": "Avenida de la Paz 456, Barcelona",
-      "photo": "carlos-rodriguez.jpg",
+      "photo": "https://picsum.photos/id/1002/300/300",
       "birthday": "1978-07-22T00:00:00Z"
     },
     {
       "name": "Ana Martínez",
       "address": "Plaza España 789, Valencia",
-      "photo": "ana-martinez.jpg",
+      "photo": "https://picsum.photos/id/1003/300/300",
       "birthday": "1990-11-08T00:00:00Z"
     },
     {
       "name": "Luis Fernández",
       "address": "Gran Vía 321, Sevilla",
-      "photo": "luis-fernandez.jpg",
+      "photo": "https://picsum.photos/id/1004/300/300",
       "birthday": "1982-04-12T00:00:00Z"
     }
   ],
@@ -37,7 +37,8 @@
       "beds": 4,
       "baths": 3,
       "halfBaths": 1,
-      "sqft": 3500
+      "sqft": 3500,
+      "videoUrl": "http://localhost:5244/videos/lujosa1.mp4"
     },
     {
       "name": "Modern Apartment Barcelona",
@@ -50,7 +51,8 @@
       "beds": 3,
       "baths": 2,
       "halfBaths": 0,
-      "sqft": 2200
+      "sqft": 2200,
+      "videoUrl": "http://localhost:5244/videos/lujosa2.mp4"
     },
     {
       "name": "Beach House Valencia",
@@ -187,31 +189,84 @@
     {
       "propertyCode": "MAD001",
       "images": [
-        "madrid-penthouse-1.jpg",
-        "madrid-penthouse-2.jpg",
-        "madrid-penthouse-3.jpg"
+        "https://picsum.photos/id/1015/800/600",
+        "https://picsum.photos/id/1016/800/600",
+        "https://picsum.photos/id/1018/800/600"
       ]
     },
     {
       "propertyCode": "BCN001",
       "images": [
-        "barcelona-apartment-1.jpg",
-        "barcelona-apartment-2.jpg"
+        "https://picsum.photos/id/1019/800/600",
+        "https://picsum.photos/id/1020/800/600"
       ]
     },
     {
       "propertyCode": "VAL001",
       "images": [
-        "valencia-beach-1.jpg",
-        "valencia-beach-2.jpg",
-        "valencia-beach-3.jpg"
+        "https://picsum.photos/id/1021/800/600",
+        "https://picsum.photos/id/1022/800/600",
+        "https://picsum.photos/id/1023/800/600"
       ]
     },
     {
       "propertyCode": "SEV001",
       "images": [
-        "sevilla-loft-1.jpg",
-        "sevilla-loft-2.jpg"
+        "https://picsum.photos/id/1024/800/600",
+        "https://picsum.photos/id/1025/800/600"
+      ]
+    },
+    {
+      "propertyCode": "MAD002",
+      "images": [
+        "https://picsum.photos/id/1026/800/600",
+        "https://picsum.photos/id/1027/800/600"
+      ]
+    },
+    {
+      "propertyCode": "BCN002",
+      "images": [
+        "https://picsum.photos/id/1028/800/600"
+      ]
+    },
+    {
+      "propertyCode": "VAL002",
+      "images": [
+        "https://picsum.photos/id/1029/800/600",
+        "https://picsum.photos/id/1030/800/600"
+      ]
+    },
+    {
+      "propertyCode": "SEV002",
+      "images": [
+        "https://picsum.photos/id/1031/800/600"
+      ]
+    },
+    {
+      "propertyCode": "MAD003",
+      "images": [
+        "https://picsum.photos/id/1032/800/600",
+        "https://picsum.photos/id/1033/800/600"
+      ]
+    },
+    {
+      "propertyCode": "BCN003",
+      "images": [
+        "https://picsum.photos/id/1034/800/600"
+      ]
+    },
+    {
+      "propertyCode": "VAL003",
+      "images": [
+        "https://picsum.photos/id/1035/800/600",
+        "https://picsum.photos/id/1036/800/600"
+      ]
+    },
+    {
+      "propertyCode": "SEV003",
+      "images": [
+        "https://picsum.photos/id/1037/800/600",
+        "https://picsum.photos/id/1038/800/600"
       ]
     }
   ]
