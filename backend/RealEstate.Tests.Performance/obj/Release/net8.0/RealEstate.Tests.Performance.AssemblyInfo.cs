@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("RealEstate.Tests.Performance")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fd7b8d899e410dfa8ef4b1c5230e179ceef4ff16")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+42df8ddfded558e4a90249b80b6d4fddc2fa38b2")]
 [assembly: System.Reflection.AssemblyProductAttribute("RealEstate.Tests.Performance")]
 [assembly: System.Reflection.AssemblyTitleAttribute("RealEstate.Tests.Performance")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

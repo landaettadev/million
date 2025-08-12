@@ -4,6 +4,9 @@
 Write-Host "🧪 Starting Complete Test Suite for Real Estate API" -ForegroundColor Green
 Write-Host "================================================" -ForegroundColor Green
 
+# Ensure we run from this script's directory
+Set-Location $PSScriptRoot
+
 # Function to check if a command was successful
 function Test-Success {
     param($ExitCode, $TestType)
@@ -20,13 +23,13 @@ $AllTestsPassed = $true
 
 # 1. Unit Tests
 Write-Host "`n🔬 Running Unit Tests..." -ForegroundColor Yellow
-dotnet test RealEstate.Tests/RealEstate.Tests.csproj --configuration Release --logger "console;verbosity=normal" --collect:"XPlat Code Coverage"
+dotnet test RealEstate.Tests/RealEstate.Tests.csproj --configuration Release --logger 'console;verbosity=normal' --collect:'XPlat Code Coverage'
 $UnitTestsResult = $LASTEXITCODE
 $AllTestsPassed = $AllTestsPassed -and (Test-Success $UnitTestsResult "Unit")
 
 # 2. Integration Tests
 Write-Host "`n🔗 Running Integration Tests..." -ForegroundColor Yellow
-dotnet test RealEstate.Tests.Integration/RealEstate.Tests.Integration.csproj --configuration Release --logger "console;verbosity=normal"
+dotnet test RealEstate.Tests.Integration/RealEstate.Tests.Integration.csproj --configuration Release --logger 'console;verbosity=normal'
 $IntegrationTestsResult = $LASTEXITCODE
 $AllTestsPassed = $AllTestsPassed -and (Test-Success $IntegrationTestsResult "Integration")
 
@@ -38,19 +41,25 @@ Write-Host "Note: This may take several minutes..." -ForegroundColor Cyan
 dotnet build RealEstate.Tests.Performance/RealEstate.Tests.Performance.csproj --configuration Release --no-restore
 
 # Run benchmarks
-dotnet run --project RealEstate.Tests.Performance/RealEstate.Tests.Performance.csproj --configuration Release -- --filter "*PropertyServiceBenchmarks*"
+dotnet run --project RealEstate.Tests.Performance/RealEstate.Tests.Performance.csproj --configuration Release -- --filter '*PropertyServiceBenchmarks*'
 $BenchmarkResult = $LASTEXITCODE
 $AllTestsPassed = $AllTestsPassed -and (Test-Success $BenchmarkResult "Performance Benchmark")
 
-# 4. Load Tests
+# 4. Performance Tests (non-load)
+Write-Host "`n🏎️ Running Performance Tests (non-load)..." -ForegroundColor Yellow
+dotnet test RealEstate.Tests.Performance/RealEstate.Tests.Performance.csproj --configuration Release --logger 'console;verbosity=normal' --filter 'Category!=LoadTest'
+$PerfTestsResult = $LASTEXITCODE
+$AllTestsPassed = $AllTestsPassed -and (Test-Success $PerfTestsResult "Performance Tests")
+
+# 5. Load Tests
 Write-Host "`n🔥 Running Load Tests..." -ForegroundColor Yellow
 Write-Host "Note: This will test API under simulated load..." -ForegroundColor Cyan
 
-dotnet test RealEstate.Tests.Performance/RealEstate.Tests.Performance.csproj --configuration Release --logger "console;verbosity=normal" --filter "Category=LoadTest"
+dotnet test RealEstate.Tests.Performance/RealEstate.Tests.Performance.csproj --configuration Release --logger 'console;verbosity=normal' --filter 'Category=LoadTest'
 $LoadTestResult = $LASTEXITCODE
 $AllTestsPassed = $AllTestsPassed -and (Test-Success $LoadTestResult "Load")
 
-# 5. Frontend Tests (if available)
+# 6. Frontend Tests (if available)
 if (Test-Path "../frontend/package.json") {
     Write-Host "`n⚛️ Running Frontend Tests..." -ForegroundColor Yellow
     Push-Location "../frontend"

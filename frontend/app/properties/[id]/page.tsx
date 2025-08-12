@@ -114,19 +114,32 @@ export default function PropertyDetailPage() {
       <div className="container py-8 grid md:grid-cols-2 gap-8">
         {/* Left: Gallery or single image */}
         <div>
-          {hasMultiple ? (
-            <Gallery images={data.images} />
-          ) : (
-            <div className="relative aspect-[16/10] rounded-2xl overflow-hidden">
-              <SmartImage
-                src={data.images?.[0] || data.image || ''}
-                alt={data.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-            </div>
-          )}
+          {(() => {
+            let videos: string[] = []
+            try {
+              const raw = typeof window !== 'undefined' ? localStorage.getItem('propertyVideoMap') : null
+              if (raw) {
+                const map = JSON.parse(raw) as Record<string, string>
+                const v = map[data.id]
+                if (v && v.endsWith('.mp4')) videos = [v]
+              }
+            } catch {}
+
+            if ((data.images && data.images.length > 0) || videos.length > 0) {
+              return <Gallery images={data.images || []} videos={videos} />
+            }
+            return (
+              <div className="relative aspect-[16/10] rounded-2xl overflow-hidden">
+                <SmartImage
+                  src={data.images?.[0] || data.image || ''}
+                  alt={data.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              </div>
+            )
+          })()}
         </div>
 
         {/* Right: Info */}
@@ -153,7 +166,7 @@ export default function PropertyDetailPage() {
                 {data.sqft ? `${data.sqft.toLocaleString()} SqFt` : ''}
               </p>
             )}
-            {data.idOwner && <p className="mt-1">Owner: {data.idOwner}</p>}
+            {/* Owner hidden from public view */}
           </div>
 
           {data.description && (

@@ -2,46 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace RealEstate.Application;
 
-// DTOs for writes
-public sealed record CreatePropertyDto(
-    string OwnerId,
-    string Name,
-    string Address,
-    decimal Price,
-    OperationType OperationType,
-    int? Beds = null,
-    int? Baths = null,
-    int? HalfBaths = null,
-    int? Sqft = null,
-    string? Description = null
-);
-
-public sealed record UpdatePropertyDto(
-    string Name,
-    string Address,
-    decimal Price,
-    OperationType OperationType,
-    int? Beds = null,
-    int? Baths = null,
-    int? HalfBaths = null,
-    int? Sqft = null,
-    string? Description = null
-);
-
-public sealed record CreateOwnerDto(
-    string Name,
-    string Address,
-    string? Photo = null,
-    DateTime? Birthday = null
-);
-
-public sealed record UpdateOwnerDto(
-    string Name,
-    string Address,
-    string? Photo = null,
-    DateTime? Birthday = null
-);
-
+// DTOs for writes (only unique ones not in Abstractions.cs)
 public sealed record AddImageDto(
     string PropertyId,
     string File,

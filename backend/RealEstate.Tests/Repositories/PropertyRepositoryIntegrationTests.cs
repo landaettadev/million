@@ -5,7 +5,7 @@ using MongoDB.Driver;
 using RealEstate.Application;
 using RealEstate.Infrastructure;
 using Testcontainers.MongoDb;
-using Xunit;
+using NSubstitute;
 
 namespace RealEstate.Tests.Repositories;
 
@@ -28,10 +28,16 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         _database = client.GetDatabase("testdb");
 
         var context = new MongoContext(_database);
-        _repository = new PropertyRepository(context);
+        var mockImageStorageService = Substitute.For<IImageStorageService>();
+        mockImageStorageService.GetImageUrl(Arg.Any<string>()).Returns(callInfo =>
+        {
+            var file = callInfo.ArgAt<string>(0);
+            return $"https://example.com/{Uri.EscapeDataString(file)}";
+        });
+        _repository = new PropertyRepository(context, mockImageStorageService);
     }
 
-    [Fact]
+    [Test]
     public async Task SearchAsync_WithNoFilters_ShouldReturnAllProperties()
     {
         // Arrange
@@ -47,7 +53,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         result.PageSize.Should().Be(20);
     }
 
-    [Fact]
+    [Test]
     public async Task SearchAsync_WithNameFilter_ShouldReturnMatchingProperties()
     {
         // Arrange
@@ -61,7 +67,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         result.Items.Should().OnlyContain(p => p.Name.Contains("Luxury", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Test]
     public async Task SearchAsync_WithAddressFilter_ShouldReturnMatchingProperties()
     {
         // Arrange
@@ -76,7 +82,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         result.Items.Should().OnlyContain(p => p.Address.Contains("Park", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [Test]
     public async Task SearchAsync_WithPriceRange_ShouldReturnPropertiesInRange()
     {
         // Arrange
@@ -90,7 +96,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         result.Items.Should().OnlyContain(p => p.Price >= 2000000 && p.Price <= 4000000);
     }
 
-    [Fact]
+    [Test]
     public async Task SearchAsync_WithOperationTypeFilter_ShouldReturnMatchingProperties()
     {
         // Arrange
@@ -104,7 +110,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         result.Items.Should().OnlyContain(p => p.OperationType == Application.OperationType.Sale);
     }
 
-    [Fact]
+    [Test]
     public async Task SearchAsync_WithPagination_ShouldReturnCorrectPage()
     {
         // Arrange
@@ -120,7 +126,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         result.Total.Should().Be(3);
     }
 
-    [Fact]
+    [Test]
     public async Task SearchAsync_WithMultipleFilters_ShouldReturnMatchingProperties()
     {
         // Arrange
@@ -143,7 +149,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         );
     }
 
-    [Fact]
+    [Test]
     public async Task GetByIdAsync_WithValidId_ShouldReturnPropertyWithImages()
     {
         // Arrange
@@ -165,7 +171,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         result.Images.Should().Contain("image2.jpg");
     }
 
-    [Fact]
+    [Test]
     public async Task GetByIdAsync_WithNonExistentId_ShouldReturnNull()
     {
         // Arrange
@@ -178,7 +184,7 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
         result.Should().BeNull();
     }
 
-    [Fact]
+    [Test]
     public async Task SearchAsync_ShouldReturnOnlyFirstEnabledImage()
     {
         // Arrange
@@ -189,10 +195,14 @@ public class PropertyRepositoryIntegrationTests : IAsyncDisposable
 
         // Assert
         result.Items.Should().HaveCount(3);
-        result.Items.Should().OnlyContain(p => p.Image != null && (p.Image == "image1.jpg" || p.Image == "image4.jpg" || p.Image == "image6.jpg"));
+        result.Items.Should().OnlyContain(p => p.Image != null && (
+            p.Image == "https://example.com/image1.jpg" ||
+            p.Image == "https://example.com/image4.jpg" ||
+            p.Image == "https://example.com/image6.jpg"
+        ));
     }
 
-    [Fact]
+    [Test]
     public async Task SearchAsync_ShouldOrderByPriceAscending()
     {
         // Arrange

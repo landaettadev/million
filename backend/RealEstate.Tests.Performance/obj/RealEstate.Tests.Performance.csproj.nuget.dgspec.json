@@ -296,6 +296,10 @@
             "MongoDB.Driver": {
               "target": "Package",
               "version": "[3.4.2, )"
+            },
+            "StackExchange.Redis": {
+              "target": "Package",
+              "version": "[2.7.17, )"
             }
           },
           "imports": [
@@ -402,6 +406,14 @@
             "NBomber.Http": {
               "target": "Package",
               "version": "[6.0.0, )"
+            },
+            "NUnit": {
+              "target": "Package",
+              "version": "[3.14.0, )"
+            },
+            "NUnit3TestAdapter": {
+              "target": "Package",
+              "version": "[4.5.0, )"
             },
             "Testcontainers.MongoDb": {
               "target": "Package",

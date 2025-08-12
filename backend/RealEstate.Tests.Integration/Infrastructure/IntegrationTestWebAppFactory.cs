@@ -16,7 +16,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<RealEstate.Api
         .WithImage("mongo:7.0")
         .WithUsername("admin")
         .WithPassword("password123")
-        .WithPortBinding(27017, true)
+        .WithPortBinding(0, 27017) // random host port → container 27017
         .Build();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -25,10 +25,11 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<RealEstate.Api
         {
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["MongoDb:ConnectionString"] = _mongoContainer.GetConnectionString(),
+                // ConnectionString will be provided via services after container starts
                 ["MongoDb:Database"] = "realestate_test",
                 ["Seed:Enabled"] = "false", // Disable automatic seeding for tests
-                ["Swagger:Enabled"] = "false"
+                ["Swagger:Enabled"] = "false",
+                ["REDIS_DISABLED"] = "true"
             });
         });
 
@@ -40,10 +41,24 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<RealEstate.Api
             // Add test-specific MongoContext
             services.AddSingleton<MongoContext>(serviceProvider =>
             {
+                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+                var configConn = configuration["MongoDb:ConnectionString"];
+
+                // Default to local Mongo for integration tests unless explicitly disabled
+                var useLocalEnv = Environment.GetEnvironmentVariable("USE_LOCAL_MONGO");
+                var useLocal = string.IsNullOrWhiteSpace(useLocalEnv) || string.Equals(useLocalEnv, "true", StringComparison.OrdinalIgnoreCase);
+                var connectionString = !string.IsNullOrWhiteSpace(configConn)
+                    ? configConn
+                    : useLocal
+                        ? (Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING") ?? "mongodb://localhost:27017")
+                        : _mongoContainer.GetConnectionString();
+
+                var databaseName = Environment.GetEnvironmentVariable("MONGO_DATABASE") ?? "realestate_test";
+
                 var settings = new MongoSettings
                 {
-                    ConnectionString = _mongoContainer.GetConnectionString(),
-                    Database = "realestate_test"
+                    ConnectionString = connectionString,
+                    Database = databaseName
                 };
                 return new MongoContext(settings);
             });
@@ -57,12 +72,22 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<RealEstate.Api
 
     public async Task InitializeAsync()
     {
-        await _mongoContainer.StartAsync();
+        var useLocalEnv = Environment.GetEnvironmentVariable("USE_LOCAL_MONGO");
+        var useLocal = string.IsNullOrWhiteSpace(useLocalEnv) || string.Equals(useLocalEnv, "true", StringComparison.OrdinalIgnoreCase);
+        if (!useLocal)
+        {
+            await _mongoContainer.StartAsync();
+        }
     }
 
     public new async Task DisposeAsync()
     {
-        await _mongoContainer.StopAsync();
+        var useLocalEnv = Environment.GetEnvironmentVariable("USE_LOCAL_MONGO");
+        var useLocal = string.IsNullOrWhiteSpace(useLocalEnv) || string.Equals(useLocalEnv, "true", StringComparison.OrdinalIgnoreCase);
+        if (!useLocal)
+        {
+            await _mongoContainer.StopAsync();
+        }
         await base.DisposeAsync();
     }
 }
