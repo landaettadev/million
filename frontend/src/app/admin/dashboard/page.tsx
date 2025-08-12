@@ -1,7 +1,7 @@
 'use client';
 
-import { withAdminAuth } from '../../lib/auth/AdminAuthContext';
-import AdminLayout from '../../components/admin/AdminLayout';
+import { withAdminAuth } from '../../../lib/auth/AdminAuthContext';
+import AdminLayout from '../../../components/admin/AdminLayout';
 import { Building2, Users, DollarSign, TrendingUp } from 'lucide-react';
 
 function DashboardPage() {
