@@ -14,8 +14,9 @@ public sealed class AzureBlobStorageService : IImageStorageService
     private readonly string _containerName;
     private readonly string _baseUrl;
     private readonly bool _isDevelopmentStorage;
+        private readonly string _readSasQuery; // optional: append to GET URLs when container is private
 
-    public AzureBlobStorageService(IConfiguration configuration)
+        public AzureBlobStorageService(IConfiguration configuration)
     {
         if (configuration is null) throw new ArgumentNullException(nameof(configuration));
 
@@ -23,6 +24,9 @@ public sealed class AzureBlobStorageService : IImageStorageService
         _containerName = configuration["AzureStorage:ContainerName"] ?? "property-images";
         _baseUrl = configuration["AzureStorage:BaseUrl"] ?? string.Empty;
         _isDevelopmentStorage = (connectionString ?? string.Empty).Contains("UseDevelopmentStorage=true", StringComparison.OrdinalIgnoreCase);
+            // Accept either with or without leading '?'
+            var sas = configuration["AzureStorage:ReadSas"] ?? string.Empty;
+            _readSasQuery = string.IsNullOrWhiteSpace(sas) ? string.Empty : (sas.StartsWith("?") ? sas : $"?{sas}");
 
         // Create client only if we have a non-empty connection string and it's valid; otherwise keep null.
         if (!string.IsNullOrWhiteSpace(connectionString))
@@ -87,7 +91,7 @@ public sealed class AzureBlobStorageService : IImageStorageService
         }
     }
 
-    public string GetImageUrl(string imagePath)
+        public string GetImageUrl(string imagePath)
     {
         if (string.IsNullOrWhiteSpace(imagePath))
         {
@@ -140,7 +144,13 @@ public sealed class AzureBlobStorageService : IImageStorageService
             }
 
             // Fallback to Azure Storage URL format (production)
-            return $"https://millionstorageprod.blob.core.windows.net/{_containerName}/{encodedBlobName}";
+            var url = $"https://millionstorageprod.blob.core.windows.net/{_containerName}/{encodedBlobName}";
+            // Append read SAS if provided and no explicit query present
+            if (string.IsNullOrEmpty(queryPart) && !string.IsNullOrEmpty(_readSasQuery))
+            {
+                url += _readSasQuery;
+            }
+            return url;
         }
 
         var baseUrlNormalized = _baseUrl.TrimEnd('/');
@@ -153,7 +163,13 @@ public sealed class AzureBlobStorageService : IImageStorageService
             ? $"{baseUrlNormalized}/{_containerName}"
             : baseUrlNormalized;
 
-        return $"{finalBase}/{encodedBlobName}{queryPart}{fragmentPart}";
+        // Compose final URL and append SAS if configured and no explicit query already present
+        var composed = $"{finalBase}/{encodedBlobName}{queryPart}{fragmentPart}";
+        if (string.IsNullOrEmpty(queryPart) && !string.IsNullOrEmpty(_readSasQuery))
+        {
+            composed = $"{finalBase}/{encodedBlobName}{_readSasQuery}{fragmentPart}";
+        }
+        return composed;
     }
 
     // Additional helper methods for internal use

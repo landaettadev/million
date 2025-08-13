@@ -17,8 +17,8 @@ function buildImageUrl(imagePath: string): string {
   
   // Use the actual Azure Blob Storage URLs directly
   // The images are publicly accessible at: https://millionstorageprod.blob.core.windows.net/property-images/{imagePath}
-  const storageAccountName = 'millionstorageprod'
-  const containerName = 'property-images'
+  const storageAccountName = (process.env.NEXT_PUBLIC_IMAGE_ACCOUNT || 'millionstorageprod')
+  const containerName = (process.env.NEXT_PUBLIC_IMAGE_CONTAINER || 'property-images')
   
   // Return the full Azure Blob Storage URL
   const fullUrl = `https://${storageAccountName}.blob.core.windows.net/${containerName}/${imagePath}`

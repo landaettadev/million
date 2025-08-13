@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import Image from 'next/image'
+import { SmartImage } from '../ui/SmartImage'
 import { useEffect, useState, useRef } from 'react'
 import { api } from '../../lib/api'
 import { Skeleton } from '../ui/Skeleton'
@@ -87,36 +87,24 @@ export function PropertyCard({ item, loading = false }: PropertyCardProps) {
   }
   if (item.sqft) specs.push(`${item.sqft.toLocaleString()} Sq. Ft.`)
 
-  // Generate a placeholder image URL if no image is provided
-  const usePlaceholderImages = process.env.NEXT_PUBLIC_USE_PLACEHOLDER_IMAGES === 'true'
-  const imageBaseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://picsum.photos'
-  
-  // Use placeholder images in development, or fallback if image fails
-  const safeId = String(item?.id ?? '')
-  const imageUrl = usePlaceholderImages || !item.image 
-    ? `${imageBaseUrl}/800/600?random=${safeId ? Math.abs(safeId.charCodeAt(0)) % 10 : 1}`
-    : item.image
-
-  const shouldBypassOptimization = imageUrl.includes('blob.core.windows.net') || imageUrl.includes('127.0.0.1:10000') || imageUrl.includes('picsum.photos')
+  // Use backend image when available; fallback to a local poster to avoid empty src
+  const imageUrl = item.image && item.image.trim().length > 0 ? item.image : '/hero-poster.jpg'
+  const shouldBypassOptimization = imageUrl.includes('blob.core.windows.net') || imageUrl.includes('127.0.0.1:10000')
 
   return (
     <Link href={`/properties/${item.id}`} aria-label={`View details of ${item.name}`} className="block">
       <article className="relative group transition-all duration-200 transform-gpu hover:-translate-y-0.5">
         {/* Big image */}
         <div className="relative w-full h-[360px] md:h-[560px] rounded-3xl overflow-hidden shadow-xl group-hover:shadow-2xl">
-          <Image
+          <SmartImage
             src={imageUrl}
             alt={`${item.name} — ${item.address}`}
             fill
             className="w-full h-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.01]"
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 50vw"
+            priority={false}
+            fallbackSrc="/hero-poster.jpg"
             unoptimized={shouldBypassOptimization}
-            onError={(e) => {
-              // Fallback to placeholder if image fails to load
-              const target = e.target as HTMLImageElement
-              const fallbackId = String(item?.id ?? 'x')
-              target.src = `${imageBaseUrl}/800/600?random=${Math.abs(fallbackId.charCodeAt(0)) % 10}`
-            }}
           />
           {/* Hover video overlay (plays on hover) */}
           {mounted && hoverVideo && (
