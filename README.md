@@ -89,6 +89,28 @@ npm run dev
 
 The frontend will be available at `http://localhost:3000`
 
+### 3.1 Local MongoDB (no authentication, recommended for demo)
+
+```powershell
+# One-time (or ensure it's running)
+docker run -d --name mongodb1 -p 27017:27017 mongo:7
+```
+
+Use this minimal dev config in `backend/RealEstate.Api/appsettings.Development.json`:
+
+```json
+{
+  "MongoDb": { "ConnectionString": "mongodb://localhost:27017", "Database": "million" },
+  "Seed": { "Enabled": true, "InsertIfEmpty": true, "Locked": true, "DatasetPath": "backend/seed/locked", "ResetCollections": false },
+  "AzureStorage": { "BaseUrl": "https://millionstorageprod.blob.core.windows.net", "ContainerName": "property-images", "ReadSas": "" },
+  "UseLocalImageStorage": false
+}
+```
+
+Notes
+- The locked seed loads fixed owners, properties, images (Azure blobs) and videos so every clone sees the same UI.
+- You do NOT need Azure keys to view images when the container is public. If private, provide a read-only SAS in `AzureStorage:ReadSas`.
+
 ### 4. Database and Seed
 
 #### Option A: Local MongoDB
@@ -154,6 +176,28 @@ To view images you have two options:
   }
 }
 ```
+
+### Customize demo images (so each property shows a different photo)
+
+The locked dataset reads blob names from `backend/seed/locked/propertyImages.json`.
+
+- Replace the `BlobName` values with real blobs that exist in your container. Example:
+
+```json
+[
+  { "PropertyIndex": 0, "BlobName": "img_property_0.jpg", "Enabled": true, "Order": 1 },
+  { "PropertyIndex": 1, "BlobName": "img_property_1.jpg", "Enabled": true, "Order": 1 },
+  { "PropertyIndex": 2, "BlobName": "img_property_2.jpg", "Enabled": true, "Order": 1 }
+]
+```
+
+- PropertyIndex refers to the position in `backend/seed/locked/properties.json`.
+- Restart the API with `Seed.ResetCollections=true` once to reload the dataset, then you can set it back to false.
+
+### Troubleshooting
+
+- 500 at `/api/properties` or `/api/properties/featured` on a fresh machine: ensure Mongo is running and the connection string matches your container (no auth vs auth). For no-auth dev, use `mongodb://localhost:27017`.
+- Images not visible: the container must be public read or you must set `AzureStorage:ReadSas` with a read-only SAS.
 
 ### Frontend Configuration
 
