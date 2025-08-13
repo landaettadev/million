@@ -377,4 +377,14 @@ export async function getPropertyVideo(propertyId: string) {
   return res.json() as Promise<{ id: string; url: string | null }>;
 }
 
+// Featured flag
+export async function setFeatured(propertyId: string, isFeatured: boolean) {
+  const res = await fetchWithAuth(`${apiBase}/admin/properties/${propertyId}/featured`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ isFeatured }),
+  });
+  if (!res.ok && res.status !== 204) throw new Error('Failed to update featured flag');
+}
+
 

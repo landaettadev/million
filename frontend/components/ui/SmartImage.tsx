@@ -26,23 +26,14 @@ export function SmartImage({
   onError,
   ...props 
 }: SmartImageProps) {
-  const [currentSrc, setCurrentSrc] = useState(src)
+  const [currentSrc, setCurrentSrc] = useState(src || '/hero-poster.jpg')
   const [hasError, setHasError] = useState(false)
 
-  // Generate fallback image if none provided
+  // Generate fallback image if none provided (avoid external placeholders)
   const generateFallback = () => {
     if (fallbackSrc) return fallbackSrc
-    
-    // Use environment configuration for fallback images
-    const usePlaceholderImages = process.env.NEXT_PUBLIC_USE_PLACEHOLDER_IMAGES === 'true'
-    const imageBaseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://picsum.photos'
-    
-    if (usePlaceholderImages) {
-      return `${imageBaseUrl}/800/600?random=${Math.abs(src.charCodeAt(0)) % 10}`
-    }
-    
-    // Default fallback
-    return `${imageBaseUrl}/800/600?random=1`
+    // No external placeholder usage. Keep original src to let browser handle error gracefully.
+    return src
   }
 
   const handleError = () => {
@@ -64,20 +55,9 @@ export function SmartImage({
 
   // Reset error state when src changes
   useEffect(() => {
-    setCurrentSrc(src)
+    setCurrentSrc(src || '/hero-poster.jpg')
     setHasError(false)
-    
-    // Log the image source being used
-    const usePlaceholderImages = process.env.NEXT_PUBLIC_USE_PLACEHOLDER_IMAGES === 'true'
-    if (usePlaceholderImages) {
-      console.log('Using placeholder image (development mode):', src)
-    } else if (src.includes('millionstorageprod.blob.core.windows.net')) {
-      console.log('Using Azure image:', src)
-    } else if (src.includes('picsum.photos')) {
-      console.log('Using placeholder image:', src)
-    } else {
-      console.log('Using other image source:', src)
-    }
+    // Avoid logging placeholder sources; prefer silent behavior
   }, [src])
 
   // Only pass priority prop if it's true
@@ -94,7 +74,7 @@ export function SmartImage({
       fill={fill}
       sizes={sizes}
       onError={handleError}
-      unoptimized={currentSrc.includes('millionstorageprod.blob.core.windows.net') || currentSrc.includes('picsum.photos')}
+      unoptimized={currentSrc.includes('millionstorageprod.blob.core.windows.net') || currentSrc.includes('127.0.0.1:10000')}
       {...imageProps}
     />
   )

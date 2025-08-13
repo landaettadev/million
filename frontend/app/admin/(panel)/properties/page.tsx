@@ -3,7 +3,7 @@
 import { withAdminAuth } from '../../../../src/lib/auth/AdminAuthContext';
 import { Plus, Search, Filter, Eye, Edit, Trash2, Image as ImageIcon, CheckCircle2, RotateCcw, Video } from 'lucide-react';
 import { ImageManagerModal } from '../../../../components/admin/ImageManagerModal';
-import { createProperty, deleteProperty, updateProperty, getAdminProperties, type AdminPropertyDto, getOwners, type AdminOwnerDto, uploadPropertyImage, deleteImage, getPropertyImages, type PropertyImageDto, markPropertySold, markPropertyActive, setPropertyVideo, getPropertyVideo } from '../../../../src/lib/adminApi';
+import { createProperty, deleteProperty, updateProperty, getAdminProperties, type AdminPropertyDto, getOwners, type AdminOwnerDto, uploadPropertyImage, deleteImage, getPropertyImages, type PropertyImageDto, markPropertySold, markPropertyActive, setPropertyVideo, getPropertyVideo, setFeatured } from '../../../../src/lib/adminApi';
 import { useEffect, useState } from 'react';
 
 function PropertiesPage() {
@@ -378,6 +378,7 @@ function PropertiesPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Details</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Owner</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Featured</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -450,6 +451,23 @@ function PropertiesPage() {
                       </button>
                       <button onClick={() => handleDelete(property.id)} className="text-gray-400 hover:text-red-400" title="Delete"><Trash2 className="w-4 h-4" /></button>
                     </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-300">
+                      <input
+                        type="checkbox"
+                        defaultChecked={property.isFeatured as any}
+                        onChange={async (e) => {
+                          try {
+                            await setFeatured(property.id, e.target.checked)
+                          } catch {
+                            e.currentTarget.checked = !e.currentTarget.checked
+                            alert('Failed to update featured flag')
+                          }
+                        }}
+                      />
+                      Featured
+                    </label>
                   </td>
                 </tr>
               ))}

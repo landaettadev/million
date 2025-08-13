@@ -185,4 +185,13 @@ public sealed class AdminPropertyReadService : IAdminPropertyService
             .FirstOrDefaultAsync(ct);
         return doc;
     }
+
+    public async Task<bool> SetFeaturedAsync(string id, bool isFeatured, CancellationToken ct = default)
+    {
+        var update = Builders<PropertyDocument>.Update
+            .Set(p => p.IsFeatured, isFeatured)
+            .Set(p => p.UpdatedAt, DateTime.UtcNow);
+        var res = await _ctx.Properties.UpdateOneAsync(p => p.Id == id && !p.IsDeleted, update, cancellationToken: ct);
+        return res.ModifiedCount > 0;
+    }
 }

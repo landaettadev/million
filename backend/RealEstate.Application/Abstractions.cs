@@ -246,6 +246,7 @@ public interface IAdminPropertyService
     Task DeletePropertyAsync(string id, CancellationToken ct = default);
     Task SetPropertyVideoAsync(string id, string url, CancellationToken ct = default);
     Task<string?> GetPropertyVideoAsync(string id, CancellationToken ct = default);
+    Task<bool> SetFeaturedAsync(string id, bool isFeatured, CancellationToken ct = default);
 }
 
 public interface IAdminAnalyticsService
