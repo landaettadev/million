@@ -38,6 +38,14 @@ public sealed class MongoSeeder
         var insertIfEmpty = _config.GetValue<bool>("Seed:InsertIfEmpty");
         if (!seedEnabled) return;
 
+        // Locked dataset mode: load deterministic JSON so every clone gets the same data
+        var locked = _config.GetValue<bool>("Seed:Locked");
+        if (locked)
+        {
+            await RunLockedDatasetAsync(ct);
+            return;
+        }
+
         // Seed Admin user (idempotent) - do this BEFORE early return based on properties count
         var seedAdminEmail = _config.GetValue<string>("Admin:Seed:Email");
         var seedAdminPassword = _config.GetValue<string>("Admin:Seed:Password");
@@ -69,125 +77,204 @@ public sealed class MongoSeeder
         var count = await _ctx.Properties.CountDocumentsAsync(FilterDefinition<PropertyDocument>.Empty, cancellationToken: ct);
         if (count > 0 && insertIfEmpty) return;
 
-        // Deterministic demo data (no picsum, real-like content). Videos local, images from Azure Blob by file name.
-        var ownerDocs = new List<OwnerDocument>
+        var random = new Random(42);
+        var seedCount = _config.GetValue<int>("Seed:Count", 12);
+        
+        // Create Owners first
+        var owners = Enumerable.Range(1, seedCount / 2 + 1).Select(i => new OwnerDocument
         {
-            new() { Id = ObjectId.GenerateNewId().ToString(), Name = "María González", Address = "Calle Mayor 123, Madrid" },
-            new() { Id = ObjectId.GenerateNewId().ToString(), Name = "Carlos Rodríguez", Address = "Diagonal 456, Barcelona" },
-            new() { Id = ObjectId.GenerateNewId().ToString(), Name = "Ana Martínez", Address = "Malvarrosa Beach 789, Valencia" },
-            new() { Id = ObjectId.GenerateNewId().ToString(), Name = "Luis Fernández", Address = "Calle Sierpes 321, Sevilla" }
-        };
-        await _ctx.Owners.InsertManyAsync(ownerDocs, cancellationToken: ct);
+            Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+            Name = GetRandomOwnerName(random),
+            Address = GetRandomOwnerAddress(random),
+            Photo = null,
+            Birthday = DateTime.UtcNow.AddYears(-random.Next(25, 65)).AddDays(-random.Next(0, 365))
+        }).ToList();
 
-        // Map: code -> (property, owner)
-        var propertiesByCode = new Dictionary<string, PropertyDocument>
+        await _ctx.Owners.InsertManyAsync(owners, cancellationToken: ct);
+
+        // Create Properties
+        var docs = Enumerable.Range(1, seedCount).Select(i => new PropertyDocument
         {
-            ["MAD001"] = new PropertyDocument
-            {
-                Id = ObjectId.GenerateNewId().ToString(),
-                OwnerId = ownerDocs[0].Id,
-                Name = "Luxury Penthouse Madrid",
-                Address = "Paseo de la Castellana 123, Madrid",
-                Price = 850000,
-                OperationType = "sale",
-                Description = "Exclusive penthouse with panoramic views of Madrid",
-                Beds = 4,
-                Baths = 3,
-                HalfBaths = 1,
-                Sqft = 3500,
-                IsFeatured = true,
-                VideoUrl = "/videos/lujosa1.mp4"
-            },
-            ["BCN001"] = new PropertyDocument
-            {
-                Id = ObjectId.GenerateNewId().ToString(),
-                OwnerId = ownerDocs[1].Id,
-                Name = "Modern Apartment Barcelona",
-                Address = "Diagonal 456, Barcelona",
-                Price = 450000,
-                OperationType = "sale",
-                Description = "Contemporary apartment in the heart of Barcelona",
-                Beds = 3,
-                Baths = 2,
-                HalfBaths = 0,
-                Sqft = 2200,
-                IsFeatured = true,
-                VideoUrl = "/videos/lujosa2.mp4"
-            },
-            ["VAL001"] = new PropertyDocument
-            {
-                Id = ObjectId.GenerateNewId().ToString(),
-                OwnerId = ownerDocs[2].Id,
-                Name = "Beach House Valencia",
-                Address = "Malvarrosa Beach 789, Valencia",
-                Price = 650000,
-                OperationType = "sale",
-                Description = "Beautiful beachfront property with private access",
-                Beds = 5,
-                Baths = 4,
-                HalfBaths = 1,
-                Sqft = 4200
-            },
-            ["SEV001"] = new PropertyDocument
-            {
-                Id = ObjectId.GenerateNewId().ToString(),
-                OwnerId = ownerDocs[3].Id,
-                Name = "Downtown Loft Sevilla",
-                Address = "Calle Sierpes 321, Sevilla",
-                Price = 280000,
-                OperationType = "sale",
-                Description = "Charming loft in the historic center of Sevilla",
-                Beds = 2,
-                Baths = 1,
-                HalfBaths = 0,
-                Sqft = 1500
-            }
-        };
+            Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+            OwnerId = owners[random.Next(owners.Count)].Id, // Reference existing owner
+            Name = $"Property {i}",
+            Address = i % 2 == 0 ? "Beverly Hills, CA" : "Manhattan, NY",
+            Price = random.Next(100_000, 5_000_000),
+            OperationType = i % 2 == 0 ? "sale" : "rent",
+            Description = GetRandomDescription(random),
+            Beds = random.Next(2, 6),
+            Baths = random.Next(1, 4),
+            HalfBaths = random.Next(0, 2),
+            Sqft = random.Next(900, 6000)
+        }).ToList();
 
-        await _ctx.Properties.InsertManyAsync(propertiesByCode.Values, cancellationToken: ct);
+        await _ctx.Properties.InsertManyAsync(docs, cancellationToken: ct);
 
+        // images
         var images = new List<PropertyImageDocument>();
-        void AddImages(string code, params string[] files)
+        foreach (var d in docs)
         {
-            var pid = propertiesByCode[code].Id;
-            for (var i = 0; i < files.Length; i++)
+            var enabledFirst = true;
+            var countImages = random.Next(3, 6);
+            for (var j = 0; j < countImages; j++)
             {
                 images.Add(new PropertyImageDocument
                 {
-                    Id = ObjectId.GenerateNewId().ToString(),
-                    PropertyId = pid,
-                    File = files[i], // blob file name (no URL). Service composes URL.
-                    Enabled = i == 0,
-                    Order = i + 1
+                    Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+                    PropertyId = d.Id,
+                    File = string.Empty,
+                    Enabled = enabledFirst
                 });
+                enabledFirst = false;
             }
         }
-
-        AddImages("MAD001", "madrid-penthouse-1.jpg", "madrid-penthouse-2.jpg", "madrid-penthouse-3.jpg");
-        AddImages("BCN001", "barcelona-apartment-1.jpg", "barcelona-apartment-2.jpg");
-        AddImages("VAL001", "valencia-beach-1.jpg", "valencia-beach-2.jpg", "valencia-beach-3.jpg");
-        AddImages("SEV001", "sevilla-loft-1.jpg", "sevilla-loft-2.jpg");
-
         await _ctx.PropertyImages.InsertManyAsync(images, cancellationToken: ct);
 
-        // Optional: minimal traces
+        // Create PropertyTraces 
         var traces = new List<PropertyTraceDocument>();
-        foreach (var p in propertiesByCode.Values)
+        foreach (var property in docs)
         {
-            traces.Add(new PropertyTraceDocument
+            var traceCount = random.Next(1, 4); // 1-3 traces per property
+            for (var k = 0; k < traceCount; k++)
             {
-                Id = ObjectId.GenerateNewId().ToString(),
-                PropertyId = p.Id,
-                DateSale = DateTime.UtcNow.AddDays(-120),
-                Name = "Initial Listing",
-                Value = p.Price,
-                Tax = p.Price * 0.02m
-            });
+                traces.Add(new PropertyTraceDocument
+                {
+                    Id = MongoDB.Bson.ObjectId.GenerateNewId().ToString(),
+                    PropertyId = property.Id,
+                    DateSale = DateTime.UtcNow.AddDays(-random.Next(30, 1095)), // Last 3 years
+                    Name = GetRandomTraceName(random),
+                    Value = property.Price * (decimal)(0.8 + random.NextDouble() * 0.4), // ±20% of current price
+                    Tax = property.Price * (decimal)(0.01 + random.NextDouble() * 0.02) // 1-3% tax
+                });
+            }
         }
         await _ctx.PropertyTraces.InsertManyAsync(traces, cancellationToken: ct);
 
         // Admin user seeding done earlier to avoid early return preventing it
     }
+
+    private async Task RunLockedDatasetAsync(CancellationToken ct)
+    {
+        var datasetPath = _config.GetValue<string>("Seed:DatasetPath") ?? Path.Combine("backend", "seed", "locked");
+        // Fallback when running from backend project dir
+        if (!Directory.Exists(datasetPath))
+        {
+            datasetPath = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "seed", "locked");
+        }
+
+        // Minimal schema for dataset files
+        var ownersPath = Path.Combine(datasetPath, "owners.json");
+        var propertiesPath = Path.Combine(datasetPath, "properties.json");
+        var imagesPath = Path.Combine(datasetPath, "propertyImages.json");
+        var videosPath = Path.Combine(datasetPath, "propertyVideos.json");
+
+        var owners = File.Exists(ownersPath)
+            ? System.Text.Json.JsonSerializer.Deserialize<List<SimpleOwner>>(await File.ReadAllTextAsync(ownersPath, ct)) ?? new()
+            : new();
+        var props = File.Exists(propertiesPath)
+            ? System.Text.Json.JsonSerializer.Deserialize<List<SimpleProperty>>(await File.ReadAllTextAsync(propertiesPath, ct)) ?? new()
+            : new();
+        var images = File.Exists(imagesPath)
+            ? System.Text.Json.JsonSerializer.Deserialize<List<SimpleImage>>(await File.ReadAllTextAsync(imagesPath, ct)) ?? new()
+            : new();
+        var videos = File.Exists(videosPath)
+            ? System.Text.Json.JsonSerializer.Deserialize<List<SimpleVideo>>(await File.ReadAllTextAsync(videosPath, ct)) ?? new()
+            : new();
+
+        // Clear collections only if explicitly requested
+        var reset = _config.GetValue<bool>("Seed:ResetCollections");
+        if (reset)
+        {
+            await _ctx.Properties.DeleteManyAsync(_ => true, ct);
+            await _ctx.PropertyImages.DeleteManyAsync(_ => true, ct);
+            await _ctx.PropertyTraces.DeleteManyAsync(_ => true, ct);
+            await _ctx.Owners.DeleteManyAsync(_ => true, ct);
+        }
+
+        // Insert owners
+        var ownerIdByIndex = new Dictionary<int, string>();
+        for (var i = 0; i < owners.Count; i++)
+        {
+            var o = owners[i];
+            var doc = new OwnerDocument
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                Name = o.Name,
+                Address = o.Address ?? string.Empty,
+                Photo = null,
+                Birthday = o.Birthday,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _ctx.Owners.InsertOneAsync(doc, cancellationToken: ct);
+            ownerIdByIndex[i] = doc.Id;
+        }
+
+        // Insert properties
+        var propertyIdByIndex = new Dictionary<int, string>();
+        for (var i = 0; i < props.Count; i++)
+        {
+            var p = props[i];
+            var doc = new PropertyDocument
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                OwnerId = (p.OwnerIndex.HasValue && ownerIdByIndex.TryGetValue(p.OwnerIndex.Value, out var oid)) ? oid : null,
+                Name = p.Name,
+                Address = p.Address,
+                Price = p.Price,
+                OperationType = p.OperationType?.ToLowerInvariant() == "rent" ? "rent" : "sale",
+                Description = p.Description,
+                Beds = p.Beds,
+                Baths = p.Baths,
+                HalfBaths = p.HalfBaths,
+                Sqft = p.Sqft,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                IsDeleted = false,
+                IsFeatured = p.IsFeatured,
+                VideoUrl = null
+            };
+            await _ctx.Properties.InsertOneAsync(doc, cancellationToken: ct);
+            propertyIdByIndex[i] = doc.Id;
+        }
+
+        // Insert images
+        foreach (var img in images)
+        {
+            if (!img.PropertyIndex.HasValue) continue;
+            if (!propertyIdByIndex.TryGetValue(img.PropertyIndex.Value, out var pid)) continue;
+            var doc = new PropertyImageDocument
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                PropertyId = pid,
+                File = img.BlobName,
+                ThumbnailFile = null,
+                Enabled = img.Enabled,
+                Order = img.Order,
+                FileSize = img.FileSize,
+                ContentType = string.IsNullOrWhiteSpace(img.ContentType) ? "image/jpeg" : img.ContentType,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                IsDeleted = false
+            };
+            await _ctx.PropertyImages.InsertOneAsync(doc, cancellationToken: ct);
+        }
+
+        // Insert videos (as property.VideoUrl)
+        foreach (var v in videos)
+        {
+            if (!v.PropertyIndex.HasValue) continue;
+            if (!propertyIdByIndex.TryGetValue(v.PropertyIndex.Value, out var pid)) continue;
+            var update = Builders<PropertyDocument>.Update
+                .Set(p => p.VideoUrl, v.Url)
+                .Set(p => p.UpdatedAt, DateTime.UtcNow);
+            await _ctx.Properties.UpdateOneAsync(p => p.Id == pid, update, cancellationToken: ct);
+        }
+    }
+
+    private sealed record SimpleOwner(string Name, string? Address = null, DateTime? Birthday = null);
+    private sealed record SimpleProperty(string Name, string Address, decimal Price, string OperationType, int? Beds = null, int? Baths = null, int? HalfBaths = null, int? Sqft = null, string? Description = null, bool IsFeatured = false, int? OwnerIndex = null);
+    private sealed record SimpleImage(int? PropertyIndex, string BlobName, bool Enabled = true, int Order = 1, long FileSize = 0, string ContentType = "image/jpeg");
+    private sealed record SimpleVideo(int? PropertyIndex, string Url);
 
     private static string GetRandomOwnerName(Random random)
     {

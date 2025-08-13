@@ -191,15 +191,17 @@ public sealed class TokenBlacklistDocument
     public string? UserAgent { get; set; }
 }
 
-public sealed class PropertyRepository : IPropertyRepository
+    public sealed class PropertyRepository : IPropertyRepository
 {
     private readonly MongoContext _ctx;
     private readonly IImageStorageService _imageStorageService;
+        private readonly string _defaultImageBlob;
 
-    public PropertyRepository(MongoContext ctx, IImageStorageService imageStorageService)
+        public PropertyRepository(MongoContext ctx, IImageStorageService imageStorageService)
     {
         _ctx = ctx;
         _imageStorageService = imageStorageService;
+            _defaultImageBlob = Environment.GetEnvironmentVariable("DEFAULT_IMAGE_BLOB") ?? string.Empty;
     }
 
     public async Task<PagedResult<PropertyLiteDto>> SearchAsync(SearchPropertiesQuery query, CancellationToken ct = default)
@@ -248,6 +250,10 @@ public sealed class PropertyRepository : IPropertyRepository
             if (!string.IsNullOrEmpty(firstImageFile))
             {
                 imageUrl = _imageStorageService.GetImageUrl(firstImageFile);
+            }
+            else if (!string.IsNullOrWhiteSpace(_defaultImageBlob))
+            {
+                imageUrl = _imageStorageService.GetImageUrl(_defaultImageBlob);
             }
 
             items.Add(new PropertyLiteDto(

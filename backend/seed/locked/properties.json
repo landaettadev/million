@@ -1,0 +1,10 @@
+[
+  { "Name": "Property 4", "Address": "Beverly Hills, CA", "Price": 2159794, "OperationType": "rent", "Beds": 4, "Baths": 2, "Sqft": 2762, "IsFeatured": true, "OwnerIndex": 0 },
+  { "Name": "Property 5", "Address": "Manhattan, NY", "Price": 436438, "OperationType": "rent", "Beds": 2, "Baths": 2, "Sqft": 4968, "IsFeatured": true, "OwnerIndex": 2 },
+  { "Name": "Property 6", "Address": "Beverly Hills, CA", "Price": 2616131, "OperationType": "sale", "Beds": 2, "Baths": 3, "Sqft": 915, "IsFeatured": false, "OwnerIndex": 1 },
+  { "Name": "Property 7", "Address": "Manhattan, NY", "Price": 3305301, "OperationType": "rent", "Beds": 5, "Baths": 3, "Sqft": 2814, "IsFeatured": false, "OwnerIndex": 0 },
+  { "Name": "Property 8", "Address": "Beverly Hills, CA", "Price": 317774, "OperationType": "sale", "Beds": 2, "Baths": 2, "Sqft": 3615, "IsFeatured": true, "OwnerIndex": 1 },
+  { "Name": "Property 9", "Address": "Manhattan, NY", "Price": 1557125, "OperationType": "rent", "Beds": 4, "Baths": 3, "Sqft": 5396, "IsFeatured": false, "OwnerIndex": 2 }
+]
+
+
