@@ -49,7 +49,7 @@ git clone https://github.com/landaettadev/million.git
 cd million
 ```
 
-### 2. Backend Setup
+### 2. Backend Setup (deterministic demo)
 
 ```bash
 cd backend/RealEstate.Api
@@ -57,9 +57,13 @@ cd backend/RealEstate.Api
 # Restore dependencies
 dotnet restore
 
-# Set up environment variables
+# Copy example settings
 cp appsettings.Development.json.example appsettings.Development.json
-# Edit appsettings.Development.json with your MongoDB connection string
+
+# Configure only what is needed for the demo
+# Mongo (local or Atlas)
+# Azure images are public-read, so NO keys needed to view
+# Optional if container is private: add AzureStorage:ReadSas (read-only SAS)
 
 # Run the application
 dotnet run
@@ -77,7 +81,7 @@ npm install
 
 # Set up environment variables
 cp .env.local.example .env.local
-# Edit .env.local with your API endpoints
+# Ensure NEXT_PUBLIC_API_BASE points to the backend (default http://localhost:5244)
 
 # Run the development server
 npm run dev
@@ -85,7 +89,7 @@ npm run dev
 
 The frontend will be available at `http://localhost:3000`
 
-### 4. Database Setup
+### 4. Database and Seed
 
 #### Option A: Local MongoDB
 ```bash
@@ -101,9 +105,20 @@ docker run -d -p 27017:27017 --name mongodb mongo:latest
 3. Get your connection string
 4. Update `appsettings.Development.json`
 
-### 5. Azure Blob Storage (Optional)
+### 5. Azure Blob Storage (images)
 
-If you want to use Azure Blob Storage for images:
+The repo ships with a locked seed that references Azure blob names so every clone sees the same images.
+To view images you have two options:
+
+1) Public container (recommended for demo):
+   - Set your container `property-images` to Blob public access
+   - Backend uses the `AzureStorage:BaseUrl` and `ContainerName` from config to build URLs
+   - No keys required to view
+
+2) Private container:
+   - Generate a read-only SAS for the container (sp=r, sr=c)
+   - Provide it via environment: `AzureStorage__ReadSas="?sp=r&st=...&se=...&sv=...&sr=c&sig=..."`
+   - Backend appends the SAS to every image URL
 
 1. Create an Azure Storage Account
 2. Create a container named `property-images`
@@ -116,18 +131,26 @@ If you want to use Azure Blob Storage for images:
 
 ```json
 {
-  "MongoDB": {
-    "ConnectionString": "mongodb://localhost:27017/million",
-    "DatabaseName": "million"
+  "MongoDb": {
+    "ConnectionString": "mongodb://localhost:27017",
+    "Database": "million"
   },
   "AzureStorage": {
-    "ConnectionString": "your-azure-connection-string",
-    "ContainerName": "property-images"
+    "BaseUrl": "https://<your-account>.blob.core.windows.net",
+    "ContainerName": "property-images",
+    "ReadSas": "" // optional, for private containers
   },
   "JWT": {
-    "SecretKey": "your-secret-key-here",
-    "Issuer": "million-real-estate",
-    "Audience": "million-users"
+    "KEY": "your-dev-jwt-key-min-32-chars",
+    "ISSUER": "millionluxury",
+    "AUDIENCE": "millionluxury-admin",
+    "EXPIRES_MIN": 60
+  },
+  "Seed": {
+    "Locked": true,
+    "DatasetPath": "backend/seed/locked",
+    "InsertIfEmpty": true,
+    "Enabled": true
   }
 }
 ```
@@ -135,8 +158,8 @@ If you want to use Azure Blob Storage for images:
 ### Frontend Configuration
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5244
-NEXT_PUBLIC_IMAGE_BASE_URL=https://your-storage-account.blob.core.windows.net/property-images
+NEXT_PUBLIC_API_BASE=http://localhost:5244
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5244/api
 ```
 
 ## 🧪 Running Tests
